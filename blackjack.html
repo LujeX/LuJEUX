@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blackjack — Casino Royal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Cinzel:wght@400;700;900&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --felt:#0a2e1a;--felt2:#0d3820;--felt3:#0f4025;
+  --gold:#c9a84c;--gold2:#e8cc7a;--gold3:#f5e0a0;--goldd:#8a6820;
+  --cream:#f5ecd5;--ink:#1a100a;--red:#cc2233;
+  --chip1:#e8392a;--chip2:#1a6bb5;--chip3:#2a8a3a;--chip5:#8b2be2;--chip10:#c9a84c;
+  --shadow:rgba(0,0,0,.7);--CW:72px;--CH:105px;
+}
+html,body{height:100%;font-family:'Cormorant Garamond',Georgia,serif;background:#080f08;overflow-x:hidden}
+body{display:flex;flex-direction:column;align-items:center;min-height:100vh;color:var(--cream)}
+#table{width:100%;max-width:740px;min-height:100vh;
+  background:radial-gradient(ellipse 90% 70% at 50% 40%,var(--felt3) 0%,var(--felt2) 45%,var(--felt) 75%,#060f08 100%);
+  display:flex;flex-direction:column;align-items:center;padding:16px 14px 24px;gap:10px;position:relative;
+  border-left:1px solid rgba(201,168,76,.12);border-right:1px solid rgba(201,168,76,.12)}
+#table::before{content:'';position:absolute;inset:0;opacity:.04;pointer-events:none;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.5) 2px,rgba(255,255,255,.5) 3px),
+  repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(255,255,255,.5) 2px,rgba(255,255,255,.5) 3px);background-size:6px 6px}
+#table::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:85%;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),var(--gold),transparent);border-radius:0 0 50% 50%}
+.back-btn{position:absolute;top:14px;left:14px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;
+  color:var(--goldd);text-decoration:none;border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:4px 12px;transition:all .15s;z-index:10}
+.back-btn:hover{color:var(--gold2);border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.07)}
+.casino-name{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:900;letter-spacing:.3em;color:var(--gold2);
+  text-align:center;text-shadow:0 0 40px rgba(201,168,76,.5);position:relative;z-index:1;margin-top:4px}
+.casino-sub{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.5em;color:var(--goldd);text-align:center;margin-top:-2px}
+.orn{display:flex;align-items:center;gap:10px;width:100%;max-width:420px}
+.orn-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.orn-dia{width:6px;height:6px;background:var(--gold);transform:rotate(45deg);flex-shrink:0}
+.infobar{display:flex;gap:10px;align-items:stretch;width:100%}
+.infoc{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:8px 10px;text-align:center}
+.infoc-lbl{font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--goldd);font-family:'Cinzel',serif}
+.infoc-val{font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;color:var(--gold2);line-height:1.2}
+.infoc-val.red{color:#e85566}.infoc-val.grn{color:#5ccc7a}
+.zone{width:100%}
+.zone-lbl{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.25em;color:rgba(201,168,76,.5);
+  text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.zone-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.3),transparent)}
+.score-badge{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;background:rgba(0,0,0,.5);
+  border:1px solid rgba(201,168,76,.35);border-radius:20px;padding:2px 12px;color:var(--gold2);min-width:36px;text-align:center;transition:all .3s}
+.score-badge.bust{background:rgba(180,30,30,.3);border-color:rgba(220,60,60,.5);color:#ff7788}
+.score-badge.bj{background:rgba(201,168,76,.2);border-color:var(--gold);color:var(--gold3);animation:bjg 1s ease-in-out infinite alternate}
+@keyframes bjg{from{box-shadow:0 0 8px rgba(201,168,76,.4)}to{box-shadow:0 0 20px rgba(201,168,76,.8)}}
+.hand{display:flex;min-height:calc(var(--CH)+8px);padding:4px 2px;flex-wrap:wrap;gap:4px}
+.card{width:var(--CW);height:var(--CH);border-radius:7px;position:relative;flex-shrink:0;perspective:600px}
+.card-inner{width:100%;height:100%;border-radius:7px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.card-front,.card-back{position:absolute;inset:0;border-radius:7px;backface-visibility:hidden}
+.card-front{background:#fffdf5;border:1px solid #d4c8a8;display:flex;flex-direction:column;justify-content:space-between;
+  padding:4px 5px;box-shadow:2px 4px 16px var(--shadow),inset 0 1px 0 rgba(255,255,255,.9)}
+.card-back{transform:rotateY(180deg);background:linear-gradient(135deg,#1a2560,#0f1840);border:1px solid #2a3580;
+  box-shadow:2px 4px 16px var(--shadow);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card-back::before{content:'';position:absolute;inset:6px;border-radius:4px;border:1px solid rgba(201,168,76,.4);
+  background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(201,168,76,.06) 4px,rgba(201,168,76,.06) 5px)}
+.card-back::after{content:'♦';position:absolute;font-size:2rem;color:rgba(201,168,76,.25)}
+.card-front.red .cr,.card-front.red .cs,.card-front.red .cm{color:var(--red)}
+.card-front .cr{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;line-height:1;color:var(--ink)}
+.card-front .cs{font-size:.8rem;line-height:1;color:var(--ink)}
+.card-front .cm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;opacity:.08;color:var(--ink)}
+.card-front .bot{transform:rotate(180deg);display:flex;flex-direction:column;align-items:flex-end}
+.card.dealing{animation:deal .4s cubic-bezier(.2,1,.4,1) both}
+@keyframes deal{from{opacity:0;transform:translateY(-60px) scale(.7) rotate(-8deg)}to{opacity:1;transform:none}}
+.felt-divider{width:90%;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.6),transparent)}
+.betting-arc{width:240px;height:80px;border-radius:50% 50% 0 0/100% 100% 0 0;border:1px solid rgba(201,168,76,.2);
+  border-bottom:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;position:relative;margin-top:-6px}
+.betting-arc::before{content:'MISE';font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.3em;color:rgba(201,168,76,.4);position:absolute;top:14px}
+.chips-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.chip{width:52px;height:52px;border-radius:50%;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:.7rem;font-weight:700;color:#fff;transition:transform .12s,box-shadow .12s;user-select:none;
+  border:3px dashed rgba(255,255,255,.35);box-shadow:0 3px 12px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2)}
+.chip:hover{transform:translateY(-4px) scale(1.08)}
+.chip[data-v="1"]{background:radial-gradient(circle at 35% 35%,#ff6677,var(--chip1))}
+.chip[data-v="5"]{background:radial-gradient(circle at 35% 35%,#4a9fe0,var(--chip2))}
+.chip[data-v="10"]{background:radial-gradient(circle at 35% 35%,#5ab06a,var(--chip3))}
+.chip[data-v="25"]{background:radial-gradient(circle at 35% 35%,#b060f0,var(--chip5))}
+.chip[data-v="50"]{background:radial-gradient(circle at 35% 35%,#e8c870,var(--chip10));color:var(--ink)}
+.bet-stack{min-width:60px;min-height:48px;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.bet-chip{width:40px;height:16px;border-radius:50%;position:absolute;border:2px solid rgba(255,255,255,.3);
+  box-shadow:0 2px 6px rgba(0,0,0,.6);font-family:'Cinzel',serif;font-size:.52rem;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn{padding:9px 22px;border:1px solid;border-radius:4px;font-family:'Cinzel',serif;font-size:.75rem;font-weight:700;
+  letter-spacing:.1em;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.btn-gold{background:linear-gradient(180deg,var(--gold2),var(--gold));border-color:var(--goldd);color:var(--ink)}
+.btn-gold:hover{background:linear-gradient(180deg,var(--gold3),var(--gold2));transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,.4)}
+.btn-ghost{background:rgba(0,0,0,.3);border-color:rgba(201,168,76,.3);color:var(--gold2)}
+.btn-ghost:hover{background:rgba(201,168,76,.1);border-color:var(--gold);transform:translateY(-1px)}
+.btn-red{background:rgba(180,30,30,.2);border-color:rgba(220,60,60,.4);color:#ff8899}
+.btn-red:hover{background:rgba(180,30,30,.35)}
+.btn:disabled{opacity:.3;cursor:default;transform:none !important;box-shadow:none !important}
+.msg-zone{min-height:44px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;
+  font-size:.9rem;letter-spacing:.06em;text-align:center;padding:0 10px}
+.msg-zone span{background:rgba(0,0,0,.4);border:1px solid rgba(201,168,76,.2);border-radius:6px;padding:8px 20px;color:var(--gold2);animation:fs .3s ease both}
+@keyframes fs{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hint{font-size:.7rem;color:rgba(201,168,76,.55);font-style:italic;text-align:center;min-height:16px;letter-spacing:.04em}
+.history{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:340px}
+.hist-dot{width:10px;height:10px;border-radius:50%}
+.hist-dot.w{background:#5ccc7a}.hist-dot.l{background:#e85566}.hist-dot.d{background:#c9a84c}
+.hist-dot.bj{background:var(--gold3);box-shadow:0 0 4px var(--gold)}
+@media(max-width:400px){:root{--CW:56px;--CH:82px}.casino-name{font-size:1.2rem}.chip{width:44px;height:44px}.btn{padding:7px 12px;font-size:.65rem}}
+</style>
+</head>
+<body>
+<div id="table">
+  <a class="back-btn" href="index.html">← Accueil</a>
+  <div class="casino-name">CASINO ROYAL</div>
+  <div class="casino-sub">Blackjack — Règles Vegas Strip</div>
+  <div class="orn"><div class="orn-line"></div><div class="orn-dia"></div><div class="orn-line"></div></div>
+  <div class="infobar">
+    <div class="infoc"><div class="infoc-lbl">Solde</div><div class="infoc-val" id="bal">1 000 €</div></div>
+    <div class="infoc"><div class="infoc-lbl">Mise</div><div class="infoc-val" id="betDisp">0 €</div></div>
+    <div class="infoc"><div class="infoc-lbl">Parties</div><div class="infoc-val" id="gamesDisp">0</div></div>
+    <div class="infoc"><div class="infoc-lbl">Gains nets</div><div class="infoc-val" id="netDisp">0 €</div></div>
+  </div>
+  <div class="history" id="history"></div>
+  <div class="zone"><div class="zone-lbl">Croupier &nbsp;<span class="score-badge" id="dScore">?</span></div><div class="hand" id="dHand"></div></div>
+  <div class="felt-divider"></div>
+  <div class="msg-zone" id="msgZone"></div>
+  <div class="betting-arc"><div class="bet-stack" id="betStack"></div></div>
+  <div class="zone"><div class="zone-lbl">Votre main &nbsp;<span class="score-badge" id="pScore">0</span></div><div class="hand" id="pHand"></div></div>
+  <div class="hint" id="hint"></div>
+  <div class="chips-row">
+    <div class="chip" data-v="1" onclick="addBet(1)"><span>1</span></div>
+    <div class="chip" data-v="5" onclick="addBet(5)"><span>5</span></div>
+    <div class="chip" data-v="10" onclick="addBet(10)"><span>10</span></div>
+    <div class="chip" data-v="25" onclick="addBet(25)"><span>25</span></div>
+    <div class="chip" data-v="50" onclick="addBet(50)"><span>50</span></div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="btn btn-gold" id="btnDeal" onclick="deal()" disabled>Distribuer</button>
+    <button class="btn btn-ghost" onclick="clearBet()">Effacer</button>
+    <button class="btn btn-ghost" id="btnRebet" onclick="reBet()" disabled>Remiser</button>
+  </div>
+  <div class="actions" id="gameActions" style="display:none">
+    <button class="btn btn-gold" onclick="hit()">Tirer</button>
+    <button class="btn btn-ghost" onclick="stand()">Rester</button>
+    <button class="btn btn-ghost" id="btnDouble" onclick="doDouble()">Doubler</button>
+    <button class="btn btn-red" id="btnSurr" onclick="surrender()">Abandonner</button>
+  </div>
+</div>
+<script>
+const SUITS=['♠','♥','♦','♣'],RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+let deck=[],pHand=[],dHand=[],bet=0,lastBet=0,balance=1000,net=0,games=0,phase='bet',lock=false;
+const CC={'1':'#e8392a','5':'#1a6bb5','10':'#2a8a3a','25':'#8b2be2','50':'#c9a84c'};
+function mk(){const d=[];for(const s of SUITS)for(const r of RANKS)d.push({rank:r,suit:s});return d;}
+function sh(a){const d=[...a];for(let i=d.length-1;i>0;i--){const j=0|Math.random()*(i+1);[d[i],d[j]]=[d[j],d[i]];}return d;}
+function fr(){if(deck.length<26)deck=sh([...mk(),...mk(),...mk(),...mk()]);}
+function cv(r){if(['J','Q','K'].includes(r))return 10;if(r==='A')return 11;return+r;}
+function hv(h){let v=h.reduce((s,c)=>s+(c.hidden?0:cv(c.rank)),0),a=h.filter(c=>!c.hidden&&c.rank==='A').length;while(v>21&&a-->0)v-=10;return v;}
+function bj(h){return h.length===2&&hv(h)===21;}
+function red(s){return s==='♥'||s==='♦';}
+function rc(c,dl=0){
+  const el=document.createElement('div');el.className='card dealing';el.style.animationDelay=dl+'ms';
+  const r=red(c.suit)?' red':'';
+  if(c.hidden){el.innerHTML=`<div class="card-inner" style="transform:rotateY(180deg)"><div class="card-front${r}"></div><div class="card-back"></div></div>`;}
+  else{el.innerHTML=`<div class="card-inner"><div class="card-front${r}"><div><div class="cr">${c.rank}</div><div class="cs">${c.suit}</div></div><div class="cm">${c.suit}</div><div class="bot"><div class="cr">${c.rank}</div><div class="cs">${c.suit}</div></div></div><div class="card-back"></div></div>`;}
+  return el;
+}
+function rh(h,id){const el=document.getElementById(id);el.innerHTML='';h.forEach((c,i)=>el.appendChild(rc(c,i*110)));}
+function flip(hEl,i){return new Promise(r=>{const c=hEl.querySelectorAll('.card');if(!c[i])return r();c[i].querySelector('.card-inner').style.transform='rotateY(0)';setTimeout(r,520);});}
+function us(h,id,hide=false){const el=document.getElementById(id);if(hide){el.textContent='?';el.className='score-badge';return;}const v=hv(h);el.textContent=v;el.className='score-badge'+(v>21?' bust':bj(h)?' bj':'');}
+function ubs(){
+  const el=document.getElementById('betStack');el.innerHTML='';document.getElementById('betDisp').textContent=bet+'€';
+  if(!bet)return;
+  let n=bet;const vals=[50,25,10,5,1],chips=[];
+  for(const v of vals)while(n>=v&&chips.length<6){chips.push(v);n-=v;}
+  chips.forEach((v,i)=>{const c=document.createElement('div');c.className='bet-chip';c.style.cssText=`background:${CC[v]||'#888'};bottom:${i*12}px`;c.textContent=v;el.appendChild(c);});
+  el.style.minHeight=(chips.length*12+16)+'px';
+}
+function addBet(v){if(phase!=='bet')return;if(balance-bet<v){sm('Solde insuffisant');return;}bet+=v;ubs();document.getElementById('btnDeal').disabled=false;}
+function clearBet(){if(phase!=='bet')return;bet=0;ubs();document.getElementById('btnDeal').disabled=true;}
+function reBet(){if(phase!=='bet'||!lastBet||lastBet>balance)return;bet=lastBet;ubs();document.getElementById('btnDeal').disabled=false;}
+function ui(){
+  document.getElementById('bal').textContent=balance.toLocaleString('fr-FR')+'€';
+  const nd=document.getElementById('netDisp');nd.textContent=(net>=0?'+':'')+net.toLocaleString('fr-FR')+'€';
+  nd.className='infoc-val'+(net>0?' grn':net<0?' red':'');document.getElementById('gamesDisp').textContent=games;
+}
+function sm(t,s=''){document.getElementById('msgZone').innerHTML=`<span>${t}${s?'<br><small style="opacity:.6;font-size:.7rem">'+s+'</small>':''}</span>`;}
+function hint(){
+  if(phase!=='play'){document.getElementById('hint').textContent='';return;}
+  const p=hv(pHand),d=cv(dHand[0].rank),dd=pHand.length===2;
+  let h='';
+  if(p>=17)h='→ Rester';else if(p===11&&dd)h='→ Doubler';else if(p===10&&d<=9&&dd)h='→ Doubler';
+  else if(p===9&&d>=3&&d<=6&&dd)h='→ Doubler';else if(p<=11)h='→ Tirer';
+  else if(p===16&&d>=7)h='→ Tirer';else if(p>=13&&d<=6)h='→ Rester';else h='→ Tirer';
+  document.getElementById('hint').textContent=h+' (stratégie de base)';
+}
+function ah(t){const el=document.getElementById('history');const d=document.createElement('div');d.className='hist-dot '+t;el.appendChild(d);if(el.children.length>40)el.removeChild(el.firstChild);}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function deal(){
+  if(phase!=='bet'||!bet||lock)return;lock=true;fr();
+  balance-=bet;lastBet=bet;phase='play';
+  pHand=[deck.pop(),deck.pop()];dHand=[deck.pop(),{...deck.pop(),hidden:true}];
+  ui();document.getElementById('actions').style.display='none';
+  rh(pHand,'pHand');rh(dHand,'dHand');
+  await delay(600);us(pHand,'pScore');us(dHand,'dScore',true);hint();
+  if(bj(pHand)){await dr();resolve(bj(dHand)?'push':'bj',bj(dHand)?'Égalité ! Double Blackjack ✦':'Blackjack ! ✦ Payé 3 contre 2');return;}
+  document.getElementById('gameActions').style.display='flex';
+  document.getElementById('btnDouble').disabled=balance<bet;
+  document.getElementById('btnSurr').disabled=false;
+  sm('Votre tour');lock=false;
+}
+
+async function hit(){
+  if(phase!=='play'||lock)return;lock=true;
+  pHand.push(deck.pop());rh(pHand,'pHand');await delay(350);
+  us(pHand,'pScore');hint();
+  document.getElementById('btnDouble').disabled=true;document.getElementById('btnSurr').disabled=true;
+  if(hv(pHand)>21){await dr();resolve('lose','Vous avez dépassé 21 — Perdu');return;}
+  if(hv(pHand)===21){await stand();return;}
+  lock=false;
+}
+
+async function stand(){
+  if(phase!=='play'||lock)return;lock=true;
+  document.getElementById('gameActions').style.display='none';document.getElementById('hint').textContent='';
+  sm('Le croupier joue…');await dr();
+  const p=hv(pHand),d=hv(dHand);
+  if(d>21)resolve('win',`Croupier dépasse 21 — Vous gagnez !`);
+  else if(p>d)resolve('win',`${p} contre ${d} — Vous gagnez !`);
+  else if(p<d)resolve('lose',`${d} contre ${p} — Perdu`);
+  else resolve('push',`Égalité à ${p}`);
+}
+
+async function doDouble(){
+  if(phase!=='play'||lock||balance<bet)return;lock=true;
+  balance-=bet;bet*=2;ubs();ui();pHand.push(deck.pop());rh(pHand,'pHand');await delay(350);us(pHand,'pScore');
+  document.getElementById('gameActions').style.display='none';
+  if(hv(pHand)>21){await dr();resolve('lose',`Doublé et dépassé — Perdu`);return;}
+  sm('Le croupier joue…');await dr();
+  const p=hv(pHand),d=hv(dHand);
+  if(d>21)resolve('win','Croupier dépasse — Doublé gagné !');
+  else if(p>d)resolve('win',`${p} vs ${d} — Doublé gagné !`);
+  else if(p<d)resolve('lose',`${d} vs ${p} — Doublé perdu`);
+  else resolve('push','Égalité — Mise remboursée');
+}
+
+async function surrender(){
+  if(phase!=='play'||lock)return;lock=true;phase='over';games++;
+  const half=Math.floor(bet/2);balance+=half;net-=(bet-half);bet=0;ubs();ui();
+  document.getElementById('gameActions').style.display='none';ah('l');sm('Abandon','½ mise récupérée');
+  await delay(1600);reset();
+}
+
+async function dr(){
+  await flip(document.getElementById('dHand'),1);dHand[1].hidden=false;us(dHand,'dScore');await delay(400);
+  while(hv(dHand)<17){dHand.push(deck.pop());rh(dHand,'dHand');await delay(500);us(dHand,'dScore');}
+}
+
+function resolve(type,msg){
+  phase='over';games++;
+  let gain=0,sub='';
+  if(type==='win'){gain=bet*2;sub=`+${bet}€`;}
+  else if(type==='bj'){gain=Math.floor(bet*2.5);sub=`+${Math.floor(bet*1.5)}€`;}
+  else if(type==='push'){gain=bet;sub='Mise remboursée';}
+  else sub=`-${bet}€`;
+  net+=gain-bet;balance+=gain;bet=0;ubs();ui();
+  ah(type==='bj'?'bj':type==='win'?'w':type==='push'?'d':'l');sm(msg,sub);
+  document.getElementById('hint').textContent='';setTimeout(reset,2000);
+}
+
+function reset(){
+  phase='bet';lock=false;pHand=[];dHand=[];
+  ['pHand','dHand'].forEach(id=>document.getElementById(id).innerHTML='');
+  document.getElementById('pScore').textContent='0';document.getElementById('pScore').className='score-badge';
+  document.getElementById('dScore').textContent='?';document.getElementById('dScore').className='score-badge';
+  document.getElementById('gameActions').style.display='none';document.getElementById('actions').style.display='flex';
+  document.getElementById('btnRebet').disabled=!lastBet||lastBet>balance;
+  document.getElementById('btnDeal').disabled=true;sm('');
+  if(balance<=0){sm('Solde épuisé — Réinitialisation');setTimeout(()=>{balance=1000;net=0;games=0;ui();document.getElementById('history').innerHTML='';sm('');},2200);}
+}
+ui();sm('');
+</script>
+</body>
+</html>
