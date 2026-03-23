@@ -1,236 +1,321 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>7 Familles des Mers — LuJEUX</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:wght@400;600;700&display=swap">
-<style>
-:root{--bg:#06080f;--gold:#c9a84c;--gold2:#e8cc7a;--goldd:#7a5c1a;--txt:#f5ecd5}
-body{min-height:100vh;background:var(--bg);color:var(--txt);font-family:'Cormorant Garamond',serif;margin:0;padding:20px;display:flex;flex-direction:column;align-items:center}
-h1{font-family:'Cinzel',serif;font-size:3.2rem;color:var(--gold2);text-shadow:0 0 30px rgba(201,168,76,.6);margin:10px 0}
-.container{max-width:620px;width:100%}
-.stats{display:flex;justify-content:space-around;background:rgba(201,168,76,.08);padding:12px;border-radius:12px;margin-bottom:20px}
-.stat{text-align:center}
-.stat-val{font-family:'Cinzel',serif;font-size:2rem;color:var(--gold2)}
-.hand{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:20px 0}
-.card{width:78px;height:110px;background:#0a1f1a;border:3px solid var(--gold);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:2.8rem;cursor:pointer;transition:all .2s;box-shadow:0 4px 15px rgba(0,0,0,.6)}
-.card:hover{transform:scale(1.08);border-color:var(--gold2)}
-.card span{font-size:.85rem;margin-top:6px;color:var(--gold2);font-family:'Cinzel',serif}
-#ai-hand{font-size:1.8rem;color:var(--goldd);margin:10px 0}
-#message{background:rgba(0,0,0,.5);padding:14px 20px;border-radius:12px;text-align:center;min-height:56px;margin:15px 0;font-size:1.1rem}
-button{padding:12px 28px;background:linear-gradient(var(--gold2),var(--gold));border:none;border-radius:8px;color:#1a1408;font-family:'Cinzel',serif;font-size:1rem;cursor:pointer}
-#ask-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0}
-.ask-btn{background:rgba(201,168,76,.15);border:2px solid var(--gold);color:var(--gold2);padding:8px 16px;border-radius:20px;cursor:pointer;font-family:'Cinzel',serif}
-.ask-btn:hover{background:var(--gold);color:#1a1408}
-#draw-pile{text-align:center;margin:20px 0}
-#draw-pile .pile{font-size:4rem;cursor:pointer}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Fish - Plato Style</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-bg: #ffffff;
+            --accent: #4ecca3;
+            --text: #eeeeee;
+            --player-zone: #16213e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* HUD & Stats */
+        #ui-overlay {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 25px;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .score-box {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        /* Table de jeu */
+        #game-board {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Cartes */
+        .hand {
+            display: flex;
+            justify-content: center;
+            gap: -20px;
+            min-height: 120px;
+        }
+
+        .card {
+            width: 70px;
+            height: 100px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s, margin 0.2s;
+            position: relative;
+            border: 2px solid #ddd;
+        }
+
+        .player-hand .card:hover {
+            transform: translateY(-20px);
+            z-index: 10;
+        }
+
+        .cpu-card {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: transparent;
+        }
+
+        /* Message Bubble */
+        #status-msg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--accent);
+            color: #1a1a2e;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Pioche */
+        #deck-container {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+        }
+
+        .deck-visual {
+            width: 70px;
+            height: 100px;
+            background: #2c3e50;
+            border-radius: 8px;
+            border: 2px solid white;
+            box-shadow: 4px 4px 0px #16213e;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+    </style>
 </head>
 <body>
 
-<h1>7 Familles des Mers</h1>
-<div class="container">
+    <div id="ui-overlay">
+        <div class="score-box">CPU Books: <span id="cpu-score">0</span></div>
+        <div class="score-box">Tes Books: <span id="player-score">0</span></div>
+    </div>
 
-  <div class="stats">
-    <div class="stat"><div class="stat-val" id="player-books">0</div><div>Tes familles</div></div>
-    <div class="stat"><div class="stat-val" id="ai-books">0</div><div>IA</div></div>
-    <div class="stat"><div class="stat-val" id="deck-count">18</div><div>Pioche</div></div>
-  </div>
+    <div id="game-board">
+        <div class="turn-indicator" id="turn-display">C'est ton tour !</div>
+        
+        <div id="cpu-hand" class="hand"></div>
 
-  <div id="ai-hand">IA a <span id="ai-count">5</span> cartes 🐟</div>
+        <div id="status-msg">GO FISH !</div>
 
-  <div class="hand" id="player-hand"></div>
+        <div id="deck-container">
+            <div class="deck-visual"></div>
+            <p>Deck: <span id="deck-count">0</span></p>
+        </div>
 
-  <div id="message">À ton tour ! Clique sur une carte puis demande à l’IA</div>
-
-  <div id="ask-buttons"></div>
-
-  <div id="draw-pile">
-    <div class="pile" onclick="drawCard()">🐟<br><small>Pêcher</small></div>
-  </div>
-
-  <button onclick="resetGame()">Nouvelle partie</button>
-</div>
+        <div id="player-hand" class="hand player-hand"></div>
+    </div>
 
 <script>
-// === FAMILLES (7 familles de poissons, 4 cartes chacune) ===
-const families = [
-  {id:"clown", name:"Poisson-Clown", emoji:"🐠"},
-  {id:"requin", name:"Requin", emoji:"🦈"},
-  {id:"tortue", name:"Tortue", emoji:"🐢"},
-  {id:"pieuvre", name:"Pieuvre", emoji:"🐙"},
-  {id:"meduse", name:"Méduse", emoji:"🪼"},
-  {id:"etoile", name:"Étoile", emoji:"⭐"},
-  {id:"dauphin", name:"Dauphin", emoji:"🐬"}
-];
+    const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    
+    class Game {
+        constructor() {
+            this.deck = [];
+            this.playerHand = [];
+            this.cpuHand = [];
+            this.playerBooks = 0;
+            this.cpuBooks = 0;
+            this.isPlayerTurn = true;
+            this.isProcessing = false;
 
-let deck = [];
-let playerHand = [];
-let aiHand = [];
-let playerBooks = 0;
-let aiBooks = 0;
-let gameOver = false;
+            this.initDeck();
+            this.shuffle();
+            this.deal(7);
+            this.updateUI();
+        }
 
-function createDeck() {
-  deck = [];
-  families.forEach(f => {
-    for(let i=0; i<4; i++) deck.push(f.id);
-  });
-  // Shuffle
-  for(let i=deck.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [deck[i],deck[j]]=[deck[j],deck[i]];
-  }
-}
+        initDeck() {
+            for (let rank of RANKS) {
+                for (let i = 0; i < 4; i++) this.deck.push(rank);
+            }
+        }
 
-function deal() {
-  playerHand = deck.splice(0,5);
-  aiHand = deck.splice(0,5);
-}
+        shuffle() {
+            this.deck.sort(() => Math.random() - 0.5);
+        }
 
-function countFamily(hand, fam) {
-  return hand.filter(c => c === fam).length;
-}
+        deal(count) {
+            for (let i = 0; i < count; i++) {
+                this.playerHand.push(this.deck.pop());
+                this.cpuHand.push(this.deck.pop());
+            }
+            this.checkBooks('player');
+            this.checkBooks('cpu');
+        }
 
-function removeFamily(hand, fam) {
-  return hand.filter(c => c !== fam);
-}
+        showMessage(text) {
+            const el = document.getElementById('status-msg');
+            el.innerText = text;
+            el.style.opacity = '1';
+            setTimeout(() => el.style.opacity = '0', 1500);
+        }
 
-function checkBooks(hand, isPlayer) {
-  let changed = false;
-  families.forEach(f => {
-    if(countFamily(hand, f.id) === 4) {
-      if(isPlayer) playerBooks++;
-      else aiBooks++;
-      hand = removeFamily(hand, f.id);
-      changed = true;
+        // Action de demander une carte
+        async ask(rank) {
+            if (!this.isPlayerTurn || this.isProcessing) return;
+            this.isProcessing = true;
+
+            const hasRank = this.cpuHand.filter(r => r === rank);
+            
+            if (hasRank.length > 0) {
+                this.showMessage(`Trouvé ! +${hasRank.length} ${rank}`);
+                this.cpuHand = this.cpuHand.filter(r => r !== rank);
+                this.playerHand.push(...hasRank);
+                this.checkBooks('player');
+                this.isProcessing = false;
+                this.updateUI();
+            } else {
+                this.showMessage("GO FISH !");
+                setTimeout(() => this.goFish('player'), 1000);
+            }
+        }
+
+        goFish(target) {
+            if (this.deck.length > 0) {
+                const card = this.deck.pop();
+                if (target === 'player') {
+                    this.playerHand.push(card);
+                    this.checkBooks('player');
+                    this.isPlayerTurn = false;
+                    setTimeout(() => this.computerTurn(), 1500);
+                } else {
+                    this.cpuHand.push(card);
+                    this.checkBooks('cpu');
+                    this.isPlayerTurn = true;
+                }
+            } else {
+                this.isPlayerTurn = !this.isPlayerTurn;
+                if (!this.isPlayerTurn) setTimeout(() => this.computerTurn(), 1000);
+            }
+            this.isProcessing = false;
+            this.updateUI();
+        }
+
+        async computerTurn() {
+            if (this.isPlayerTurn || this.cpuHand.length === 0) {
+                this.isPlayerTurn = true;
+                this.updateUI();
+                return;
+            }
+
+            const randomRank = this.cpuHand[Math.floor(Math.random() * this.cpuHand.length)];
+            this.showMessage(`CPU demande: ${randomRank}`);
+
+            setTimeout(() => {
+                const hasRank = this.playerHand.filter(r => r === randomRank);
+                if (hasRank.length > 0) {
+                    this.playerHand = this.playerHand.filter(r => r !== randomRank);
+                    this.cpuHand.push(...hasRank);
+                    this.checkBooks('cpu');
+                    this.updateUI();
+                    setTimeout(() => this.computerTurn(), 1500);
+                } else {
+                    this.showMessage("Tu dis: GO FISH !");
+                    setTimeout(() => this.goFish('cpu'), 1000);
+                }
+            }, 1500);
+        }
+
+        checkBooks(target) {
+            const hand = target === 'player' ? this.playerHand : this.cpuHand;
+            const counts = {};
+            hand.forEach(r => counts[r] = (counts[r] || 0) + 1);
+
+            for (let rank in counts) {
+                if (counts[rank] === 4) {
+                    if (target === 'player') {
+                        this.playerHand = this.playerHand.filter(r => r !== rank);
+                        this.playerBooks++;
+                    } else {
+                        this.cpuHand = this.cpuHand.filter(r => r !== rank);
+                        this.cpuBooks++;
+                    }
+                    this.showMessage(`CARRÉ DE ${rank} !`);
+                }
+            }
+        }
+
+        updateUI() {
+            const playerDiv = document.getElementById('player-hand');
+            const cpuDiv = document.getElementById('cpu-hand');
+            
+            playerDiv.innerHTML = '';
+            this.playerHand.sort((a,b) => RANKS.indexOf(a) - RANKS.indexOf(b));
+            this.playerHand.forEach(rank => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerText = rank;
+                card.onclick = () => this.ask(rank);
+                playerDiv.appendChild(card);
+            });
+
+            cpuDiv.innerHTML = '';
+            this.cpuHand.forEach(() => {
+                const card = document.createElement('div');
+                card.className = 'card cpu-card';
+                cpuDiv.appendChild(card);
+            });
+
+            document.getElementById('player-score').innerText = this.playerBooks;
+            document.getElementById('cpu-score').innerText = this.cpuBooks;
+            document.getElementById('deck-count').innerText = this.deck.length;
+            document.getElementById('turn-display').innerText = this.isPlayerTurn ? "C'est ton tour !" : "L'adversaire réfléchit...";
+            
+            if (this.deck.length === 0 && this.playerHand.length === 0 && this.cpuHand.length === 0) {
+                this.showMessage(this.playerBooks > this.cpuBooks ? "TU AS GAGNÉ !" : "CPU A GAGNÉ !");
+            }
+        }
     }
-  });
-  return hand;
-}
 
-function renderPlayerHand() {
-  const container = document.getElementById('player-hand');
-  container.innerHTML = '';
-  playerHand.forEach((cardId, index) => {
-    const fam = families.find(f => f.id === cardId);
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `${fam.emoji}<span>${fam.name}</span>`;
-    div.onclick = () => selectFamily(cardId);
-    container.appendChild(div);
-  });
-}
-
-function updateUI() {
-  document.getElementById('player-books').textContent = playerBooks;
-  document.getElementById('ai-books').textContent = aiBooks;
-  document.getElementById('ai-count').textContent = aiHand.length;
-  document.getElementById('deck-count').textContent = deck.length;
-  renderPlayerHand();
-}
-
-let selectedFamily = null;
-
-function selectFamily(famId) {
-  if(gameOver) return;
-  selectedFamily = famId;
-  const fam = families.find(f => f.id === famId);
-  document.getElementById('message').innerHTML = `Tu veux demander : <strong>${fam.emoji} ${fam.name}</strong> ?`;
-  
-  const btns = document.getElementById('ask-buttons');
-  btns.innerHTML = `<button class="ask-btn" onclick="askAI()">Demander à l’IA →</button>`;
-}
-
-function askAI() {
-  if(!selectedFamily || gameOver) return;
-  const fam = selectedFamily;
-  selectedFamily = null;
-  document.getElementById('ask-buttons').innerHTML = '';
-
-  const aiHas = countFamily(aiHand, fam);
-  if(aiHas > 0) {
-    // IA donne toutes ses cartes
-    for(let i=0; i<aiHas; i++) playerHand.push(fam);
-    aiHand = removeFamily(aiHand, fam);
-    document.getElementById('message').innerHTML = `L’IA te donne ses ${aiHas} ${families.find(f=>f.id===fam).emoji} !`;
-  } else {
-    document.getElementById('message').innerHTML = `L’IA n’a pas de ${families.find(f=>f.id===fam).emoji}… Pêche !`;
-    if(deck.length > 0) {
-      playerHand.push(deck.pop());
-    }
-  }
-
-  // Vérifier familles complètes
-  playerHand = checkBooks(playerHand, true);
-  updateUI();
-
-  if(deck.length === 0 && playerHand.length === 0) endGame();
-  else setTimeout(aiTurn, 1200);
-}
-
-function aiTurn() {
-  if(gameOver || aiHand.length === 0) return;
-
-  // IA choisit une famille au hasard qu’elle possède
-  const possible = [...new Set(aiHand)];
-  const randomFam = possible[Math.floor(Math.random()*possible.length)];
-
-  const playerHas = countFamily(playerHand, randomFam);
-  document.getElementById('message').innerHTML = `L’IA demande des ${families.find(f=>f.id===randomFam).emoji}…`;
-
-  if(playerHas > 0) {
-    // Tu donnes
-    for(let i=0; i<playerHas; i++) aiHand.push(randomFam);
-    playerHand = removeFamily(playerHand, randomFam);
-    document.getElementById('message').innerHTML += ` Tu lui donnes tes cartes !`;
-  } else {
-    document.getElementById('message').innerHTML += ` Tu n’as pas… Elle pêche !`;
-    if(deck.length > 0) aiHand.push(deck.pop());
-  }
-
-  aiHand = checkBooks(aiHand, false);
-  updateUI();
-
-  if(deck.length === 0 && aiHand.length === 0) endGame();
-  else {
-    document.getElementById('message').innerHTML += `<br>À ton tour !`;
-  }
-}
-
-function drawCard() {
-  if(gameOver || deck.length === 0) return;
-  playerHand.push(deck.pop());
-  playerHand = checkBooks(playerHand, true);
-  updateUI();
-  document.getElementById('message').textContent = "Tu as pêché une carte !";
-  setTimeout(aiTurn, 800);
-}
-
-function endGame() {
-  gameOver = true;
-  let msg = "";
-  if(playerBooks > aiBooks) msg = "🏆 Victoire ! Tu as le plus de familles !";
-  else if(aiBooks > playerBooks) msg = "L’IA gagne… Bien joué quand même !";
-  else msg = "Égalité parfaite !";
-  document.getElementById('message').innerHTML = `<strong>${msg}</strong><br>Familles : Toi ${playerBooks} — IA ${aiBooks}`;
-}
-
-function resetGame() {
-  createDeck();
-  deal();
-  playerBooks = 0;
-  aiBooks = 0;
-  gameOver = false;
-  selectedFamily = null;
-  document.getElementById('ask-buttons').innerHTML = '';
-  updateUI();
-  document.getElementById('message').textContent = "À ton tour ! Clique sur une carte puis demande à l’IA";
-}
-
-// Lancement
-resetGame();
+    const game = new Game();
 </script>
 </body>
 </html>
