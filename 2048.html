@@ -6,99 +6,172 @@
     <title>2048 NEON | Neon Arcade</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --neon-gold: #ffd700; --neon-cyan: #00ffff; --neon-pink: #ff00ff;
-            --bg-dark: #0a0a0f; --grid-bg: rgba(20,20,30,0.8);
-        }
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: var(--bg-dark);
+            background: #0a0a0f;
             color: white;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            min-height: 100vh;
         }
-        .header { text-align: center; margin-bottom: 30px; }
-        .neon-title {
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #ffd700;
             font-size: 48px;
-            font-weight: 900;
-            background: linear-gradient(90deg, var(--neon-gold), var(--neon-cyan), var(--neon-pink));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin-bottom: 10px;
+            text-shadow: 0 0 10px #ffd700;
         }
         .back-btn {
-            position: absolute; left: 20px; top: 20px;
-            color: var(--neon-gold); text-decoration: none;
-            display: flex; align-items: center; gap: 5px;
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 18px;
         }
-        .stats-container { display: flex; gap: 20px; margin-bottom: 30px; }
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
         .stat-box {
-            background: var(--grid-bg); border: 1px solid rgba(255,215,0,0.3);
-            border-radius: 15px; padding: 15px 25px; text-align: center;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
         }
-        .stat-value { font-size: 36px; font-weight: 900; color: var(--neon-gold); }
-        .grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;
-            background: var(--grid-bg); border-radius: 20px; padding: 20px;
+        .score {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
         }
         .cell {
-            width: 100px; height: 100px;
-            background: rgba(255,255,255,0.05); border-radius: 15px;
-            display: flex; align-items: center; justify-content: center;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
         }
         .tile {
-            position: absolute; width: 100px; height: 100px;
-            border-radius: 15px; display: flex; align-items: center;
-            justify-content: center; font-size: 32px; font-weight: 900;
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            transition: all 0.2s;
         }
-        .controls { display: flex; gap: 15px; margin: 30px 0; }
-        .btn {
-            padding: 15px 30px; border: none; border-radius: 50px;
-            background: linear-gradient(135deg, var(--neon-gold), #ffaa00);
-            color: #000; font-size: 16px; cursor: pointer;
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
         }
-        @media (max-width: 768px) {
-            .cell { width: 70px; height: 70px; }
-            .tile { width: 70px; height: 70px; font-size: 24px; }
+        button {
+            padding: 15px 30px;
+            background: #ffd700;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #message {
+            color: #00ffff;
+            font-size: 20px;
+            margin-bottom: 20px;
+            min-height: 30px;
+        }
+        @media (max-width: 600px) {
+            #grid {
+                grid-template-columns: repeat(4, 70px);
+                grid-template-rows: repeat(4, 70px);
+                gap: 8px;
+                padding: 15px;
+            }
+            .cell, .tile {
+                width: 70px;
+                height: 70px;
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-btn">← RETOUR</a>
+    <a href="index.html" class="back-btn">← Retour</a>
+    
     <div class="header">
-        <h1 class="neon-title">2048 NEON</h1>
-        <p style="color: var(--neon-cyan);">Fusionnez jusqu'à 2048 !</p>
+        <h1>2048 NEON</h1>
+        <p style="color: #00ffff;">Fusionnez les tuiles pour atteindre 2048 !</p>
     </div>
     
-    <div class="stats-container">
-        <div class="stat-box"><div>Score</div><div class="stat-value" id="score">0</div></div>
-        <div class="stat-box"><div>Meilleur</div><div class="stat-value" id="best">0</div></div>
+    <div class="stats">
+        <div class="stat-box">
+            <div>SCORE</div>
+            <div class="score" id="score">0</div>
+        </div>
+        <div class="stat-box">
+            <div>MEILLEUR</div>
+            <div class="score" id="best">0</div>
+        </div>
     </div>
     
-    <div class="grid" id="grid"></div>
+    <div id="message">Utilisez les flèches du clavier</div>
+    
+    <div id="grid"></div>
     
     <div class="controls">
-        <button class="btn" onclick="resetGame()">Nouvelle Partie</button>
-        <button class="btn" onclick="undoMove()">Annuler</button>
+        <button onclick="resetGame()">Nouvelle Partie</button>
+        <button onclick="undoMove()">Annuler</button>
     </div>
-    
-    <div id="message" style="color: var(--neon-gold); margin: 20px;"></div>
 
     <script>
+        // Jeu 2048 complet
         const SIZE = 4;
         let grid = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-        let score = 0, best = localStorage.getItem('2048-best') || 0, prevState = null;
-        const gridEl = document.getElementById('grid'), scoreEl = document.getElementById('score');
-        const bestEl = document.getElementById('best'), msgEl = document.getElementById('message');
+        let score = 0;
+        let best = localStorage.getItem('2048-best') || 0;
+        let prevState = null;
+        
+        const gridEl = document.getElementById('grid');
+        const scoreEl = document.getElementById('score');
+        const bestEl = document.getElementById('best');
+        const msgEl = document.getElementById('message');
         
         bestEl.textContent = best;
         
         function init() {
             grid = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
-            score = 0; scoreEl.textContent = 0; msgEl.textContent = '';
-            addRandomTile(); addRandomTile(); render(); prevState = null;
+            score = 0;
+            scoreEl.textContent = '0';
+            msgEl.textContent = 'Utilisez les flèches du clavier';
+            addRandomTile();
+            addRandomTile();
+            render();
+            prevState = null;
         }
         
         function render() {
@@ -110,7 +183,7 @@
                     cell.className = 'cell';
                     if (val > 0) {
                         const tile = document.createElement('div');
-                        tile.className = `tile tile-${val}`;
+                        tile.className = 'tile';
                         tile.textContent = val;
                         tile.style.background = getTileColor(val);
                         tile.style.color = val >= 32 ? '#333' : 'white';
@@ -132,20 +205,24 @@
         
         function addRandomTile() {
             const empty = [];
-            for (let r = 0; r < SIZE; r++)
-                for (let c = 0; c < SIZE; c++)
-                    if (grid[r][c] === 0) empty.push([r,c]);
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (grid[r][c] === 0) empty.push([r, c]);
+                }
+            }
             if (empty.length === 0) return;
-            const [r,c] = empty[Math.floor(Math.random()*empty.length)];
+            const [r, c] = empty[Math.floor(Math.random() * empty.length)];
             grid[r][c] = Math.random() < 0.9 ? 2 : 4;
         }
         
         function slideRow(row) {
             let newRow = row.filter(v => v !== 0);
-            for (let i = 0; i < newRow.length-1; i++) {
-                if (newRow[i] === newRow[i+1]) {
-                    newRow[i] *= 2; score += newRow[i];
-                    newRow.splice(i+1,1); i--;
+            for (let i = 0; i < newRow.length - 1; i++) {
+                if (newRow[i] === newRow[i + 1]) {
+                    newRow[i] *= 2;
+                    score += newRow[i];
+                    newRow.splice(i + 1, 1);
+                    i--;
                 }
             }
             while (newRow.length < SIZE) newRow.push(0);
@@ -162,27 +239,24 @@
                     if (newR.join() !== grid[r].join()) moved = true;
                     grid[r] = newR;
                 }
-            }
-            else if (direction === 'right') {
+            } else if (direction === 'right') {
                 for (let r = 0; r < SIZE; r++) {
                     const rev = slideRow(grid[r].reverse()).reverse();
                     if (rev.join() !== grid[r].join()) moved = true;
                     grid[r] = rev;
                 }
-            }
-            else if (direction === 'up') {
+            } else if (direction === 'up') {
                 for (let c = 0; c < SIZE; c++) {
-                    let col = [grid[0][c],grid[1][c],grid[2][c],grid[3][c]];
+                    let col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
                     const newC = slideRow(col);
                     if (newC.join() !== col.join()) moved = true;
                     for (let r = 0; r < SIZE; r++) grid[r][c] = newC[r];
                 }
-            }
-            else if (direction === 'down') {
+            } else if (direction === 'down') {
                 for (let c = 0; c < SIZE; c++) {
-                    let col = [grid[0][c],grid[1][c],grid[2][c],grid[3][c]].reverse();
+                    let col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]].reverse();
                     const newC = slideRow(col).reverse();
-                    if (newC.join() !== [grid[0][c],grid[1][c],grid[2][c],grid[3][c]].join()) moved = true;
+                    if (newC.join() !== [grid[0][c], grid[1][c], grid[2][c], grid[3][c]].join()) moved = true;
                     for (let r = 0; r < SIZE; r++) grid[r][c] = newC[r];
                 }
             }
@@ -192,57 +266,72 @@
                 addRandomTile();
                 scoreEl.textContent = score;
                 if (score > best) {
-                    best = score; bestEl.textContent = best;
+                    best = score;
+                    bestEl.textContent = best;
                     localStorage.setItem('2048-best', best);
                 }
                 render();
                 
                 if (has2048()) {
-                    msgEl.textContent = "🎉 2048 atteint ! Victoire !";
-                }
-                else if (isGameOver()) {
-                    msgEl.textContent = "💀 Plus de mouvements possibles…";
+                    msgEl.textContent = "🎉 VICTOIRE ! Vous avez atteint 2048 !";
+                } else if (isGameOver()) {
+                    msgEl.textContent = "💀 GAME OVER ! Plus de mouvements possibles.";
                 }
             }
         }
         
         function has2048() {
-            for (let r = 0; r < SIZE; r++)
-                for (let c = 0; c < SIZE; c++)
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
                     if (grid[r][c] === 2048) return true;
+                }
+            }
             return false;
         }
         
         function isGameOver() {
-            for (let r = 0; r < SIZE; r++)
-                for (let c = 0; c < SIZE; c++)
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
                     if (grid[r][c] === 0) return false;
-            for (let r = 0; r < SIZE; r++)
-                for (let c = 0; c < SIZE-1; c++)
-                    if (grid[r][c] === grid[r][c+1]) return false;
-            for (let c = 0; c < SIZE; c++)
-                for (let r = 0; r < SIZE-1; r++)
-                    if (grid[r][c] === grid[r+1][c]) return false;
+                }
+            }
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE - 1; c++) {
+                    if (grid[r][c] === grid[r][c + 1]) return false;
+                }
+            }
+            for (let c = 0; c < SIZE; c++) {
+                for (let r = 0; r < SIZE - 1; r++) {
+                    if (grid[r][c] === grid[r + 1][c]) return false;
+                }
+            }
             return true;
         }
         
-        function undo() {
+        function undoMove() {
             if (!prevState) return;
             grid = prevState.grid.map(r => [...r]);
-            score = prevState.score; scoreEl.textContent = score;
-            prevState = null; render(); msgEl.textContent = '';
+            score = prevState.score;
+            scoreEl.textContent = score;
+            prevState = null;
+            render();
+            msgEl.textContent = '';
         }
         
-        function resetGame() { init(); }
+        function resetGame() {
+            init();
+        }
         
+        // Contrôles clavier
         window.addEventListener('keydown', e => {
-            if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
                 e.preventDefault();
-                const dir = e.key.replace('Arrow','').toLowerCase();
+                const dir = e.key.replace('Arrow', '').toLowerCase();
                 move(dir);
             }
         });
         
+        // Contrôles tactiles
         let touchStartX = 0, touchStartY = 0;
         document.addEventListener('touchstart', e => {
             touchStartX = e.touches[0].clientX;
