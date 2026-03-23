@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Royal — LuJEUX</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:wght@400;600;700&display=swap">
+  <style>
+    :root {
+      --bg: #06080f;
+      --gold: #c9a84c; --gold2: #e8cc7a; --goldd: #7a5c1a;
+      --card-back: linear-gradient(135deg, #1a0f00, #0a0500);
+      --card-front: #f5ecd5;
+      --txt: #f5ecd5;
+    }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: 'Cormorant Garamond', serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 3.5rem;
+      color: var(--gold2);
+      text-shadow: 0 0 20px rgba(201,168,76,0.5);
+      margin: 20px 0;
+    }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(4, 90px);
+      grid-gap: 12px;
+      perspective: 1000px;
+    }
+    .card {
+      width: 90px;
+      height: 120px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+      cursor: pointer;
+    }
+    .card.flipped { transform: rotateY(180deg); }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+    }
+    .card-back {
+      background: var(--card-back);
+      color: var(--gold);
+      transform: rotateY(180deg);
+    }
+    .card-front {
+      background: var(--card-front);
+      color: #1a1408;
+      transform: rotateY(0deg);
+    }
+    #message {
+      margin: 30px 0;
+      font-size: 1.6rem;
+      color: var(--gold2);
+      min-height: 2rem;
+      text-align: center;
+    }
+    button {
+      padding: 12px 30px;
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      background: linear-gradient(var(--gold2), var(--gold));
+      border: none;
+      border-radius: 8px;
+      color: #1a1408;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover { transform: scale(1.05); }
+    @media (max-width: 500px) {
+      #grid { grid-template-columns: repeat(4, 70px); grid-gap: 8px; }
+      .card { width: 70px; height: 95px; }
+      .card-front, .card-back { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Memory Royal</h1>
+  <div id="grid"></div>
+  <div id="message"></div>
+  <button onclick="init()">Nouvelle partie</button>
+
+  <script>
+    const symbols = ['♦','♥','♠','♣','★','⚡','☀','☾'];
+    let cards = [...symbols, ...symbols];
+    let flipped = [];
+    let matched = 0;
+    const grid = document.getElementById('grid');
+    const msg = document.getElementById('message');
+
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+    }
+
+    function createCard(sym) {
+      const card = document.createElement('div');
+      card.classList.add('card');
+      card.innerHTML = `
+        <div class="card-front">${sym}</div>
+        <div class="card-back">?</div>
+      `;
+      card.addEventListener('click', () => flipCard(card, sym));
+      return card;
+    }
+
+    function flipCard(card, sym) {
+      if (flipped.length === 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      card.classList.add('flipped');
+      flipped.push({card, sym});
+
+      if (flipped.length === 2) {
+        setTimeout(checkMatch, 800);
+      }
+    }
+
+    function checkMatch() {
+      const [first, second] = flipped;
+      if (first.sym === second.sym) {
+        first.card.classList.add('matched');
+        second.card.classList.add('matched');
+        matched += 2;
+        if (matched === cards.length) {
+          msg.textContent = "Victoire Royale ! Toutes les paires trouvées ✦";
+        }
+      } else {
+        first.card.classList.remove('flipped');
+        second.card.classList.remove('flipped');
+      }
+      flipped = [];
+    }
+
+    function init() {
+      shuffle(cards);
+      grid.innerHTML = '';
+      cards.forEach(sym => grid.appendChild(createCard(sym)));
+      msg.textContent = '';
+      matched = 0;
+      flipped = [];
+    }
+
+    init();
+  </script>
+</body>
+</html>
