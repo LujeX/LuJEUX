@@ -161,6 +161,8 @@
             position: relative;
             overflow: hidden;
             cursor: pointer;
+            text-decoration: none;
+            display: block;
         }
 
         .game-card::before {
@@ -373,6 +375,35 @@
                 transform: translateY(0);
             }
         }
+
+        /* ============================================
+           NEW: BACK BUTTON STYLE (for game pages)
+           ============================================ */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 25px;
+            background: var(--gradient);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(108, 92, 231, 0.4);
+        }
+
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -392,68 +423,68 @@
     <!-- Games Grid -->
     <div class="games-container">
         <div class="games-grid">
-            <!-- Game 1 -->
-            <div class="game-card" onclick="launchGame('Go Fish')">
+            <!-- Game 1: Go Fish -->
+            <a href="Go FISH.html" class="game-card">
                 <div class="game-icon">🐟</div>
                 <h3 class="game-title">Go Fish</h3>
                 <p class="game-description">Stratégie & Chance</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
 
-            <!-- Game 2 -->
-            <div class="game-card" onclick="launchGame('Blackjack')">
+            <!-- Game 2: Blackjack -->
+            <a href="blackjack.html" class="game-card">
                 <div class="game-icon">🃏</div>
                 <h3 class="game-title">Blackjack</h3>
                 <p class="game-description">Le 21 Victorieux</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
 
-            <!-- Game 3 -->
-            <div class="game-card" onclick="launchGame('2048')">
+            <!-- Game 3: 2048 -->
+            <a href="2048.html" class="game-card">
                 <div class="game-icon">🔢</div>
                 <h3 class="game-title">2048</h3>
                 <p class="game-description">Logique Mathématique</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
 
-            <!-- Game 4 -->
-            <div class="game-card" onclick="launchGame('Snake')">
+            <!-- Game 4: Snake -->
+            <a href="snake.html" class="game-card">
                 <div class="game-icon">🐍</div>
                 <h3 class="game-title">Snake</h3>
                 <p class="game-description">Réflexes Classiques</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
 
-            <!-- Game 5 -->
-            <div class="game-card" onclick="launchGame('Puissance 4')">
+            <!-- Game 5: Puissance 4 -->
+            <a href="puissance4.html" class="game-card">
                 <div class="game-icon">🔴</div>
                 <h3 class="game-title">Puissance 4</h3>
                 <p class="game-description">Duel Tactique</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
 
-            <!-- Game 6 -->
-            <div class="game-card" onclick="launchGame('Memory')">
+            <!-- Game 6: Memory -->
+            <a href="memory.html" class="game-card">
                 <div class="game-icon">🧠</div>
                 <h3 class="game-title">Memory</h3>
                 <p class="game-description">Esprit d'Analyse</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
 
-            <!-- Game 7 -->
-            <div class="game-card" onclick="launchGame('Tic-Tac-Toe')">
+            <!-- Game 7: Tic-Tac-Toe -->
+            <a href="tic-tac.html" class="game-card">
                 <div class="game-icon">⭕</div>
                 <h3 class="game-title">Tic-Tac-Toe</h3>
                 <p class="game-description">Morpion de Luxe</p>
                 <button class="play-btn">▶ Jouer</button>
-            </div>
+            </a>
         </div>
     </div>
 
     <!-- Footer -->
     <footer>
         <div class="footer-links">
-            <a href="#">Accueil</a>
+            <a href="index.html">Accueil</a>
             <a href="#">Jeux</a>
             <a href="#">À Propos</a>
             <a href="#">Contact</a>
@@ -472,21 +503,6 @@
         // INTERACTIVITY
         // ============================================
         
-        function launchGame(gameName) {
-            // Animation de clic
-            const card = event.currentTarget;
-            card.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                card.style.transform = '';
-            }, 150);
-
-            // Message de lancement
-            console.log(`🎮 Lancement du jeu : ${gameName}`);
-            
-            // Ici tu pourras ajouter la logique pour lancer chaque jeu
-            alert(`🚀 Préparation du jeu : ${gameName}\n\nBientôt disponible !`);
-        }
-
         // Effet de parallaxe sur les cartes
         document.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('mousemove', (e) => {
@@ -512,6 +528,22 @@
         window.addEventListener('load', () => {
             document.querySelector('.logo-icon').style.animation = 'pulse 2s ease-in-out infinite';
         });
+
+        // ============================================
+        // BOUTON RETOUR (à ajouter dans chaque page de jeu)
+        // ============================================
+        function addBackButton() {
+            const backBtn = document.createElement('a');
+            backBtn.href = 'index.html';
+            backBtn.className = 'back-btn';
+            backBtn.innerHTML = '← Retour';
+            document.body.appendChild(backBtn);
+        }
+
+        // Activer le bouton retour sur les pages de jeux (pas sur index)
+        if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
+            addBackButton();
+        }
     </script>
 </body>
 </html>
