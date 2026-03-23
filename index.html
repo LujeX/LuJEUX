@@ -3,547 +3,486 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Royale — Sélection de Jeux</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>NOIR | L'Art du Jeu</title>
+    
+    <!-- Typographie Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Manrope:wght@200;400;600&display=swap" rel="stylesheet">
+
     <style>
-        /* ============================================
-           RESET & VARIABLES
-           ============================================ */
+        /* =========================================
+           VARIABLES & RESET
+           ========================================= */
+        :root {
+            --bg-color: #050505;
+            --surface-color: #121212;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --gold: #D4AF37;
+            --gold-light: #F1D676;
+            --gold-dark: #8A6E2F;
+            --easing: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-like easing */
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6c5ce7;
-            --primary-dark: #5b4cdb;
-            --secondary: #00cec9;
-            --accent: #fd79a8;
-            --dark: #0f0f1a;
-            --dark-light: #1a1a2e;
-            --dark-card: #252542;
-            --text: #ffffff;
-            --text-muted: #a0a0b0;
-            --gradient: linear-gradient(135deg, #6c5ce7 0%, #00cec9 100%);
+            cursor: none; /* Custom cursor implementation */
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--dark);
-            color: var(--text);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Manrope', sans-serif;
             overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
         }
 
-        /* ============================================
-           BACKGROUND ANIMATION
-           ============================================ */
-        .bg-animation {
+        /* =========================================
+           CUSTOM CURSOR
+           ========================================= */
+        .cursor {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 12px;
+            height: 12px;
+            background: var(--gold);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s var(--easing), height 0.4s var(--easing), background 0.4s;
+            mix-blend-mode: difference;
+        }
+
+        .cursor.hovered {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* =========================================
+           BACKGROUND ATMOSPHERE
+           ========================================= */
+        .ambient-light {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.03) 0%, transparent 60%);
+            transform: translate(-50%, -50%);
             z-index: -1;
-            overflow: hidden;
+            animation: breathe 10s infinite alternate;
+            pointer-events: none;
         }
 
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
-            top: -200px;
-            right: -200px;
-            animation: float 15s ease-in-out infinite;
+        @keyframes breathe {
+            0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
         }
 
-        .bg-animation::after {
-            content: '';
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(0, 206, 201, 0.1) 0%, transparent 70%);
-            bottom: -150px;
-            left: -150px;
-            animation: float 20s ease-in-out infinite reverse;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(30px, 30px) scale(1.1); }
-        }
-
-        /* ============================================
-           HEADER
-           ============================================ */
-        header {
-            text-align: center;
-            padding: 60px 20px 40px;
-            position: relative;
+        /* =========================================
+           NAVIGATION
+           ========================================= */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: exclusion;
         }
 
         .logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .logo-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.4);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 10px 30px rgba(108, 92, 231, 0.4); }
-            50% { box-shadow: 0 10px 50px rgba(108, 92, 231, 0.6); }
-        }
-
-        .logo-text {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .tagline {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            font-weight: 300;
-            letter-spacing: 2px;
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.2em;
+            font-weight: 600;
+            color: var(--text-primary);
             text-transform: uppercase;
         }
 
-        .divider {
-            width: 100px;
-            height: 4px;
-            background: var(--gradient);
-            margin: 25px auto;
-            border-radius: 2px;
+        .menu-btn {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-primary);
+            position: relative;
+            padding: 10px 0;
         }
 
-        /* ============================================
-           GAMES GRID
-           ============================================ */
-        .games-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 1px;
+            background: var(--gold);
+            transition: width 0.6s var(--easing);
+        }
+
+        .menu-btn:hover::after {
+            width: 100%;
+        }
+
+        /* =========================================
+           HERO SECTION
+           ========================================= */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .hero-label {
+            font-size: 0.8rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 1s var(--easing) 0.5s forwards;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(3rem, 8vw, 8rem);
+            line-height: 1;
+            font-weight: 400;
+            margin-bottom: 40px;
+            background: linear-gradient(to right, #fff 20%, #888 50%, #fff 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 5s linear infinite;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s var(--easing) 0.2s forwards, shine 5s linear infinite;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        /* =========================================
+           THE BUTTON (MAGNETIC)
+           ========================================= */
+        .cta-container {
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s var(--easing) 0.8s forwards;
+        }
+
+        .btn-gold {
+            position: relative;
+            display: inline-block;
+            padding: 20px 50px;
+            background: transparent;
+            color: var(--gold);
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.9rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            overflow: hidden;
+            transition: all 0.5s var(--easing);
+        }
+
+        .btn-gold::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--gold);
+            transition: transform 0.6s var(--easing);
+            z-index: -1;
+        }
+
+        .btn-gold:hover {
+            color: #000;
+            border-color: var(--gold);
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
+        }
+
+        .btn-gold:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* =========================================
+           GAMES SHOWCASE (Horizontal Scroll feel)
+           ========================================= */
+        .showcase {
+            padding: 100px 60px;
+            background: var(--surface-color);
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 80px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: var(--text-primary);
         }
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            padding: 20px 0;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2px; /* Tiny gap for border effect */
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .game-card {
-            background: var(--dark-card);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--surface-color);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             position: relative;
+            transition: background 0.5s var(--easing);
             overflow: hidden;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-        }
-
-        .game-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--gradient);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            z-index: 0;
+            group: cursor;
         }
 
         .game-card:hover {
-            transform: translateY(-10px);
-            border-color: rgba(108, 92, 231, 0.5);
-            box-shadow: 0 20px 40px rgba(108, 92, 231, 0.3);
-        }
-
-        .game-card:hover::before {
-            opacity: 0.1;
-        }
-
-        .game-card > * {
-            position: relative;
-            z-index: 1;
+            background: #1a1a1a;
         }
 
         .game-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            transition: all 0.4s ease;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+            transition: all 0.5s var(--easing);
+            filter: grayscale(100%);
         }
 
         .game-card:hover .game-icon {
-            background: var(--gradient);
-            transform: scale(1.1) rotate(5deg);
+            opacity: 1;
+            filter: grayscale(0%);
+            transform: scale(1.1);
+            color: var(--gold);
         }
 
         .game-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text);
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            transition: color 0.5s;
         }
 
-        .game-description {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            line-height: 1.6;
+        .game-card:hover .game-title {
+            color: var(--text-primary);
         }
 
-        .play-btn {
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: var(--gradient);
-            border: none;
-            border-radius: 25px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(10px);
+        /* Subtle line animation on hover */
+        .game-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: var(--gold);
+            transition: all 0.6s var(--easing);
+            transform: translateX(-50%);
         }
 
-        .game-card:hover .play-btn {
-            opacity: 1;
-            transform: translateY(0);
+        .game-card:hover::after {
+            width: 60%;
         }
 
-        .play-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.5);
-        }
-
-        /* ============================================
+        /* =========================================
            FOOTER
-           ============================================ */
+           ========================================= */
         footer {
+            padding: 80px 60px;
             text-align: center;
-            padding: 50px 20px 30px;
-            margin-top: 60px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
 
-        .footer-text {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            letter-spacing: 1px;
+        .footer-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
         }
 
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0;
+        .copyright {
+            font-size: 0.8rem;
+            color: #444;
         }
 
-        .footer-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: var(--secondary);
-        }
-
-        .social-icons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .social-icon:hover {
-            background: var(--gradient);
-            transform: translateY(-3px);
-        }
-
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
-        @media (max-width: 768px) {
-            .logo-text {
-                font-size: 2rem;
-            }
-
-            .tagline {
-                font-size: 0.9rem;
-            }
-
-            .games-grid {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
-            }
-
-            .game-card {
-                padding: 25px;
-            }
-
-            .play-btn {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 480px) {
-            header {
-                padding: 40px 15px 30px;
-            }
-
-            .logo-text {
-                font-size: 1.6rem;
-            }
-
-            .games-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ============================================
-           LOADING ANIMATION
-           ============================================ */
-        .game-card {
-            animation: fadeInUp 0.6s ease forwards;
-            opacity: 0;
-        }
-
-        .game-card:nth-child(1) { animation-delay: 0.1s; }
-        .game-card:nth-child(2) { animation-delay: 0.2s; }
-        .game-card:nth-child(3) { animation-delay: 0.3s; }
-        .game-card:nth-child(4) { animation-delay: 0.4s; }
-        .game-card:nth-child(5) { animation-delay: 0.5s; }
-        .game-card:nth-child(6) { animation-delay: 0.6s; }
-        .game-card:nth-child(7) { animation-delay: 0.7s; }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
+        /* =========================================
+           ANIMATIONS
+           ========================================= */
+        @keyframes fadeUp {
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* ============================================
-           NEW: BACK BUTTON STYLE (for game pages)
-           ============================================ */
-        .back-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 12px 25px;
-            background: var(--gradient);
-            border: none;
-            border-radius: 25px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            box-shadow: 0 5px 20px rgba(108, 92, 231, 0.4);
-        }
-
-        .back-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.6);
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            nav { padding: 30px; }
+            .hero { padding: 0 30px; }
+            .showcase { padding: 60px 30px; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+            h1 { font-size: 3.5rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Background Animation -->
-    <div class="bg-animation"></div>
 
-    <!-- Header -->
-    <header>
-        <div class="logo">
-            <div class="logo-icon">🎮</div>
-            <h1 class="logo-text">Arcade Royale</h1>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+
+    <!-- Ambient Background -->
+    <div class="ambient-light"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo interactable">NOIR</div>
+        <div class="menu-btn interactable">Menu</div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-label">Casino Privé</div>
+        <h1>L'ÉLÉGANCE<br>DU HASARD</h1>
+        
+        <div class="cta-container">
+            <a href="#" class="btn-gold interactable">Entrer dans le jeu</a>
         </div>
-        <p class="tagline">L'excellence du divertissement</p>
-        <div class="divider"></div>
-    </header>
+    </section>
 
-    <!-- Games Grid -->
-    <div class="games-container">
+    <!-- Games Showcase -->
+    <section class="showcase">
+        <div class="section-header">
+            <h2 class="section-title">Collection Exclusive</h2>
+            <span style="color: var(--gold); font-size: 0.9rem;">SÉLECTION 2024</span>
+        </div>
+
         <div class="games-grid">
-            <!-- Game 1: Go Fish -->
-            <a href="Go FISH.html" class="game-card">
-                <div class="game-icon">🐟</div>
-                <h3 class="game-title">Go Fish</h3>
-                <p class="game-description">Stratégie & Chance</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
-
-            <!-- Game 2: Blackjack -->
-            <a href="blackjack.html" class="game-card">
-                <div class="game-icon">🃏</div>
-                <h3 class="game-title">Blackjack</h3>
-                <p class="game-description">Le 21 Victorieux</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
-
-            <!-- Game 3: 2048 -->
-            <a href="2048.html" class="game-card">
-                <div class="game-icon">🔢</div>
-                <h3 class="game-title">2048</h3>
-                <p class="game-description">Logique Mathématique</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
-
-            <!-- Game 4: Snake -->
-            <a href="snake.html" class="game-card">
-                <div class="game-icon">🐍</div>
-                <h3 class="game-title">Snake</h3>
-                <p class="game-description">Réflexes Classiques</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
-
-            <!-- Game 5: Puissance 4 -->
-            <a href="puissance4.html" class="game-card">
-                <div class="game-icon">🔴</div>
-                <h3 class="game-title">Puissance 4</h3>
-                <p class="game-description">Duel Tactique</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
-
-            <!-- Game 6: Memory -->
-            <a href="memory.html" class="game-card">
-                <div class="game-icon">🧠</div>
-                <h3 class="game-title">Memory</h3>
-                <p class="game-description">Esprit d'Analyse</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
-
-            <!-- Game 7: Tic-Tac-Toe -->
-            <a href="tic-tac.html" class="game-card">
-                <div class="game-icon">⭕</div>
-                <h3 class="game-title">Tic-Tac-Toe</h3>
-                <p class="game-description">Morpion de Luxe</p>
-                <button class="play-btn">▶ Jouer</button>
-            </a>
+            <!-- Card 1 -->
+            <div class="game-card interactable">
+                <div class="game-icon">♠</div>
+                <div class="game-title">Blackjack Royal</div>
+            </div>
+            <!-- Card 2 -->
+            <div class="game-card interactable">
+                <div class="game-icon">●</div>
+                <div class="game-title">Roulette Française</div>
+            </div>
+            <!-- Card 3 -->
+            <div class="game-card interactable">
+                <div class="game-icon">🎲</div>
+                <div class="game-title">Craps Privé</div>
+            </div>
+            <!-- Card 4 -->
+            <div class="game-card interactable">
+                <div class="game-icon">♣</div>
+                <div class="game-title">Poker Texas</div>
+            </div>
         </div>
-    </div>
+    </section>
 
     <!-- Footer -->
     <footer>
-        <div class="footer-links">
-            <a href="index.html">Accueil</a>
-            <a href="#">Jeux</a>
-            <a href="#">À Propos</a>
-            <a href="#">Contact</a>
-        </div>
-        <p class="footer-text">© 2026 ARCADE ROYALE - ALL RIGHTS RESERVED</p>
-        <div class="social-icons">
-            <div class="social-icon">📘</div>
-            <div class="social-icon">🐦</div>
-            <div class="social-icon">📸</div>
-            <div class="social-icon">🎮</div>
-        </div>
+        <div class="footer-logo">NOIR CASINO</div>
+        <div class="copyright">© 2024 Tous droits réservés. Jouez responsable.</div>
     </footer>
 
     <script>
-        // ============================================
-        // INTERACTIVITY
-        // ============================================
+        // =========================================
+        // CUSTOM CURSOR LOGIC
+        // =========================================
+        const cursor = document.querySelector('.cursor');
+        const interactables = document.querySelectorAll('.interactable');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        interactables.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.classList.add('hovered');
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.classList.remove('hovered');
+            });
+        });
+
+        // =========================================
+        // MAGNETIC BUTTON EFFECT
+        // =========================================
+        const btn = document.querySelector('.btn-gold');
         
-        // Effet de parallaxe sur les cartes
-        document.querySelectorAll('.game-card').forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateX = (y - centerY) / 10;
-                const rotateY = (centerX - x) / 10;
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = '';
-            });
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            
+            btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
         });
 
-        // Animation du logo au chargement
-        window.addEventListener('load', () => {
-            document.querySelector('.logo-icon').style.animation = 'pulse 2s ease-in-out infinite';
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0, 0)';
         });
 
-        // ============================================
-        // BOUTON RETOUR (à ajouter dans chaque page de jeu)
-        // ============================================
-        function addBackButton() {
-            const backBtn = document.createElement('a');
-            backBtn.href = 'index.html';
-            backBtn.className = 'back-btn';
-            backBtn.innerHTML = '← Retour';
-            document.body.appendChild(backBtn);
-        }
+        // =========================================
+        // SCROLL REVEAL (Simple Intersection Observer)
+        // =========================================
+        const observerOptions = {
+            threshold: 0.1
+        };
 
-        // Activer le bouton retour sur les pages de jeux (pas sur index)
-        if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
-            addBackButton();
-        }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.game-card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(50px)';
+            card.style.transition = `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s`;
+            observer.observe(card);
+        });
     </script>
 </body>
 </html>
