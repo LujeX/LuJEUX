@@ -3,486 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOIR | L'Art du Jeu</title>
-    
-    <!-- Typographie Premium -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Manrope:wght@200;400;600&display=swap" rel="stylesheet">
-
+    <title>Arcade Royale</title>
     <style>
-        /* =========================================
-           VARIABLES & RESET
-           ========================================= */
-        :root {
-            --bg-color: #050505;
-            --surface-color: #121212;
-            --text-primary: #ffffff;
-            --text-secondary: #888888;
-            --gold: #D4AF37;
-            --gold-light: #F1D676;
-            --gold-dark: #8A6E2F;
-            --easing: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-like easing */
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            cursor: none; /* Custom cursor implementation */
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: 'Manrope', sans-serif;
-            overflow-x: hidden;
-            width: 100vw;
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
             min-height: 100vh;
+            padding: 40px 20px;
         }
 
-        /* =========================================
-           CUSTOM CURSOR
-           ========================================= */
-        .cursor {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 12px;
-            height: 12px;
-            background: var(--gold);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: width 0.4s var(--easing), height 0.4s var(--easing), background 0.4s;
-            mix-blend-mode: difference;
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
-        .cursor.hovered {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(2px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* =========================================
-           BACKGROUND ATMOSPHERE
-           ========================================= */
-        .ambient-light {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 80vw;
-            height: 80vw;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.03) 0%, transparent 60%);
-            transform: translate(-50%, -50%);
-            z-index: -1;
-            animation: breathe 10s infinite alternate;
-            pointer-events: none;
-        }
-
-        @keyframes breathe {
-            0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
-            100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
-
-        /* =========================================
-           NAVIGATION
-           ========================================= */
-        nav {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            padding: 40px 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            mix-blend-mode: exclusion;
-        }
-
-        .logo {
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            letter-spacing: 0.2em;
-            font-weight: 600;
-            color: var(--text-primary);
-            text-transform: uppercase;
-        }
-
-        .menu-btn {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-primary);
-            position: relative;
-            padding: 10px 0;
-        }
-
-        .menu-btn::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0%;
-            height: 1px;
-            background: var(--gold);
-            transition: width 0.6s var(--easing);
-        }
-
-        .menu-btn:hover::after {
-            width: 100%;
-        }
-
-        /* =========================================
-           HERO SECTION
-           ========================================= */
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        header {
             text-align: center;
-            position: relative;
-            padding: 0 20px;
-        }
-
-        .hero-label {
-            font-size: 0.8rem;
-            letter-spacing: 0.4em;
-            text-transform: uppercase;
-            color: var(--gold);
-            margin-bottom: 20px;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeUp 1s var(--easing) 0.5s forwards;
-        }
-
-        h1 {
-            font-family: 'Cinzel', serif;
-            font-size: clamp(3rem, 8vw, 8rem);
-            line-height: 1;
-            font-weight: 400;
             margin-bottom: 40px;
-            background: linear-gradient(to right, #fff 20%, #888 50%, #fff 80%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: shine 5s linear infinite;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 1s var(--easing) 0.2s forwards, shine 5s linear infinite;
         }
 
-        @keyframes shine {
-            to { background-position: 200% center; }
-        }
-
-        /* =========================================
-           THE BUTTON (MAGNETIC)
-           ========================================= */
-        .cta-container {
-            position: relative;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 1s var(--easing) 0.8s forwards;
-        }
-
-        .btn-gold {
-            position: relative;
-            display: inline-block;
-            padding: 20px 50px;
-            background: transparent;
-            color: var(--gold);
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            font-size: 0.9rem;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            overflow: hidden;
-            transition: all 0.5s var(--easing);
-        }
-
-        .btn-gold::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: var(--gold);
-            transition: transform 0.6s var(--easing);
-            z-index: -1;
-        }
-
-        .btn-gold:hover {
-            color: #000;
-            border-color: var(--gold);
-            box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
-        }
-
-        .btn-gold:hover::before {
-            transform: translateX(100%);
-        }
-
-        /* =========================================
-           GAMES SHOWCASE (Horizontal Scroll feel)
-           ========================================= */
-        .showcase {
-            padding: 100px 60px;
-            background: var(--surface-color);
-            position: relative;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 80px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 20px;
-        }
-
-        .section-title {
-            font-family: 'Cinzel', serif;
+        header h1 {
+            color: #fff;
             font-size: 2rem;
-            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 0.9rem;
         }
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2px; /* Tiny gap for border effect */
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.05);
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            justify-items: center;
         }
 
         .game-card {
-            background: var(--surface-color);
-            height: 400px;
+            width: 150px;
+            height: 180px;
+            background: #252542;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            position: relative;
-            transition: background 0.5s var(--easing);
-            overflow: hidden;
-            group: cursor;
+            justify-content: center;
+            text-decoration: none;
+            transition: transform 0.3s, background 0.3s;
+            border: 2px solid transparent;
         }
 
         .game-card:hover {
-            background: #1a1a1a;
+            transform: translateY(-5px);
+            background: #2d2d50;
+            border-color: #6c5ce7;
         }
 
-        .game-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-            transition: all 0.5s var(--easing);
-            filter: grayscale(100%);
+        .game-image {
+            width: 80px;
+            height: 80px;
+            background: #3a3a60;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 15px;
         }
 
-        .game-card:hover .game-icon {
-            opacity: 1;
-            filter: grayscale(0%);
-            transform: scale(1.1);
-            color: var(--gold);
-        }
-
-        .game-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            letter-spacing: 0.1em;
-            color: var(--text-secondary);
-            transition: color 0.5s;
-        }
-
-        .game-card:hover .game-title {
-            color: var(--text-primary);
-        }
-
-        /* Subtle line animation on hover */
-        .game-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 1px;
-            background: var(--gold);
-            transition: all 0.6s var(--easing);
-            transform: translateX(-50%);
-        }
-
-        .game-card:hover::after {
-            width: 60%;
-        }
-
-        /* =========================================
-           FOOTER
-           ========================================= */
-        footer {
-            padding: 80px 60px;
+        .game-name {
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 500;
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.05);
         }
 
-        .footer-logo {
-            font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
-
-        .copyright {
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #666;
             font-size: 0.8rem;
-            color: #444;
-        }
-
-        /* =========================================
-           ANIMATIONS
-           ========================================= */
-        @keyframes fadeUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            nav { padding: 30px; }
-            .hero { padding: 0 30px; }
-            .showcase { padding: 60px 30px; }
-            .section-header { flex-direction: column; align-items: flex-start; gap: 20px; }
-            h1 { font-size: 3.5rem; }
         }
     </style>
 </head>
 <body>
-
-    <!-- Custom Cursor -->
-    <div class="cursor"></div>
-
-    <!-- Ambient Background -->
-    <div class="ambient-light"></div>
-
-    <!-- Navigation -->
-    <nav>
-        <div class="logo interactable">NOIR</div>
-        <div class="menu-btn interactable">Menu</div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-label">Casino Privé</div>
-        <h1>L'ÉLÉGANCE<br>DU HASARD</h1>
-        
-        <div class="cta-container">
-            <a href="#" class="btn-gold interactable">Entrer dans le jeu</a>
-        </div>
-    </section>
-
-    <!-- Games Showcase -->
-    <section class="showcase">
-        <div class="section-header">
-            <h2 class="section-title">Collection Exclusive</h2>
-            <span style="color: var(--gold); font-size: 0.9rem;">SÉLECTION 2024</span>
-        </div>
+    <div class="container">
+        <header>
+            <h1>🎮 Arcade Royale</h1>
+            <p>Choisis ton jeu</p>
+        </header>
 
         <div class="games-grid">
-            <!-- Card 1 -->
-            <div class="game-card interactable">
-                <div class="game-icon">♠</div>
-                <div class="game-title">Blackjack Royal</div>
-            </div>
-            <!-- Card 2 -->
-            <div class="game-card interactable">
-                <div class="game-icon">●</div>
-                <div class="game-title">Roulette Française</div>
-            </div>
-            <!-- Card 3 -->
-            <div class="game-card interactable">
-                <div class="game-icon">🎲</div>
-                <div class="game-title">Craps Privé</div>
-            </div>
-            <!-- Card 4 -->
-            <div class="game-card interactable">
-                <div class="game-icon">♣</div>
-                <div class="game-title">Poker Texas</div>
-            </div>
+            <!-- Go Fish -->
+            <a href="Go FISH.html" class="game-card">
+                <div class="game-image">🐟</div>
+                <span class="game-name">Go Fish</span>
+            </a>
+
+            <!-- Blackjack -->
+            <a href="blackjack.html" class="game-card">
+                <div class="game-image">🃏</div>
+                <span class="game-name">Blackjack</span>
+            </a>
+
+            <!-- 2048 -->
+            <a href="2048.html" class="game-card">
+                <div class="game-image">🔢</div>
+                <span class="game-name">2048</span>
+            </a>
+
+            <!-- Snake -->
+            <a href="snake.html" class="game-card">
+                <div class="game-image">🐍</div>
+                <span class="game-name">Snake</span>
+            </a>
+
+            <!-- Puissance 4 -->
+            <a href="puissance4.html" class="game-card">
+                <div class="game-image">🔴</div>
+                <span class="game-name">Puissance 4</span>
+            </a>
+
+            <!-- Memory -->
+            <a href="memory.html" class="game-card">
+                <div class="game-image">🧠</div>
+                <span class="game-name">Memory</span>
+            </a>
+
+            <!-- Tic-Tac-Toe -->
+            <a href="tic-tac.html" class="game-card">
+                <div class="game-image">⭕</div>
+                <span class="game-name">Tic-Tac-Toe</span>
+            </a>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-logo">NOIR CASINO</div>
-        <div class="copyright">© 2024 Tous droits réservés. Jouez responsable.</div>
-    </footer>
-
-    <script>
-        // =========================================
-        // CUSTOM CURSOR LOGIC
-        // =========================================
-        const cursor = document.querySelector('.cursor');
-        const interactables = document.querySelectorAll('.interactable');
-
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
-
-        interactables.forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                cursor.classList.add('hovered');
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.classList.remove('hovered');
-            });
-        });
-
-        // =========================================
-        // MAGNETIC BUTTON EFFECT
-        // =========================================
-        const btn = document.querySelector('.btn-gold');
-        
-        btn.addEventListener('mousemove', (e) => {
-            const rect = btn.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            
-            btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
-        });
-
-        btn.addEventListener('mouseleave', () => {
-            btn.style.transform = 'translate(0, 0)';
-        });
-
-        // =========================================
-        // SCROLL REVEAL (Simple Intersection Observer)
-        // =========================================
-        const observerOptions = {
-            threshold: 0.1
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.game-card').forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(50px)';
-            card.style.transition = `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s`;
-            observer.observe(card);
-        });
-    </script>
+        <footer>
+            © 2026 ARCADE ROYALE
+        </footer>
+    </div>
 </body>
 </html>
