@@ -3,150 +3,1166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Royale</title>
+    <title>NOIR ROYALE | Casino Privé</title>
+    
+    <!-- Typographie Premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
+        /* ============================================
+           VARIABLES & RESET
+           ============================================ */
+        :root {
+            --bg-deep: #030305;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
+            
+            --gold-primary: #D4AF37;
+            --gold-light: #F4E5B1;
+            --gold-medium: #C9A961;
+            --gold-dark: #8B7355;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            
+            --accent-white: #f8f8f8;
+            
+            --easing: cubic-bezier(0.23, 1, 0.32, 1);
+            --transition: all 0.6s var(--easing);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #1a1a2e;
+            font-family: 'Raleway', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
             min-height: 100vh;
-            padding: 40px 20px;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
+        /* ============================================
+           BACKGROUND PARTICLES
+           ============================================ */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
         }
 
-        header {
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: radial-gradient(circle, var(--gold-primary) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0.2;
+            }
+            50% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0.5;
+            }
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
+                radial-gradient(ellipse at 20% 80%, rgba(212, 175, 55, 0.06) 0%, transparent 45%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ============================================
+           DECORATIVE ART DECO PATTERNS
+           ============================================ */
+        .art-deco-line {
+            position: relative;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                var(--gold-dark) 20%, 
+                var(--gold-primary) 50%, 
+                var(--gold-dark) 80%, 
+                transparent 100%);
+            margin: 40px 0;
+        }
+
+        .art-deco-line::before,
+        .art-deco-line::after {
+            content: '◆';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold-primary);
+            font-size: 8px;
+            opacity: 0.6;
+        }
+
+        .art-deco-line::before {
+            left: 0;
+        }
+
+        .art-deco-line::after {
+            right: 0;
+        }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 25px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: linear-gradient(180deg, rgba(3,3,5,0.95) 0%, transparent 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 50%, var(--gold-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--gold-primary);
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            color: var(--gold-primary);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* ============================================
+           HERO SECTION
+           ============================================ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
+            padding: 120px 20px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .premium-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 20px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50px;
+            background: rgba(212, 175, 55, 0.05);
+            margin-bottom: 30px;
+            animation: fadeInDown 1s var(--easing) 0.2s both;
+        }
+
+        .premium-badge span {
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+        }
+
+        .premium-badge .diamond {
+            width: 6px;
+            height: 6px;
+            background: var(--gold-primary);
+            transform: rotate(45deg);
+        }
+
+        .hero-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(3rem, 10vw, 7rem);
+            font-weight: 400;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeInUp 1.2s var(--easing) 0.4s both;
+        }
+
+        .hero-title .gold-text {
+            background: linear-gradient(135deg, 
+                var(--gold-light) 0%, 
+                var(--gold-primary) 30%, 
+                var(--gold-medium) 50%, 
+                var(--gold-primary) 70%, 
+                var(--gold-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% auto;
+            animation: shimmer 5s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .hero-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-style: italic;
+            color: var(--text-secondary);
             margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeInUp 1.2s var(--easing) 0.6s both;
         }
 
-        header h1 {
-            color: #fff;
-            font-size: 2rem;
-            margin-bottom: 10px;
+        .hero-cta {
+            display: inline-flex;
+            gap: 20px;
+            opacity: 0;
+            animation: fadeInUp 1.2s var(--easing) 0.8s both;
         }
 
-        header p {
-            color: #888;
-            font-size: 0.9rem;
+        .btn {
+            padding: 16px 40px;
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 2px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-medium) 100%);
+            color: var(--bg-deep);
+            font-weight: 600;
+            border: none;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--gold-primary);
+            color: var(--gold-primary);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        /* ============================================
+           GAMES SECTION
+           ============================================ */
+        .games-section {
+            padding: 100px 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .section-description {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            justify-items: center;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .game-card {
-            width: 150px;
-            height: 180px;
-            background: #252542;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            transition: transform 0.3s, background 0.3s;
-            border: 2px solid transparent;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: var(--transition);
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .game-card.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .game-card:hover {
-            transform: translateY(-5px);
-            background: #2d2d50;
-            border-color: #6c5ce7;
+            transform: translateY(-10px);
+            border-color: rgba(212, 175, 55, 0.3);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
         }
 
-        .game-image {
-            width: 80px;
-            height: 80px;
-            background: #3a3a60;
-            border-radius: 10px;
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                var(--gold-dark) 20%, 
+                var(--gold-primary) 50%, 
+                var(--gold-dark) 80%, 
+                transparent 100%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
+        }
+
+        .game-preview {
+            height: 200px;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-card-hover) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-preview::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(212, 175, 55, 0.08) 0%, transparent 50%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .game-card:hover .game-preview::after {
+            opacity: 1;
+        }
+
+        .game-icon {
+            font-size: 4rem;
+            transition: var(--transition);
+            filter: grayscale(100%) opacity(0.5);
+        }
+
+        .game-card:hover .game-icon {
+            transform: scale(1.1);
+            filter: grayscale(0%) opacity(1);
+        }
+
+        .game-content {
+            padding: 30px;
+        }
+
+        .game-tags {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 5px 12px;
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--gold-primary);
+            border-radius: 2px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .game-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .game-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .game-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .game-players {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .game-players::before {
+            content: '👤';
+            font-size: 0.9rem;
+        }
+
+        .btn-play {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gold-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-play::after {
+            content: '→';
+            transition: var(--transition);
+        }
+
+        .btn-play:hover {
+            color: var(--gold-light);
+        }
+
+        .btn-play:hover::after {
+            transform: translateX(5px);
+        }
+
+        /* ============================================
+           FEATURES SECTION
+           ============================================ */
+        .features-section {
+            padding: 100px 60px;
+            background: var(--bg-dark);
+            position: relative;
+            z-index: 1;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .feature-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        footer {
+            padding: 80px 60px 40px;
+            background: var(--bg-deep);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand .footer-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 15px;
         }
 
-        .game-name {
-            color: #fff;
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-align: center;
+        .footer-brand p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
         }
 
-        footer {
+        .footer-links h4 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--gold-primary);
+        }
+
+        .footer-bottom {
             text-align: center;
-            margin-top: 50px;
-            color: #666;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-bottom p {
             font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            nav {
+                padding: 20px 30px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 100px 20px 60px;
+            }
+
+            .games-section,
+            .features-section {
+                padding: 60px 30px;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            footer {
+                padding: 60px 30px 30px;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* ============================================
+           CUSTOM SCROLLBAR
+           ============================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gold-dark);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-primary);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎮 Arcade Royale</h1>
-            <p>Choisis ton jeu</p>
-        </header>
+    <!-- Background Effects -->
+    <div class="bg-particles" id="particles"></div>
+    <div class="bg-gradient"></div>
 
-        <div class="games-grid">
-            <!-- Go Fish -->
-            <a href="Go FISH.html" class="game-card">
-                <div class="game-image">🐟</div>
-                <span class="game-name">Go Fish</span>
-            </a>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">NOIR ROYALE</div>
+        <div class="nav-links">
+            <a href="#" class="nav-link">Jeux</a>
+            <a href="#" class="nav-link">Tournois</a>
+            <a href="#" class="nav-link">VIP</a>
+            <a href="#" class="nav-link">Contact</a>
+        </div>
+    </nav>
 
-            <!-- Blackjack -->
-            <a href="blackjack.html" class="game-card">
-                <div class="game-image">🃏</div>
-                <span class="game-name">Blackjack</span>
-            </a>
-
-            <!-- 2048 -->
-            <a href="2048.html" class="game-card">
-                <div class="game-image">🔢</div>
-                <span class="game-name">2048</span>
-            </a>
-
-            <!-- Snake -->
-            <a href="snake.html" class="game-card">
-                <div class="game-image">🐍</div>
-                <span class="game-name">Snake</span>
-            </a>
-
-            <!-- Puissance 4 -->
-            <a href="puissance4.html" class="game-card">
-                <div class="game-image">🔴</div>
-                <span class="game-name">Puissance 4</span>
-            </a>
-
-            <!-- Memory -->
-            <a href="memory.html" class="game-card">
-                <div class="game-image">🧠</div>
-                <span class="game-name">Memory</span>
-            </a>
-
-            <!-- Tic-Tac-Toe -->
-            <a href="tic-tac.html" class="game-card">
-                <div class="game-image">⭕</div>
-                <span class="game-name">Tic-Tac-Toe</span>
-            </a>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="premium-badge">
+            <div class="diamond"></div>
+            <span>Accès Privé</span>
+            <div class="diamond"></div>
         </div>
 
-        <footer>
-            © 2026 ARCADE ROYALE
-        </footer>
-    </div>
+        <h1 class="hero-title">
+            L'ART DU<br>
+            <span class="gold-text">JEU ROYAL</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Une expérience casino d'exception, où l'élégance rencontre le hasard
+        </p>
+
+        <div class="hero-cta">
+            <a href="#games" class="btn btn-primary">Découvrir les jeux</a>
+            <a href="#" class="btn btn-secondary">Devenir membre</a>
+        </div>
+    </section>
+
+    <!-- Decorative Line -->
+    <div class="art-deco-line"></div>
+
+    <!-- Games Section -->
+    <section class="games-section" id="games">
+        <div class="section-header">
+            <p class="section-label">Collection Exclusive</p>
+            <h2 class="section-title">Nos Jeux Signature</h2>
+            <p class="section-description">
+                Une sélection raffinée de jeux classiques, réinventés avec une élégance intemporelle
+            </p>
+        </div>
+
+        <div class="games-grid">
+            <!-- Game Card 1: Blackjack -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">🃏</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Cartes</span>
+                        <span class="tag">Stratégie</span>
+                    </div>
+                    <h3 class="game-title">Blackjack Royal</h3>
+                    <p class="game-description">
+                        Affrontez le croupier dans une salle au luxe Art Déco. 
+                        Misez, doublez, abandonnez — stratégie de base intégrée.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">1 Joueur</span>
+                        <a href="blackjack.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Card 2: Puissance 4 -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">🔴</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Stratégie</span>
+                        <span class="tag">IA</span>
+                    </div>
+                    <h3 class="game-title">Puissance 4</h3>
+                    <p class="game-description">
+                        Jouez contre une IA redoutable (alpha-bêta) ou regardez 
+                        deux intelligences s'affronter en temps réel.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">1-2 Joueurs</span>
+                        <a href="puissance4.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Card 3: Snake -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">🐍</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Arcade</span>
+                        <span class="tag">Rapide</span>
+                    </div>
+                    <h3 class="game-title">Snake Royale</h3>
+                    <p class="game-description">
+                        Quatre serpents IA s'affrontent dans une arène néon. 
+                        Chacun cherche sa survie avec l'algorithme A★.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">Spectacle</span>
+                        <a href="snake.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Card 4: 2048 -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">🔢</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Logique</span>
+                        <span class="tag">Solo</span>
+                    </div>
+                    <h3 class="game-title">2048 Prestige</h3>
+                    <p class="game-description">
+                        Le jeu de logique mathématique dans une version épurée 
+                        et sophistiquée. Atteignez le 2048 avec élégance.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">1 Joueur</span>
+                        <a href="2048.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Card 5: Memory -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">🧠</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Mémoire</span>
+                        <span class="tag">Défi</span>
+                    </div>
+                    <h3 class="game-title">Memory Elite</h3>
+                    <p class="game-description">
+                        Testez votre mémoire avec des cartes au design raffiné. 
+                        Un défi mental dans un écrin de luxe.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">1 Joueur</span>
+                        <a href="memory.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Card 6: Tic-Tac-Toe -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">⭕</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Classique</span>
+                        <span class="tag">Rapide</span>
+                    </div>
+                    <h3 class="game-title">Tic-Tac-Toe</h3>
+                    <p class="game-description">
+                        Le morpion réinventé avec une esthétique minimale. 
+                        Affrontez l'IA ou un ami dans ce duel tactique.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">1-2 Joueurs</span>
+                        <a href="tic-tac.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Card 7: Go Fish -->
+            <div class="game-card">
+                <div class="game-preview">
+                    <div class="game-icon">🐟</div>
+                </div>
+                <div class="game-content">
+                    <div class="game-tags">
+                        <span class="tag">Cartes</span>
+                        <span class="tag">Famille</span>
+                    </div>
+                    <h3 class="game-title">Go Fish</h3>
+                    <p class="game-description">
+                        Le jeu de cartes classique dans une version premium. 
+                        Stratégie et chance se rencontrent avec style.
+                    </p>
+                    <div class="game-footer">
+                        <span class="game-players">2+ Joueurs</span>
+                        <a href="Go FISH.html" class="btn-play">Jouer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon">🔒</div>
+                <h3 class="feature-title">100% Sécurisé</h3>
+                <p class="feature-description">
+                    Vos données sont protégées avec les meilleurs standards de sécurité
+                </p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🌐</div>
+                <h3 class="feature-title">Hors Ligne</h3>
+                <p class="feature-description">
+                    Tous les jeux sont jouables sans connexion internet
+                </p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">💎</div>
+                <h3 class="feature-title">Gratuit</h3>
+                <p class="feature-description">
+                    Accès complet à tous les jeux, aucune carte requise
+                </p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">Design Premium</h3>
+                <p class="feature-description">
+                    Une expérience visuelle soignée et élégante
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Decorative Line -->
+    <div class="art-deco-line"></div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">NOIR ROYALE</div>
+                <p>
+                    L'excellence du divertissement en ligne. 
+                    Une expérience casino premium accessible à tous.
+                </p>
+            </div>
+
+            <div class="footer-links">
+                <h4>Navigation</h4>
+                <ul>
+                    <li><a href="#">Accueil</a></li>
+                    <li><a href="#games">Jeux</a></li>
+                    <li><a href="#">Tournois</a></li>
+                    <li><a href="#">VIP</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-links">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Aide</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Règles</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-links">
+                <h4>Légal</h4>
+                <ul>
+                    <li><a href="#">Confidentialité</a></li>
+                    <li><a href="#">Conditions</a></li>
+                    <li><a href="#">Jeu Responsable</a></li>
+                    <li><a href="#">Licence</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 NOIR ROYALE — TOUS DROITS RÉSERVÉS — JOUEZ RESPONSABLE</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================
+        // PARTICLE SYSTEM
+        // ============================================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 50;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 20) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // ============================================
+        // SCROLL REVEAL ANIMATION
+        // ============================================
+        function initScrollReveal() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.classList.add('visible');
+                        }, index * 100);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.game-card').forEach(card => {
+                observer.observe(card);
+            });
+        }
+
+        // ============================================
+        // SMOOTH SCROLL FOR ANCHOR LINKS
+        // ============================================
+        function initSmoothScroll() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        // ============================================
+        // NAVBAR SCROLL EFFECT
+        // ============================================
+        function initNavbarEffect() {
+            const nav = document.querySelector('nav');
+            let lastScroll = 0;
+
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.pageYOffset;
+
+                if (currentScroll > 100) {
+                    nav.style.background = 'rgba(3, 3, 5, 0.98)';
+                    nav.style.boxShadow = '0 5px 30px rgba(0, 0, 0, 0.5)';
+                } else {
+                    nav.style.background = 'linear-gradient(180deg, rgba(3,3,5,0.95) 0%, transparent 100%)';
+                    nav.style.boxShadow = 'none';
+                }
+
+                lastScroll = currentScroll;
+            });
+        }
+
+        // ============================================
+        // CARD HOVER PARALLAX EFFECT
+        // ============================================
+        function initCardParallax() {
+            document.querySelectorAll('.game-card').forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = (y - centerY) / 30;
+                    const rotateY = (centerX - x) / 30;
+
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+                });
+            });
+        }
+
+        // ============================================
+        // INITIALIZE ALL
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            initScrollReveal();
+            initSmoothScroll();
+            initNavbarEffect();
+            initCardParallax();
+        });
+    </script>
 </body>
 </html>
