@@ -2,303 +2,239 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-select=none">
-    <title>Go Fish Royale — Arcade Royale</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-select=none">
+    <title>Go Fish Royale — Maître Jules</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Cormorant+Garamond:wght@600&display=swap');
 
         :root {
-            --gold: #c9a84c; --gold2: #e8cc7a; --gold3: #f5e0a0; --goldd: #7a5c1a;
-            --bg: #06080f; --card-bg: #121620; --txt: #dde2f5; --dim: #3d4875;
+            --gold: #c9a84c; --gold2: #e8cc7a; --bg: #060a16;
+            --card-w: 100px; --card-h: 145px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            background: var(--bg); color: var(--txt);
+            background: var(--bg); color: white; margin: 0; overflow: hidden;
             font-family: 'Cormorant Garamond', serif;
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            background-image: radial-gradient(circle at center, #0b1426 0%, #060a16 100%);
         }
 
-        /* Fond d'étoiles */
-        #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-        .star { position: absolute; border-radius: 50%; background: #fff; animation: tw var(--d) ease-in-out infinite alternate; }
-        @keyframes tw { from { opacity: .05 } to { opacity: .6 } }
-
-        /* Header & Scores */
-        .game-header {
-            position: relative; z-index: 10; padding: 15px 25px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid rgba(201, 168, 76, 0.2);
-            background: rgba(6, 8, 15, 0.8); backdrop-filter: blur(8px);
+        /* HUD */
+        header {
+            display: flex; justify-content: space-between; padding: 20px;
+            background: rgba(0,0,0,0.4); border-bottom: 2px solid var(--gold);
         }
-        .btn-back {
-            font-family: 'Cinzel', serif; font-size: 0.7rem; color: var(--gold2);
-            text-decoration: none; border: 1px solid var(--goldd);
-            padding: 6px 15px; border-radius: 20px; transition: 0.3s;
-        }
-        .btn-back:hover { background: var(--goldd); color: #fff; }
-        .score-board { display: flex; gap: 20px; font-family: 'Cinzel', serif; font-size: 0.9rem; }
-        .score-item span { color: var(--gold2); font-weight: 900; }
+        .stat-box { text-align: center; font-family: 'Cinzel'; color: var(--gold2); }
+        .stat-val { font-size: 1.5rem; display: block; color: white; }
 
         /* Board */
-        #board { flex: 1; position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
+        #game-world { height: calc(100vh - 80px); display: flex; flex-direction: column; justify-content: space-between; padding: 20px; position: relative; }
 
-        /* Zones de jeu */
-        .hand-label { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--goldd); text-align: center; letter-spacing: 2px; margin-bottom: 10px; }
-        .hand { display: flex; justify-content: center; align-items: center; min-height: 120px; width: 100%; transition: 0.3s; }
-
-        /* Cartes */
+        .zone { display: flex; flex-direction: column; align-items: center; min-height: 180px; }
+        
+        /* Cartes Style Plato */
+        .hand { display: flex; justify-content: center; gap: -40px; width: 100%; perspective: 1000px; }
+        
         .card {
-            width: 75px; height: 110px; background: var(--card-bg);
-            border: 1px solid var(--goldd); border-radius: 8px;
-            margin-left: -35px; position: relative;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.5); cursor: pointer;
-            transition: transform 0.2s ease, margin 0.3s ease;
+            width: var(--card-w); height: var(--card-h);
+            background: #1a2235; border: 2px solid var(--gold); border-radius: 12px;
+            margin-left: -50px; position: relative; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: space-around;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
             background-image: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
         }
         .card:first-child { margin-left: 0; }
-        .player-hand .card:hover { transform: translateY(-20px) rotate(2deg); z-index: 100; border-color: var(--gold2); }
-        .card .rank { font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 900; color: var(--gold2); pointer-events: none; }
-        
-        .cpu-card { background: linear-gradient(135deg, #0a0e1a 0%, var(--goldd) 400%); }
-        .cpu-card .rank { display: none; }
+        .player-hand .card:hover { transform: translateY(-30px) scale(1.1); z-index: 100; border-color: white; box-shadow: 0 15px 30px rgba(201,168,76,0.4); }
 
-        /* Centre du plateau (Deck & Messages) */
-        .center-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-        .deck-visual {
-            width: 80px; height: 115px; background: var(--goldd);
-            border: 2px solid var(--gold); border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.2rem; cursor: pointer;
+        .card .fish-icon { font-size: 2.5rem; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+        .card .rank-label { font-family: 'Cinzel'; font-weight: 900; font-size: 1.2rem; color: var(--gold2); }
+
+        /* IA Cards */
+        .cpu-card { background: linear-gradient(135deg, #0d1526, #c9a84c22); margin-left: -60px; }
+        .cpu-card .content { display: none; }
+        .cpu-card::after { content: '◈'; color: var(--gold); font-size: 2rem; opacity: 0.3; }
+
+        /* Pioche & Messages */
+        .center-deck { position: relative; display: flex; flex-direction: column; align-items: center; }
+        #msg-bubble { 
+            background: rgba(201, 168, 76, 0.1); border: 1px solid var(--gold);
+            padding: 10px 30px; border-radius: 50px; font-family: 'Cinzel';
+            color: var(--gold2); font-size: 1.1rem; margin-bottom: 20px;
+            animation: pulse 2s infinite; min-height: 50px; text-align: center;
         }
-        #game-msg { 
-            font-family: 'Cinzel', serif; color: var(--gold3); font-size: 1.1rem; 
-            text-align: center; min-height: 1.5em; text-shadow: 0 2px 10px rgba(0,0,0,1);
+        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+
+        .draw-pile {
+            width: 100px; height: 140px; background: var(--gold); border-radius: 10px;
+            border: 4px solid white; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: #000; font-weight: 900; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
 
-        /* Modal Fin */
-        #end-screen {
-            position: fixed; inset: 0; background: rgba(6, 8, 15, 0.95);
+        #win-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1000; font-family: 'Cinzel', serif; text-align: center;
         }
-        #end-screen h2 { font-size: 3rem; color: var(--gold2); margin-bottom: 20px; }
-        .btn-restart { 
-            background: var(--gold); color: #000; border: none; padding: 12px 30px; 
-            font-family: 'Cinzel', serif; font-weight: 900; cursor: pointer; border-radius: 4px;
+        .btn-gold { 
+            background: var(--gold); border: none; padding: 15px 40px; font-family: 'Cinzel';
+            font-weight: 900; cursor: pointer; border-radius: 50px; margin-top: 20px;
         }
-
     </style>
 </head>
 <body>
 
-<div id="stars"></div>
-
-<header class="game-header">
-    <a href="index.html" class="btn-back">← RETOUR</a>
-    <div class="score-board">
-        <div class="score-item">IA: <span id="cpu-score">0</span></div>
-        <div class="score-item">VOUS: <span id="player-score">0</span></div>
-    </div>
+<header>
+    <div class="stat-box">ADVERSAIRE <span id="cpu-score" class="stat-val">0</span></div>
+    <div class="stat-box" style="color:white; font-size:1.2rem;">GO FISH ROYALE</div>
+    <div class="stat-box">MAÎTRE JULES <span id="p-score" class="stat-val">0</span></div>
 </header>
 
-<main id="board">
-    <div class="cpu-zone">
-        <div class="hand-label">ADVERSAIRE (IA)</div>
+<main id="game-world">
+    <div class="zone">
         <div id="cpu-hand" class="hand"></div>
     </div>
 
-    <div class="center-zone">
-        <div id="game-msg">Bonne chance...</div>
-        <div class="deck-visual" id="deck">?</div>
-        <div id="deck-count" style="font-family:'Cinzel'; font-size:0.7rem; color:var(--dim2)">PIOCHE: 52</div>
+    <div class="center-deck">
+        <div id="msg-bubble">À vous de jouer, Maître Jules.</div>
+        <div class="draw-pile" id="deck-view">?</div>
+        <p id="deck-count" style="margin-top:10px; color:var(--gold)">Cartes : 52</p>
     </div>
 
-    <div class="player-zone">
+    <div class="zone">
         <div id="player-hand" class="hand player-hand"></div>
-        <div class="hand-label">VOTRE MAIN</div>
     </div>
 </main>
 
-<div id="end-screen">
-    <h2 id="winner-text">MATCH NUL</h2>
-    <button class="btn-restart" onclick="location.reload()">REJOUER</button>
+<div id="win-overlay">
+    <h1 id="win-txt" style="font-family:Cinzel; color:var(--gold); font-size:4rem;"></h1>
+    <button class="btn-gold" onclick="location.reload()">REJOUER</button>
 </div>
 
 <script>
-// --- CONFIGURATION ---
-const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-let deck = [];
-let playerHand = [];
-let cpuHand = [];
-let playerScore = 0;
-let cpuScore = 0;
-let isPlayerTurn = true;
+const FISH_MAP = {
+    'A': '🦈', 'K': '🐳', 'Q': '🐬', 'J': '🐙', '10': '🐡', 
+    '9': '🐠', '8': '🐟', '7': '🦐', '6': '🦀', '5': '🐚', 
+    '4': '🦑', '3': '🐢', '2': '🦞'
+};
+const RANKS = Object.keys(FISH_MAP);
+let deck = [], pHand = [], cHand = [], pSets = 0, cSets = 0, turn = 'player';
 
-// --- INITIALISATION ---
-function initStars() {
-    const s = document.getElementById('stars');
-    for(let i=0; i<80; i++) {
-        const el = document.createElement('div'); el.className = 'star';
-        el.style.cssText = `width:2px; height:2px; left:${Math.random()*100}%; top:${Math.random()*100}%; --d:${2+Math.random()*4}s`;
-        s.appendChild(el);
-    }
-}
-
-function createDeck() {
+function initGame() {
     deck = [];
-    for(let r of RANKS) {
-        for(let i=0; i<4; i++) deck.push(r);
-    }
+    RANKS.forEach(r => { for(let i=0; i<4; i++) deck.push(r); });
     deck.sort(() => Math.random() - 0.5);
-}
-
-function deal() {
-    playerHand = deck.splice(0, 7);
-    cpuHand = deck.splice(0, 7);
+    pHand = deck.splice(0, 7);
+    cHand = deck.splice(0, 7);
     updateUI();
 }
 
-// --- LOGIQUE DE JEU ---
 function updateUI() {
-    const pContainer = document.getElementById('player-hand');
-    const cContainer = document.getElementById('cpu-hand');
-    pContainer.innerHTML = '';
-    cContainer.innerHTML = '';
+    const pArea = document.getElementById('player-hand');
+    const cArea = document.getElementById('cpu-hand');
+    pArea.innerHTML = ''; cArea.innerHTML = '';
 
-    // Tri des mains
-    playerHand.sort((a,b) => RANKS.indexOf(a) - RANKS.indexOf(b));
-    cpuHand.sort((a,b) => RANKS.indexOf(a) - RANKS.indexOf(b));
-
-    playerHand.forEach(rank => {
+    pHand.sort((a,b) => RANKS.indexOf(b) - RANKS.indexOf(a)).forEach(r => {
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<span class="rank">${rank}</span>`;
-        card.onclick = () => playerRequest(rank);
-        pContainer.appendChild(card);
+        card.innerHTML = `<div class="rank-label">${r}</div><div class="fish-icon">${FISH_MAP[r]}</div><div class="rank-label">${r}</div>`;
+        card.onclick = () => playerAct(r);
+        pArea.appendChild(card);
     });
 
-    cpuHand.forEach(() => {
-        const card = document.createElement('div');
-        card.className = 'card cpu-card';
-        cContainer.appendChild(card);
+    cHand.forEach(() => {
+        const div = document.createElement('div');
+        div.className = 'card cpu-card';
+        cArea.appendChild(div);
     });
 
-    document.getElementById('cpu-score').innerText = cpuScore;
-    document.getElementById('player-score').innerText = playerScore;
-    document.getElementById('deck-count').innerText = `PIOCHE: ${deck.length}`;
+    document.getElementById('p-score').innerText = pSets;
+    document.getElementById('cpu-score').innerText = cSets;
+    document.getElementById('deck-count').innerText = `RESTANT : ${deck.length}`;
 }
 
-function checkSets(hand, isCPU) {
-    const counts = {};
-    hand.forEach(r => counts[r] = (counts[r] || 0) + 1);
-    for(let r in counts) {
-        if(counts[r] === 4) {
-            // Un carré !
-            if(isCPU) {
-                cpuHand = cpuHand.filter(card => card !== r);
-                cpuScore++;
-                showMessage(`L'IA complète le set de ${r} !`);
-            } else {
-                playerHand = playerHand.filter(card => card !== r);
-                playerScore++;
-                showMessage(`Set de ${r} complété !`);
-            }
-        }
-    }
-    updateUI();
-    checkGameOver();
-}
-
-async function playerRequest(rank) {
-    if(!isPlayerTurn) return;
-    isPlayerTurn = false;
-    
-    showMessage(`Vous demandez : ${rank}...`);
+async function playerAct(rank) {
+    if(turn !== 'player') return;
+    say(`Vous demandez : ${FISH_MAP[rank]}...`);
     await sleep(1000);
 
-    if(cpuHand.includes(rank)) {
-        const cards = cpuHand.filter(c => c === rank);
-        cpuHand = cpuHand.filter(c => c !== rank);
-        playerHand.push(...cards);
-        showMessage(`L'IA vous donne ${cards.length} carte(s) !`);
-        checkSets(playerHand, false);
-        await sleep(1000);
-        isPlayerTurn = true;
-        showMessage("À vous de rejouer !");
+    if(cHand.includes(rank)) {
+        const found = cHand.filter(c => c === rank);
+        cHand = cHand.filter(c => c !== rank);
+        pHand.push(...found);
+        say(`L'IA vous donne ${found.length} carte(s) !`);
+        checkSets('player');
     } else {
-        showMessage("L'IA dit : GO FISH !");
+        say(`L'IA : "GO FISH !" 🌊`);
         await sleep(1000);
-        goFish(false);
+        draw('player');
     }
 }
 
 async function cpuTurn() {
-    if(cpuHand.length === 0) {
-        if(deck.length > 0) cpuHand.push(deck.pop());
-        else { checkGameOver(); return; }
-    }
-
-    const randomRank = cpuHand[Math.floor(Math.random() * cpuHand.length)];
-    showMessage(`L'IA demande : ${randomRank}...`);
+    if(cHand.length === 0 && deck.length > 0) cHand.push(deck.pop());
+    if(cHand.length === 0) return checkEnd();
+    
+    const target = cHand[Math.floor(Math.random()*cHand.length)];
+    say(`L'IA demande : ${FISH_MAP[target]}...`);
     await sleep(1500);
 
-    if(playerHand.includes(randomRank)) {
-        const cards = playerHand.filter(c => c === randomRank);
-        playerHand = playerHand.filter(c => c !== randomRank);
-        cpuHand.push(...cards);
-        showMessage(`Vous donnez ${cards.length} carte(s).`);
-        checkSets(cpuHand, true);
-        await sleep(1000);
-        cpuTurn();
+    if(pHand.includes(target)) {
+        const found = pHand.filter(c => c === target);
+        pHand = pHand.filter(c => c !== target);
+        cHand.push(...found);
+        say(`Vous donnez ${found.length} carte(s).`);
+        checkSets('cpu');
+        setTimeout(cpuTurn, 1500);
     } else {
-        showMessage("Vous dites : GO FISH !");
-        await sleep(1000);
-        goFish(true);
+        say(`Vous : "GO FISH !" 🌊`);
+        draw('cpu');
     }
 }
 
-function goFish(isCPU) {
+function draw(who) {
     if(deck.length > 0) {
-        const card = deck.pop();
-        if(isCPU) {
-            cpuHand.push(card);
-            checkSets(cpuHand, true);
-            isPlayerTurn = true;
-            showMessage("À votre tour !");
+        const c = deck.pop();
+        if(who === 'player') {
+            pHand.push(c);
+            say(`Vous piochez un ${FISH_MAP[c]}`);
+            checkSets('player');
+            turn = 'cpu'; setTimeout(cpuTurn, 1500);
         } else {
-            playerHand.push(card);
-            showMessage(`Vous piochez un ${card}.`);
-            checkSets(playerHand, false);
-            setTimeout(cpuTurn, 1500);
+            cHand.push(c);
+            checkSets('cpu');
+            turn = 'player'; say("À vous, Maître Jules");
         }
-    } else {
-        showMessage("Plus de cartes dans la pioche !");
-        if(isCPU) { isPlayerTurn = true; } else { setTimeout(cpuTurn, 1000); }
+    }
+    updateUI();
+}
+
+function checkSets(who) {
+    let hand = (who === 'player') ? pHand : cHand;
+    const counts = {};
+    hand.forEach(r => counts[r] = (counts[r]||0) + 1);
+    for(let r in counts) {
+        if(counts[r] === 4) {
+            if(who === 'player') { pHand = pHand.filter(c => c !== r); pSets++; }
+            else { cHand = cHand.filter(c => c !== r); cSets++; }
+            say(`SET DE ${FISH_MAP[r]} COMPLÉTÉ !`);
+        }
+    }
+    updateUI();
+    checkEnd();
+}
+
+function checkEnd() {
+    if(pSets + cSets === 13) {
+        const overlay = document.getElementById('win-overlay');
+        const txt = document.getElementById('win-txt');
+        overlay.style.display = 'flex';
+        txt.innerText = pSets > cSets ? "VICTOIRE ROYALE !" : "IA VICTORIEUSE";
     }
 }
 
-function showMessage(txt) {
-    document.getElementById('game-msg').innerText = txt;
-}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function say(t) { document.getElementById('msg-bubble').innerText = t; }
 
-function checkGameOver() {
-    if((playerHand.length === 0 && cpuHand.length === 0) || (deck.length === 0 && (playerHand.length === 0 || cpuHand.length === 0))) {
-        const winTxt = playerScore > cpuScore ? "VICTOIRE ROYALE" : (playerScore < cpuScore ? "DÉFAITE" : "MATCH NUL");
-        document.getElementById('winner-text').innerText = winTxt;
-        document.getElementById('end-screen').style.display = 'flex';
-    }
-}
-
-const sleep = ms => new Promise(res => setTimeout(res, ms));
-
-// --- Lancement ---
-initStars();
-createDeck();
-deal();
-
+initGame();
 </script>
 </body>
 </html>
