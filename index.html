@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Arcade Royale — Jeux IA</title>
 
-<!-- Import des polices Cinzel et Cormorant Garamond -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
 
@@ -59,10 +58,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Cormorant Garamond',Geor
   text-decoration:none;display:block;
   animation:cardIn .6s cubic-bezier(.2,1,.4,1) both;
 }
-.gcard:nth-child(1){animation-delay:.1s}
-.gcard:nth-child(2){animation-delay:.2s}
-.gcard:nth-child(3){animation-delay:.3s}
-@keyframes cardIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 .gcard:hover{transform:translateY(-8px) scale(1.015);border-color:rgba(201,168,76,.5)}
 .gcard:hover .card-glow{opacity:1}
 .card-glow{position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none;border-radius:16px}
@@ -72,6 +67,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Cormorant Garamond',Geor
 .preview-bj{background:radial-gradient(ellipse at 50% 60%,#0f4025 0%,#060f08 100%)}
 .preview-p4{background:radial-gradient(ellipse at 50% 60%,#0e1730 0%,#07091a 100%)}
 .preview-sn{background:radial-gradient(ellipse at 50% 60%,#001a0a 0%,#050505 100%)}
+.preview-gf{background:radial-gradient(ellipse at 50% 60%,#0a1f2e 0%,#05121a 100%)}
 
 /* Blackjack preview */
 .bj-cards{display:flex;gap:-20px;transform:rotate(-3deg)}
@@ -131,36 +127,30 @@ footer{position:relative;z-index:1;text-align:center;padding:30px 20px 40px;
 </head>
 <body>
 
-<!-- Fond animé d'étoiles -->
 <div id="stars"></div>
 
-<!-- Hero section -->
 <div class="hero">
   <div class="hero-eyebrow">Bienvenue au</div>
   <h1 class="hero-title">Arcade<br>Royale</h1>
   <div class="hero-orn"><div class="orn-line"></div><div class="orn-dia"></div><div class="orn-line"></div></div>
-  <p class="hero-sub">Trois jeux classiques propulsés par intelligence artificielle, dans un écrin de luxe.</p>
+  <p class="hero-sub">Une collection de jeux classiques propulsés par IA, dans un écrin de luxe numérique.</p>
   <div class="hero-badge">✦ Intelligence Artificielle · Graphismes HD · Jouable hors ligne ✦</div>
 </div>
 
-<!-- Bandeau statistiques -->
 <div class="stats-banner">
-  <div class="stat"><div class="stat-n">3</div><div class="stat-l">Jeux</div></div>
+  <div class="stat"><div class="stat-n">7</div><div class="stat-l">Jeux</div></div>
   <div class="stat"><div class="stat-n">IA</div><div class="stat-l">Adversaires</div></div>
   <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Parties</div></div>
   <div class="stat"><div class="stat-n">0€</div><div class="stat-l">Gratuit</div></div>
 </div>
 
-<!-- Section grille des jeux -->
 <div class="section">
   <div class="section-title">Choisissez votre jeu</div>
   <div class="game-grid">
 
-    <!-- Carte 2048 -->
     <a href="2048.html" class="gcard">
       <div class="card-preview" style="background: radial-gradient(ellipse at 50% 60%, #1a0f00 0%, #0a0500 100%);">
         <div style="position:relative;width:160px;height:160px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;">
-          <!-- Simulation d'une grille 2048 simple -->
           <div style="background:#e8d5a3;color:#3c2f0f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:900;font-size:1.1rem;">2</div>
           <div style="background:#e8c870;color:#3c2f0f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:900;font-size:1.1rem;">4</div>
           <div style="background:#c9a84c;color:#1a1408;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:900;font-size:1.1rem;">8</div>
@@ -174,132 +164,117 @@ footer{position:relative;z-index:1;text-align:center;padding:30px 20px 40px;
       <div class="card-info">
         <div class="card-badge">PUZZLE • NUMÉRIQUE</div>
         <div class="card-title">2048</div>
-        <div class="card-desc">Fusionne les tuiles pour atteindre 2048… et au-delà ! Stratégie, anticipation et un soupçon de chance dorée.</div>
-        <div class="card-tags">
-          <span style="font-size:0.8rem;background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:12px;color:var(--gold2);">Gold Rush</span>
-          <span style="font-size:0.8rem;background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:12px;color:var(--gold2);">Swipe + Clavier</span>
-        </div>
-      </div>
-      <div class="card-glow" style="background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);"></div>
-    </a>
-
-    <!-- Carte Memory -->
-    <a href="memory.html" class="gcard">
-      <div class="card-preview" style="background: radial-gradient(ellipse at 50% 60%, #1a0f00 0%, #0a0500 100%); display:flex;align-items:center;justify-content:center;">
-        <div style="font-size:6rem;color:var(--gold2);">?</div>
-      </div>
-      <div class="card-info">
-        <div class="card-badge">MEMORY • CARTES</div>
-        <div class="card-title">Memory Royal</div>
-        <div class="card-desc">Retourne les cartes pour trouver toutes les paires. Flip élégant et suspense doré.</div>
+        <div class="card-desc">Fusionne les tuiles pour atteindre 2048. Stratégie, anticipation et un soupçon de chance dorée.</div>
         <div class="card-tags">
           <span class="tag solo">Solo</span>
-          <span class="tag strat">Concentration</span>
+          <span class="tag strat">Logique</span>
         </div>
         <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
       </div>
       <div class="card-glow" style="background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);"></div>
     </a>
 
-    <!-- Carte Tic-Tac-Toe -->
-    <a href="tictactoe.html" class="gcard">
-      <div class="card-preview" style="background: radial-gradient(ellipse at 50% 60%, #0e1730 0%, #07091a 100%); display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:20px;">
-        <div style="background:rgba(201,168,76,0.1);border-radius:6px;color:#cc2233;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">X</div>
-        <div style="background:rgba(201,168,76,0.1);border-radius:6px;color:var(--gold2);font-size:1.8rem;display:flex;align-items:center;justify-content:center;">O</div>
-        <div style="background:rgba(201,168,76,0.1);border-radius:6px;"></div>
-        <div style="background:rgba(201,168,76,0.1);border-radius:6px;color:#cc2233;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">X</div>
-        <div style="background:rgba(201,168,76,0.1);border-radius:6px;color:var(--gold2);font-size:1.8rem;display:flex;align-items:center;justify-content:center;">O</div>
+    <a href="gofish.html" class="gcard">
+      <div class="card-preview preview-gf">
+        <div style="font-size:4rem; filter: drop-shadow(0 0 10px var(--gold));">🐟</div>
       </div>
       <div class="card-info">
-        <div class="card-badge">STRATÉGIE • IA</div>
-        <div class="card-title">Morpion Royal</div>
-        <div class="card-desc">Classique morpion contre une IA rusée. X ou O, qui dominera la grille dorée ?</div>
+        <div class="card-badge">CARTES • CLASSIQUE</div>
+        <div class="card-title">Go Fish</div>
+        <div class="card-desc">Demandez des cartes à l’IA, pêchez dans la pioche et complétez vos sets. Le classique familial revisité.</div>
         <div class="card-tags">
-          <span class="tag ia">Mini-IA</span>
-          <span class="tag strat">Rapide</span>
+          <span class="tag ia">IA Adversaire</span>
+          <span class="tag strat">Hasard + Strat</span>
         </div>
         <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
       </div>
-      <div class="card-glow" style="background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);"></div>
+      <div class="card-glow" style="background: linear-gradient(135deg, rgba(122,180,255,0.1), transparent);"></div>
     </a>
-<!-- Carte Go Fish -->
-<a href="gofish.html" class="gcard">
-  <div class="card-preview" style="background: radial-gradient(ellipse at 50% 60%, #0a1f2e 0%, #05121a 100%); display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;">
-    <div style="font-size:5rem;">🐟</div>
-    <div style="font-size:4.5rem;color:var(--gold2);">Go Fish</div>
-    <div style="font-size:2.8rem;">🎣</div>
-  </div>
-  <div class="card-info">
-    <div class="card-badge">CARTES • GO FISH</div>
-    <div class="card-title">Go Fish</div>
-    <div class="card-desc">Demande des cartes à l’IA, pêche dans la pioche et complète tes sets en premier. Classique familial revisité !</div>
-    <div class="card-tags">
-      <span class="tag ia">IA Adversaire</span>
-      <span class="tag solo">1 Joueur</span>
-      <span class="tag strat">Hasard + Stratégie</span>
-    </div>
-    <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
-  </div>
-  <div class="card-glow" style="background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);"></div>
-</a>
-    <!-- Carte Blackjack -->
+
     <a class="gcard" href="blackjack.html">
-      <div class="card-glow" style="background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.12),transparent 70%)"></div>
       <div class="card-preview preview-bj">
         <div class="bj-cards">
           <div class="mini-card blk">A<br><small>♠</small></div>
           <div class="mini-card red">K<br><small>♥</small></div>
-          <div class="mini-card blk">7<br><small>♣</small></div>
-          <div class="mini-card red" style="transform:rotate(6deg)">J<br><small>♦</small></div>
         </div>
         <div class="bj-badge">✦ Blackjack</div>
       </div>
       <div class="card-info">
         <div class="card-badge">Casino · Vegas Strip</div>
         <div class="card-title">Casino Royal</div>
-        <div class="card-desc">Affrontez le croupier IA dans une salle au luxe Art Déco. Misez, doublez, abandonnez — stratégie de base intégrée.</div>
+        <div class="card-desc">Affrontez le croupier IA. Misez, doublez, abandonnez — stratégie de base intégrée.</div>
         <div class="card-tags">
           <span class="tag ia">IA Croupier</span>
           <span class="tag solo">1 Joueur</span>
-          <span class="tag strat">Stratégie</span>
+        </div>
+        <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
+      </div>
+      <div class="card-glow" style="background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.12),transparent 70%)"></div>
+    </a>
+
+    <a href="memory.html" class="gcard">
+      <div class="card-preview" style="background: radial-gradient(ellipse at 50% 60%, #1a0f00 0%, #0a0500 100%);">
+        <div style="font-size:6rem;color:var(--gold2);">?</div>
+      </div>
+      <div class="card-info">
+        <div class="card-badge">MEMORY • CARTES</div>
+        <div class="card-title">Memory Royal</div>
+        <div class="card-desc">Retourne les cartes pour trouver les paires. Flip élégant et suspense doré.</div>
+        <div class="card-tags">
+          <span class="tag solo">Solo</span>
+          <span class="tag strat">Mémoire</span>
+        </div>
+        <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
+      </div>
+      <div class="card-glow" style="background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);"></div>
+    </a>
+
+    <a href="tictactoe.html" class="gcard">
+      <div class="card-preview" style="background: radial-gradient(ellipse at 50% 60%, #0e1730 0%, #07091a 100%); display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:40px;">
+        <div style="color:#cc2233;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">X</div>
+        <div style="color:var(--gold2);font-size:1.8rem;display:flex;align-items:center;justify-content:center;">O</div>
+        <div></div><div></div>
+        <div style="color:#cc2233;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">X</div>
+      </div>
+      <div class="card-info">
+        <div class="card-badge">STRATÉGIE • IA</div>
+        <div class="card-title">Morpion Royal</div>
+        <div class="card-desc">Classique morpion contre une IA rusée. X ou O, qui dominera la grille ?</div>
+        <div class="card-tags">
+          <span class="tag ia">Mini-IA</span>
+          <span class="tag strat">Rapide</span>
         </div>
         <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
       </div>
     </a>
 
-    <!-- Carte Puissance 4 -->
     <a class="gcard" href="puissance4.html">
-      <div class="card-glow" style="background:radial-gradient(ellipse at 50% 0%,rgba(240,58,90,.1),transparent 70%)"></div>
       <div class="card-preview preview-p4">
         <div class="p4-grid" id="p4prev"></div>
       </div>
       <div class="card-info">
         <div class="card-badge">Stratégie · Minimax</div>
         <div class="card-title">Puissance 4</div>
-        <div class="card-desc">Jouez contre une IA redoutable (alpha-bêta) ou regardez deux intelligences s'affronter en temps réel.</div>
+        <div class="card-desc">IA redoutable (alpha-bêta) ou duel d'intelligences en temps réel.</div>
         <div class="card-tags">
           <span class="tag ia">IA Minimax</span>
           <span class="tag vs">IA vs IA</span>
-          <span class="tag strat">3 Niveaux</span>
         </div>
         <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
       </div>
     </a>
 
-    <!-- Carte Snake -->
     <a class="gcard" href="snake.html">
-      <div class="card-glow" style="background:radial-gradient(ellipse at 50% 0%,rgba(0,255,100,.08),transparent 70%)"></div>
       <div class="card-preview preview-sn">
         <div class="sn-grid" id="snprev"></div>
       </div>
       <div class="card-info">
         <div class="card-badge">Arcade · Pathfinding A★</div>
         <div class="card-title">Snake Royale</div>
-        <div class="card-desc">Quatre serpents IA s'affrontent dans une arène néon. Chacun cherche sa survie avec l'algorithme A★.</div>
+        <div class="card-desc">Quatre serpents IA s'affrontent avec l'algorithme A★ pour la survie.</div>
         <div class="card-tags">
-          <span class="tag ia">A★ Pathfinding</span>
-          <span class="tag vs">4 IA</span>
-          <span class="tag solo">Spectacle</span>
+          <span class="tag ia">A★ Path</span>
+          <span class="tag vs">Bataille IA</span>
         </div>
         <div class="card-cta"><span class="cta-play">Jouer maintenant</span><span class="cta-arrow">→</span></div>
       </div>
@@ -308,12 +283,10 @@ footer{position:relative;z-index:1;text-align:center;padding:30px 20px 40px;
   </div>
 </div>
 
-<!-- Footer -->
-<footer>Arcade Royale · Tous les jeux sont jouables hors-ligne · Aucune donnée collectée</footer>
+<footer>Arcade Royale · Tous les jeux sont jouables hors-ligne · 2024</footer>
 
-<!-- Scripts JavaScript -->
 <script>
-// Génération des étoiles animées en fond
+// Génération des étoiles
 (()=>{
   const s=document.getElementById('stars');
   for(let i=0;i<150;i++){
@@ -324,44 +297,26 @@ footer{position:relative;z-index:1;text-align:center;padding:30px 20px 40px;
   }
 })();
 
-// Aperçu animé Puissance 4 (grille figée)
+// Aperçu Puissance 4
 (()=>{
   const grid=document.getElementById('p4prev');
-  const layout=[
-    [0,0,0,0,0,0,0],
-    [0,0,0,1,0,0,0],
-    [0,0,1,2,0,0,0],
-    [0,1,2,2,1,0,0],
-    [0,2,1,1,2,0,0],
-    [2,1,2,2,1,1,2],
-  ];
+  const layout=[[0,0,0,0,0,0,0],[0,0,0,1,0,0,0],[0,0,1,2,0,0,0],[0,1,2,2,1,0,0],[0,2,1,1,2,0,0],[2,1,2,2,1,1,2]];
   layout.forEach(row=>row.forEach(v=>{
     const c=document.createElement('div');c.className='p4c'+(v===1?' r':v===2?' y':'');grid.appendChild(c);
   }));
 })();
 
-// Aperçu Snake (serpents et nourriture figés)
+// Aperçu Snake
 (()=>{
   const g=document.getElementById('snprev');
-  const snakes=[
-    {segs:[[3,2],[3,3],[3,4],[3,5]],color:'#00ff66'},
-    {segs:[[8,7],[7,7],[6,7]],color:'#ff3366'},
-    {segs:[[11,3],[11,4],[11,5]],color:'#3399ff'},
-    {segs:[[2,9],[3,9],[4,9],[5,9]],color:'#ffcc00'},
-  ];
-  const W=160,H=120,SZ=12,GAP=2;
-  snakes.forEach(({segs,color},si)=>{
-    segs.forEach((([x,y],i)=>{
+  const snakes=[{segs:[[3,2],[3,3],[3,4]],color:'#00ff66'},{segs:[[8,7],[7,7]],color:'#ff3366'}];
+  const SZ=12,GAP=2;
+  snakes.forEach(({segs,color})=>{
+    segs.forEach(([x,y],i)=>{
       const el=document.createElement('div');el.className='sn-seg';
-      el.style.cssText=`left:${x*(SZ+GAP)}px;top:${y*(SZ+GAP)}px;background:${color};opacity:${1-i*.15};box-shadow:0 0 6px ${color}`;
+      el.style.cssText=`left:${x*(SZ+GAP)}px;top:${y*(SZ+GAP)}px;background:${color};opacity:${1-i*.2};box-shadow:0 0 6px ${color}`;
       g.appendChild(el);
-    }));
-  });
-  // Nourritures
-  [[6,5],[10,8]].forEach(([x,y])=>{
-    const el=document.createElement('div');el.className='sn-food';
-    el.style.cssText=`left:${x*(SZ+GAP)+1}px;top:${y*(SZ+GAP)+1}px;background:#ff66aa;box-shadow:0 0 8px #ff66aa`;
-    g.appendChild(el);
+    });
   });
 })();
 </script>
