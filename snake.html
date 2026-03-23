@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNAKE BATTLE ROYALE | Neon Arcade</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+:root{
+  --neon-gold:#ffd700;--neon-cyan:#00ffff;--neon-pink:#ff00ff;--neon-green:#00ff88;
+  --neon-red:#ff3366;--neon-blue:#3366ff;--neon-purple:#8b2be2;
+  --bg-deep:#0a0a0f;--bg-card:rgba(20,20,30,0.8);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  background:var(--bg-deep);
+  color:#fff;
+  font-family:'Rajdhani',sans-serif;
+  overflow-x:hidden;
+  min-height:100vh;
+  position:relative;
+}
+
+/* FOND COSMIQUE */
+body::before{
+  content:'';
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:
+    radial-gradient(circle at 20% 30%,rgba(0,255,136,0.05) 0%,transparent 50%),
+    radial-gradient(circle at 80% 70%,rgba(255,0,255,0.05) 0%,transparent 50%),
+    radial-gradient(circle at 40% 80%,rgba(0,255,255,0.05) 0%,transparent 50%);
+  z-index:-2;
+}
+
+/* PARTICULES */
+#particles-js{
+  position:fixed;
+  width:100%;
+  height:100%;
+  z-index:-1;
+}
+
+/* HEADER */
+.neon-header{
+  position:relative;
+  z-index:1;
+  text-align:center;
+  padding:40px 20px 30px;
+}
+
+.neon-title{
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(2.5rem,8vw,4.5rem);
+  font-weight:900;
+  line-height:1;
+  letter-spacing:2px;
+  background:linear-gradient(135deg,#00ff88,#00ffff,#ff00ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:0 0 20px rgba(0,255,136,0.5);
+  margin-bottom:15px;
+  animation:titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow{
+  0%{filter:hue-rotate(0deg);}
+  100%{filter:hue-rotate(360deg);}
+}
+
+.neon-subtitle{
+  font-family:'Orbitron',sans-serif;
+  font-size:1rem;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  color:var(--neon-cyan);
+  margin-bottom:20px;
+}
+
+.back-btn{
+  position:absolute;
+  left:20px;
+  top:20px;
+  color:var(--neon-gold);
+  text-decoration:none;
+  font-size:0.9rem;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:all 0.3s;
+  z-index:10;
+}
+
+.back-btn:hover{
+  color:var(--neon-cyan);
+  transform:translateX(-5px);
+}
+
+/* STATS */
+.stats-neon{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:20px;
+  padding:0 20px 30px;
+  max-width:1000px;
+  margin:0 auto;
+}
+
+.stat-card{
+  background:var(--bg-card);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:15px;
+  padding:20px;
+  text-align:center;
+  transition:all 0.4s;
+  position:relative;
+  overflow:hidden;
+}
+
+.stat-card:hover{
+  transform:translateY(-5px);
+  border-color:var(--neon-green);
+  box-shadow:0 15px 30px rgba(0,0,0,0.4),
+             0 0 20px rgba(0,255,136,0.3);
+}
+
+.stat-icon{
+  font-size:2rem;
+  margin-bottom:10px;
+  color:var(--neon-green);
+}
+
+.stat-number{
+  font-family:'Orbitron',sans-serif;
+  font-size:2.5rem;
+  font-weight:900;
+  color:var(--neon-green);
+  line-height:1;
+  margin-bottom:5px;
+}
+
+.stat-label{
+  font-size:0.8rem;
+  color:var(--neon-cyan);
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+}
+
+/* CANVAS CONTAINER */
+.canvas-container{
+  position:relative;
+  z-index:1;
+  margin:20px auto;
+  max-width:800px;
+  padding:0 20px;
+}
+
+#gameCanvas{
+  display:block;
+  background:rgba(0,10,5,0.9);
+  border-radius:20px;
+  border:3px solid rgba(0,255,136,0.3);
+  box-shadow:
+    0 0 40px rgba(0,0,0,0.8),
+    0 0 60px rgba(0,255,136,0.2),
+    inset 0 0 30px rgba(0,255,136,0.1);
+  width:100%;
+  max-width:600px;
+  height:600px;
+  margin:0 auto;
+}
+
+/* SNAKE INFO */
+.snakes-info{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;
+  max-width:1000px;
+  margin:30px auto;
+  padding:0 20px;
+}
+
+.snake-info-card{
+  background:var(--bg-card);
+  border-radius:15px;
+  padding:15px;
+  border:2px solid;
+  transition:all 0.3s;
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.snake-info-card:nth-child(1){border-color:#00ff88;}
+.snake-info-card:nth-child(2){border-color:#ff3366;}
+.snake-info-card:nth-child(3){border-color:#3366ff;}
+.snake-info-card:nth-child(4){border-color:#ffcc00;}
+
+.snake-color{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.2rem;
+  font-weight:bold;
+  color:#000;
+}
+
+.snake-details{
+  flex:1;
+}
+
+.snake-name{
+  font-family:'Orbitron',sans-serif;
+  font-size:1.1rem;
+  font-weight:700;
+  margin-bottom:5px;
+}
+
+.snake-stats{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.8rem;
+  color:#aaa;
+}
+
+/* CONTROLS */
+.controls-neon{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:15px;
+  justify-content:center;
+  padding:20px;
+  max-width:800px;
+  margin:0 auto;
+}
+
+.btn-neon{
+  padding:15px 30px;
+  border:none;
+  border-radius:50px;
+  font-family:'Orbitron',sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.3s;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,#00ff88,#00cc66);
+  color:#000;
+}
+
+.btn-primary:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 25px rgba(0,255,136,0.4);
+}
+
+.btn-secondary{
+  background:rgba(255,255,255,0.1);
+  color:var(--neon-cyan);
+  border:1px solid rgba(0,255,255,0.3);
+}
+
+.btn-secondary:hover{
+  background:rgba(0,255,255,0.1);
+  transform:translateY(-3px);
+}
+
+/* MESSAGE */
+.message-neon{
+  text-align:center;
+  padding:20px;
+  margin:20px auto;
+  max-width:600px;
+  position:relative;
+  z-index:1;
+}
+
+.message-content{
+  background:rgba(0,0,0,0.5);
+  padding:20px 40px;
+  border-radius:50px;
+  border:2px solid var(--neon-gold);
+  color:var(--neon-gold);
+  font-size:1.2rem;
+  font-weight:600;
+  letter-spacing:1px;
+  animation:pulse 2s infinite alternate;
+}
+
+@keyframes pulse{
+  0%{box-shadow:0 0 10px rgba(255,215,0,0.3);}
+  100%{box-shadow:0 0 30px rgba(255,215,0,0.7);}
+}
+
+/* POWER UPS */
+.powerups-container{
+  position:relative;
+  z-index:1;
+  max-width:800px;
+  margin:30px auto;
+  padding:0 20px;
+}
+
+.powerups-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:15px;
+}
+
+.powerup-card{
+  background:rgba(255,255,255,0.05);
+  border-radius:15px;
+  padding:15px;
+  text-align:center;
+  border:1px solid rgba(255,255,255,0.1);
+  transition:all 0.3s;
+}
+
+.powerup-card:hover{
+  transform:translateY(-5px);
+  border-color:var(--neon-purple);
+  box-shadow:0 10px 20px rgba(139,43,226,0.3);
+}
+
+.powerup-icon{
+  font-size:2rem;
+  margin-bottom:10px;
+  color:var(--neon-purple);
+}
+
+.powerup-name{
+  font-family:'Orbitron',sans-serif;
+  font-size:0.9rem;
+  color:var(--neon-purple);
+  margin-bottom:5px;
+}
+
+.powerup-desc{
+  font-size:0.7rem;
+  color:#aaa;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats-neon{grid-template-columns:repeat(2,1fr);}
+  .snakes-info{grid-template-columns:1fr;}
+  #gameCanvas{height:400px;}
+  .controls-neon{flex-direction:column;align-items:center;}
+  .btn-neon{width:100%;max-width:300px;justify-content:center;}
+}
+
+@media(max-width:480px){
+  .stats-neon{grid-template-columns:1fr;}
+  #gameCanvas{height:300px;}
+  .neon-title{font-size:2rem;}
+  .neon-subtitle{font-size:0.8rem;letter-spacing:2px;}
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:10px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.2);}
+::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#00ff88,#00ffff);border-radius:5px;}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#00ffff,#ff00ff);}
+</style>
+</head>
+<body>
+<!-- Particules -->
+<div id="particles-js"></div>
+
+<!-- Header -->
+<div class="neon-header">
+  <a href="index.html" class="back-btn">
+    <i class="fas fa-arrow-left"></i> RETOUR
+  </a>
+  <h1 class="neon-title">SNAKE BATTLE ROYALE</h1>
+  <div class="neon-subtitle">4 IA • PATHFINDING A★ • EFFETS NÉON</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-neon">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+    <div class="stat-number" id="round">1</div>
+    <div class="stat-label">Round</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-heart"></i></div>
+    <div class="stat-number" id="alive">4</div>
+    <div class="stat-label">Survivants</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-star"></i></div>
+    <div class="stat-number" id="score">0</div>
+    <div class="stat-label">Score Total</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+    <div class="stat-number" id="speed">Normal</div>
+    <div class="stat-label">Vitesse</div>
+  </div>
+</div>
+
+<!-- Canvas -->
+<div class="canvas-container">
+  <canvas id="gameCanvas" width="600" height="600"></canvas>
+</div>
+
+<!-- Message -->
+<div class="message-neon">
+  <div class="message-content" id="message">
+    <i class="fas fa-play-circle"></i> PRÊT POUR LE COMBAT !
+  </div>
+</div>
+
+<!-- Snakes Info -->
+<div class="snakes-info">
+  <div class="snake-info-card">
+    <div class="snake-color" style="background:#00ff88;box-shadow:0 0 15px #00ff88;">S1</div>
+    <div class="snake-details">
+      <div class="snake-name">ÉMERAUDE</div>
+      <div class="snake-stats">
+        <span>Score: <span id="score1">0</span></span>
+        <span>Longueur: <span id="len1">3</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="snake-info-card">
+    <div class="snake-color" style="background:#ff3366;box-shadow:0 0 15px #ff3366;">S2</div>
+    <div class="snake-details">
+      <div class="snake-name">ÉCARLATE</div>
+      <div class="snake-stats">
+        <span>Score: <span id="score2">0</span></span>
+        <span>Longueur: <span id="len2">3</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="snake-info-card">
+    <div class="snake-color" style="background:#3366ff;box-shadow:0 0 15px #3366ff;">S3</div>
+    <div class="snake-details">
+      <div class="snake-name">SAPHIR</div>
+      <div class="snake-stats">
+        <span>Score: <span id="score3">0</span></span>
+        <span>Longueur: <span id="len3">3</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="snake-info-card">
+    <div class="snake-color" style="background:#ffcc00;box-shadow:0 0 15px #ffcc00;">S4</div>
+    <div class="snake-details">
+      <div class="snake-name">OR</div>
+      <div class="snake-stats">
+        <span>Score: <span id="score4">0</span></span>
+        <span>Longueur: <span id="len4">3</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Power Ups -->
+<div class="powerups-container">
+  <h3 style="color:var(--neon-purple);text-align:center;margin-bottom:20px;font-family:'Orbitron',sans-serif;">
+    <i class="fas fa-gem"></i> POUVOIRS SPÉCIAUX
+  </h3>
+  <div class="powerups-grid">
+    <div class="powerup-card">
+      <div class="powerup-icon"><i class="fas fa-bolt"></i></div>
+      <div class="powerup-name">VITESSE ×2</div>
+      <div class="powerup-desc">Double la vitesse pour 5 secondes</div>
+    </div>
+    <div class="powerup-card">
+      <div class="powerup-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="powerup-name">BOUCLIER</div>
+      <div class="powerup-desc">Invincible pendant 3 secondes</div>
+    </div>
+    <div class="powerup-card">
+      <div class="powerup-icon"><i class="fas fa-magnet"></i></div>
+      <div class="powerup-name">AIMANT</div>
+      <div class="powerup-desc">Attire la nourriture</div>
+    </div>
+    <div class="powerup-card">
+      <div class="powerup-icon"><i class="fas fa-expand-arrows-alt"></i></div>
+      <div class="powerup-name">GRANDE TAILLE</div>
+      <div class="powerup-desc">+3 segments instantanés</div>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-neon">
+  <button class="btn-neon btn-primary" onclick="startGame()">
+    <i class="fas fa-play"></i> DÉMARRER LE COMBAT
+  </button>
+  <button class="btn-neon btn-secondary" onclick="resetGame()">
+    <i class="fas fa-redo"></i> NOUVEAU ROUND
+  </button>
+  <button class="btn-neon btn-secondary" onclick="togglePause()">
+    <i class="fas fa-pause"></i> PAUSE / REPRENDRE
+  </button>
+  <button class="btn-neon btn-secondary" onclick="toggleSpeed()">
+    <i class="fas fa-tachometer-alt"></i> VITESSE: <span id="speedBtn">Normal</span>
+  </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+// ===== INITIALISATION PARTICULES =====
+particlesJS("particles-js", {
+  particles: {
+    number: { value: 60, density: { enable: true, value_area: 800 } },
+    color: { value: "#00ff88" },
+    shape: { type: "circle" },
+    opacity: { value: 0.5, random: true },
+    size: { value: 3, random: true },
+    line_linked: {
+      enable: true,
+      distance: 150,
+      color: "#00ffff",
+      opacity: 0.2,
+      width: 1
+    },
+    move: {
+      enable: true,
+      speed: 2,
+      direction: "none",
+      random: true,
+      straight: false,
+      out_mode: "out",
+      bounce: false
+    }
+  },
+  interactivity: {
+    detect_on: "canvas",
+    events: {
+      onhover: { enable: true, mode: "repulse" },
+      onclick: { enable: true, mode: "push" }
+    }
+  }
+});
+
+// ===== CONFIGURATION DU JEU =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const GRID_SIZE = 30;
+const CELL_SIZE = canvas.width / GRID_SIZE;
+
+// Configuration des serpents
+let snakes = [
+  {
+    id: 1,
+    name: "ÉMERAUDE",
+    segments: [[5, 5], [5, 6], [5, 7]],
+    color: "#00ff88",
+    glow: "rgba(0, 255, 136, 0.7)",
+    dir: [1, 0],
+    alive: true,
+    score: 0,
+    kills: 0,
+    speed: 1,
+    powerUps: [],
+    ai: "aggressive"
+  },
+  {
+    id: 2,
+    name: "ÉCARLATE",
+    segments: [[24, 5], [24, 6], [24, 7]],
+    color: "#ff3366",
+    glow: "rgba(255, 51, 102, 0.7)",
+    dir: [-1, 0],
+    alive: true,
+    score: 0,
+    kills: 0,
+    speed: 1,
+    powerUps: [],
+    ai: "defensive"
+  },
+  {
+    id: 3,
+    name: "SAPHIR",
+    segments: [[5, 24], [5, 23], [5, 22]],
+    color: "#3366ff",
+    glow: "rgba(51, 102, 255, 0.7)",
+    dir: [0, -1],
+    alive: true,
+    score: 0,
+    kills: 0,
+    speed: 1,
+    powerUps: [],
+    ai: "balanced"
+  },
+  {
+    id: 4,
+    name: "OR",
+    segments: [[24, 24], [24, 23], [24, 22]],
+    color: "#ffcc00",
+    glow: "rgba(255, 204, 0, 0.7)",
+    dir: [0, 1],
+    alive: true,
+    score: 0,
+    kills: 0,
+    speed: 1,
+    powerUps: [],
+    ai: "random"
+  }
+];
+
+let foods = [];
+let powerUps = [];
+let round = 1;
+let totalScore = 0;
+let gameRunning = false;
+let gamePaused = false;
+let gameSpeed = 150; // ms
+let gameLoop;
+let aliveCount = 4;
+
+// ===== FONCTIONS DE BASE =====
+function initGame() {
+  snakes.forEach(snake => {
+    snake.alive = true;
+    snake.segments = [
+      [
+        Math.floor(Math.random() * (GRID_SIZE - 10)) + 5,
+        Math.floor(Math.random() * (GRID_SIZE - 10)) + 5
+      ]
+    ];
+    snake.dir = [
+      Math.random() > 0.5 ? 1 : -1,
+      Math.random() > 0.5 ? 1 : -1
+    ];
+    snake.score = 0;
+    snake.kills = 0;
+    snake.powerUps = [];
+  });
+  
+  foods = [];
+  powerUps = [];
+  
+  // Générer de la nourriture
+  for (let i = 0; i < 10; i++) spawnFood();
+  
+  // Générer des power-ups occasionnels
+  if (Math.random() > 0.7) spawnPowerUp();
+  
+  updateDisplay();
+  draw();
+}
+
+function spawnFood() {
+  let x, y;
+  do {
+    x = Math.floor(Math.random() * GRID_SIZE);
+    y = Math.floor(Math.random() * GRID_SIZE);
+  } while (isOccupied(x, y));
+  
+  foods.push({
+    x, y,
+    type: Math.random() > 0.8 ? 'special' : 'normal',
+    value: Math.random() > 0.9 ? 5 : 1,
+    color: Math.random() > 0.8 ? '#ff66aa' : '#ffaa00'
+  });
+}
+
+function spawnPowerUp() {
+  let x, y;
+  do {
+    x = Math.floor(Math.random() * GRID_SIZE);
+    y = Math.floor(Math.random() * GRID_SIZE);
+  } while (isOccupied(x, y));
+  
+  const types = ['speed', 'shield', 'magnet', 'grow'];
+  powerUps.push({
+    x, y,
+    type: types[Math.floor(Math.random() * types.length)],
+    color: '#8b2be2',
+    active: true
+  });
+}
+
+function isOccupied(x, y) {
+  // Vérifier les serpents
+  for (let snake of snakes) {
+    if (!snake.alive) continue;
+    for (let seg of snake.segments) {
+      if (seg[0] === x && seg[1] === y) return true;
+    }
+  }
+  
+  // Vérifier la nourriture
+  for (let food of foods) {
+    if (food.x === x && food.y === y) return true;
+  }
+  
+  // Vérifier les power-ups
+  for (let powerUp of powerUps) {
+    if (powerUp.x === x && powerUp.y === y && powerUp.active) return true;
+  }
+  
+  return false;
+}
+
+// ===== IA AVANCÉE - PATHFINDING A★ =====
+function aStarPathfinding(start, goal, snakeId) {
+  const openSet = [start];
+  const cameFrom = new Map();
+  const gScore = new Map();
+  const fScore = new Map();
+  
+  gScore.set(start.toString(), 0);
+  fScore.set(start.toString(), heuristic(start, goal));
+  
+  while (openSet.length > 0) {
+    openSet.sort((a, b) => fScore.get(a.toString()) - fScore.get(b.toString()));
+    const current = openSet.shift();
+    
+    if (current[0] === goal[0] && current[1] === goal[1]) {
+      return reconstructPath(cameFrom, current);
+    }
+    
+    const neighbors = getNeighbors(current, snakeId);
+    
+    for (const neighbor of neighbors) {
+      const tentativeGScore = gScore.get(current.toString()) + 1;
+      
+      if (!gScore.has(neighbor.toString()) || tentativeGScore < gScore.get(neighbor.toString())) {
+        cameFrom.set(neighbor.toString(), current);
+        gScore.set(neighbor.toString(), tentativeGScore);
+        fScore.set(neighbor.toString(), tentativeGScore + heuristic(neighbor, goal));
+        
+        if (!openSet.some(n => n[0] === neighbor[0] && n[1] === neighbor[1])) {
+          openSet.push(neighbor);
+        }
+      }
+    }
+  }
+  
+  return null; // Pas de chemin trouvé
+}
+
+function heuristic(a, b) {
+  // Distance de Manhattan
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+}
+
+function getNeighbors(pos, snakeId) {
+  const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const neighbors = [];
+  
+  for (const [dx, dy] of directions) {
+    const nx = pos[0] + dx;
+    const ny = pos[1] + dy;
+    
+    // Vérifier les limites
+    if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) continue;
+    
+    // Vérifier les collisions avec d'autres serpents
+    let collision = false;
+    for (const snake of snakes) {
+      if (!snake.alive || snake.id === snakeId) continue;
+      for (const seg of snake.segments) {
+        if (seg[0] === nx && seg[1] === ny) {
+          collision = true;
+          break;
+        }
+      }
+      if (collision) break;
+    }
+    
+    if (!collision) {
+      neighbors.push([nx, ny]);
+    }
+  }
+  
+  return neighbors;
+}
+
+function reconstructPath(cameFrom, current) {
+  const path = [current];
+  while (cameFrom.has(current.toString())) {
+    current = cameFrom.get(current.toString());
+    path.unshift(current);
+  }
+  return path;
+}
+
+// ===== LOGIQUE DE JEU =====
+function update() {
+  if (!gameRunning || gamePaused) return;
+  
+  snakes.forEach(snake => {
+    if (!snake.alive) return;
+    
+    // IA : Chercher la nourriture la plus proche
+    let targetFood = null;
+    let minDist = Infinity;
+    
+    foods.forEach(food => {
+      const dist = Math.abs(food.x - snake.segments[0][0]) + Math.abs(food.y - snake.segments[0][1]);
+      if (dist < minDist) {
+        minDist = dist;
+        targetFood = food;
+      }
+    });
+    
+    // IA : Chercher les power-ups
+    powerUps.forEach(powerUp => {
+      if (!powerUp.active) return;
+      const dist = Math.abs(powerUp.x - snake.segments[0][0]) + Math.abs(powerUp.y - snake.segments[0][1]);
+      if (dist < 5 && (!targetFood || dist < minDist)) {
+        targetFood = { x: powerUp.x, y: powerUp.y, type: 'powerup' };
+      }
+    });
+    
+    // Déterminer la direction
+    if (targetFood) {
+      const head = snake.segments[0];
+      const path = aStarPathfinding(head, [targetFood.x, targetFood.y], snake.id);
+      
+      if (path && path.length > 1) {
+        const next = path[1];
+        snake.dir = [next[0] - head[0], next[1] - head[1]];
+      }
+    }
+    
+    // Nouvelle tête
+    const head = snake.segments[0];
+    const newHead = [
+      head[0] + snake.dir[0],
+      head[1] + snake.dir[1]
+    ];
+    
+    // Vérifier les collisions avec les murs
+    if (newHead[0] < 0 || newHead[0] >= GRID_SIZE || newHead[1] < 0 || newHead[1] >= GRID_SIZE) {
+      snake.alive = false;
+      return;
+    }
+    
+    // Vérifier les collisions avec soi-même
+    for (let i = 1; i < snake.segments.length; i++) {
+      if (snake.segments[i][0] === newHead[0] && snake.segments[i][1] === newHead[1]) {
+        snake.alive = false;
+        return;
+      }
+    }
+    
+    // Vérifier les collisions avec d'autres serpents
+    snakes.forEach(otherSnake => {
+      if (!otherSnake.alive || otherSnake.id === snake.id) return;
+      for (const seg of otherSnake.segments) {
+        if (seg[0] === newHead[0] && seg[1] === newHead[1]) {
+          snake.alive = false;
+          otherSnake.kills++;
+          otherSnake.score += 50;
+          return;
+        }
+      }
+    });
+    
+    if (!snake.alive) return;
+    
+    // Ajouter la nouvelle tête
+    snake.segments.unshift(newHead);
+    
+    // Vérifier la nourriture
+    let ateFood = false;
+    for (let i = foods.length - 1; i >= 0; i--) {
+      if (foods[i].x === newHead[0] && foods[i].y === newHead[1]) {
+        snake.score += foods[i].value;
+        snake.segments.push([...snake.segments[snake.segments.length - 1]]);
+        foods.splice(i, 1);
+        ateFood = true;
+        spawnFood(); // Nouvelle nourriture
+        break;
+      }
+    }
+    
+    // Vérifier les power-ups
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+      if (powerUps[i].active && powerUps[i].x === newHead[0] && powerUps[i].y === newHead[1]) {
+        applyPowerUp(snake, powerUps[i].type);
+        powerUps[i].active = false;
+        break;
+      }
+    }
+    
+    // Si pas mangé, retirer la queue
+    if (!ateFood) {
+      snake.segments.pop();
+    }
+  });
+  
+  // Mettre à jour le compteur de survivants
+  aliveCount = snakes.filter(s => s.alive).length;
+  
+  // Vérifier la fin du round
+  if (aliveCount <= 1) {
+    endRound();
+  }
+  
+  updateDisplay();
+  draw();
+}
+
+function applyPowerUp(snake, type) {
+  snake.powerUps.push({ type, duration: 300 });
+  
+  switch(type) {
+    case 'speed':
+      snake.speed = 2;
+      break;
+    case 'shield':
+      // Logique de bouclier
+      break;
+    case 'magnet':
+      // Logique d'aimant
+      break;
+    case 'grow':
+      for (let i = 0; i < 3; i++) {
+        snake.segments.push([...snake.segments[snake.segments.length - 1]]);
+      }
+      break;
+  }
+}
+
+function endRound() {
+  gameRunning = false;
+  clearInterval(gameLoop);
+  
+  const winner = snakes.find(s => s.alive);
+  if (winner) {
+    winner.score += 100;
+    document.getElementById('message').innerHTML = `
+      <i class="fas fa-trophy"></i> ${winner.name} GAGNE LE ROUND ${round} !
+    `;
+  } else {
+    document.getElementById('message').innerHTML = `
+      <i class="fas fa-skull-crossbones"></i> ÉLIMINATION TOTALE !
+    `;
+  }
+  
+  round++;
+  totalScore = snakes.reduce((sum, s) => sum + s.score, 0);
+  
+  setTimeout(() => {
+    initGame();
+    document.getElementById('message').innerHTML = `
+      <i class="fas fa-play-circle"></i> ROUND ${round} - PRÊT !
+    `;
+  }, 3000);
+}
+
+// ===== GRAPHIQUES AVANCÉS =====
+function draw() {
+  // Fond
+  ctx.fillStyle = 'rgba(0, 10, 5, 0.9)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Grille subtile
+  ctx.strokeStyle = 'rgba(0, 255, 136, 0.05)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= GRID_SIZE; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * CELL_SIZE, 0);
+    ctx.lineTo(i * CELL_SIZE, canvas.height);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i * CELL_SIZE);
+    ctx.lineTo(canvas.width, i * CELL_SIZE);
+    ctx.stroke();
+  }
+  
+  // Nourriture
+  foods.forEach(food => {
+    const x = food.x * CELL_SIZE + CELL_SIZE / 2;
+    const y = food.y * CELL_SIZE + CELL_SIZE / 2;
+    const radius = CELL_SIZE / 3;
+    
+    // Effet de brillance
+    ctx.shadowColor = food.color;
+    ctx.shadowBlur = 15;
+    
+    // Gradient pour la nourriture
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.5);
+    gradient.addColorStop(0, food.color);
+    gradient.addColorStop(1, food.color + '80');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Animation de pulsation
+    if (food.type === 'special') {
+      const pulse = (Date.now() / 200) % (Math.PI * 2);
+      const pulseSize = radius * (0.8 + 0.2 * Math.sin(pulse));
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x, y, pulseSize / 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.shadowBlur = 0;
+  });
+  
+  // Power-ups
+  powerUps.forEach(powerUp => {
+    if (!powerUp.active) return;
+    
+    const x = powerUp.x * CELL_SIZE + CELL_SIZE / 2;
+    const y = powerUp.y * CELL_SIZE + CELL_SIZE / 2;
+    
+    ctx.shadowColor = '#8b2be2';
+    ctx.shadowBlur = 20;
+    
+    // Animation de rotation
+    const rotation = (Date.now() / 1000) % (Math.PI * 2);
+    
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    // Forme de diamant
+    ctx.fillStyle = '#8b2be2';
+    ctx.beginPath();
+    ctx.moveTo(0, -CELL_SIZE / 4);
+    ctx.lineTo(CELL_SIZE / 4, 0);
+    ctx.lineTo(0, CELL_SIZE / 4);
+    ctx.lineTo(-CELL_SIZE / 4, 0);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Centre brillant
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, CELL_SIZE / 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  });
+  
+  // Serpents
+  snakes.forEach(snake => {
+    if (!snake.alive) return;
+    
+    // Effet de lueur
+    ctx.shadowColor = snake.color;
+    ctx.shadowBlur = 15;
+    
+    snake.segments.forEach((segment, index) => {
+      const x = segment[0] * CELL_SIZE;
+      const y = segment[1] * CELL_SIZE;
+      const size = CELL_SIZE * 0.8;
+      const offset = (CELL_SIZE - size) / 2;
+      
+      // Gradient pour chaque segment
+      const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+      const opacity = 1 - (index / snake.segments.length) * 0.5;
+      
+      if (index === 0) {
+        // Tête
+        gradient.addColorStop(0, snake.color);
+        gradient.addColorStop(1, snake.color + '80');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Yeux
+        ctx.fillStyle = '#ffffff';
+        const eyeSize = size / 5;
+        const eyeOffset = size / 3;
+        
+        // Oeil gauche
+        ctx.beginPath();
+        ctx.arc(
+          x + CELL_SIZE / 2 + snake.dir[0] * eyeOffset - snake.dir[1] * eyeSize,
+          y + CELL_SIZE / 2 + snake.dir[1] * eyeOffset + snake.dir[0] * eyeSize,
+          eyeSize / 2, 0, Math.PI * 2
+        );
+        ctx.fill();
+        
+        // Oeil droit
+        ctx.beginPath();
+        ctx.arc(
+          x + CELL_SIZE / 2 + snake.dir[0] * eyeOffset + snake.dir[1] * eyeSize,
+          y + CELL_SIZE / 2 + snake.dir[1] * eyeOffset - snake.dir[0] * eyeSize,
+          eyeSize / 2, 0, Math.PI * 2
+        );
+        ctx.fill();
+        
+        // Pupilles
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(
+          x + CELL_SIZE / 2 + snake.dir[0] * (eyeOffset + eyeSize / 3) - snake.dir[1] * eyeSize,
+          y + CELL_SIZE / 2 + snake.dir[1] * (eyeOffset + eyeSize / 3) + snake.dir[0] * eyeSize,
+          eyeSize / 4, 0, Math.PI * 2
+        );
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(
+          x + CELL_SIZE / 2 + snake.dir[0] * (eyeOffset + eyeSize / 3) + snake.dir[1] * eyeSize,
+          y + CELL_SIZE / 2 + snake.dir[1] * (eyeOffset + eyeSize / 3) - snake.dir[0] * eyeSize,
+          eyeSize / 4, 0, Math.PI * 2
+        );
+        ctx.fill();
+      } else {
+        // Corps
+        gradient.addColorStop(0, snake.color + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
+        gradient.addColorStop(1, snake.color + '40');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x + offset, y + offset, size, size);
+        
+        // Détails sur le corps
+        ctx.fillStyle = snake.color + '80';
+        ctx.fillRect(x + offset + 2, y + offset + 2, size - 4, size - 4);
+      }
+    });
+    
+    // Effet de traînée
+    if (snake.segments.length > 3) {
+      const trailGradient = ctx.createLinearGradient(
+        snake.segments[1][0] * CELL_SIZE, snake.segments[1][1] * CELL_SIZE,
+        snake.segments[3][0] * CELL_SIZE, snake.segments[3][1] * CELL_SIZE
+      );
+      trailGradient.addColorStop(0, snake.color + '40');
+      trailGradient.addColorStop(1, snake.color + '00');
+      
+      ctx.strokeStyle = trailGradient;
+      ctx.lineWidth = CELL_SIZE / 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(
+        snake.segments[1][0] * CELL_SIZE + CELL_SIZE / 2,
+        snake.segments[1][1] * CELL_SIZE + CELL_SIZE / 2
+      );
+      ctx.lineTo(
+        snake.segments[3][0] * CELL_SIZE + CELL_SIZE / 2,
+        snake.segments[3][1] * CELL_SIZE + CELL_SIZE / 2
+      );
+      ctx.stroke();
+    }
+    
+    ctx.shadowBlur = 0;
+  });
+  
+  // Effets spéciaux
+  drawSpecialEffects();
+}
+
+function drawSpecialEffects() {
+  // Effet de particules pour les serpents morts
+  snakes.forEach(snake => {
+    if (!snake.alive && snake.segments.length > 0) {
+      const head = snake.segments[0];
+      const x = head[0] * CELL_SIZE + CELL_SIZE / 2;
+      const y = head[1] * CELL_SIZE + CELL_SIZE / 2;
+      
+      // Explosion de particules
+      for (let i = 0; i < 10; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3 + 1;
+        const size = Math.random() * 3 + 1;
+        
+        ctx.fillStyle = snake.color;
+        ctx.beginPath();
+        ctx.arc(
+          x + Math.cos(angle) * speed * 10,
+          y + Math.sin(angle) * speed * 10,
+          size, 0, Math.PI * 2
+        );
+        ctx.fill();
+      }
+    }
+  });
+}
+
+// ===== INTERFACE UTILISATEUR =====
+function updateDisplay() {
+  document.getElementById('round').textContent = round;
+  document.getElementById('alive').textContent = aliveCount;
+  document.getElementById('score').textContent = totalScore;
+  
+  // Mettre à jour les stats des serpents
+  snakes.forEach((snake, index) => {
+    document.getElementById(`score${index + 1}`).textContent = snake.score;
+    document.getElementById(`len${index + 1}`).textContent = snake.segments.length;
+  });
+}
+
+function startGame() {
+  if (gameRunning) return;
+  
+  gameRunning = true;
+  gamePaused = false;
+  
+  document.getElementById('message').innerHTML = `
+    <i class="fas fa-fight"></i> COMBAT EN COURS !
+  `;
+  
+  gameLoop = setInterval(update, gameSpeed);
+}
+
+function resetGame() {
+  if (gameRunning) {
+    clearInterval(gameLoop);
+    gameRunning = false;
+  }
+  
+  round = 1;
+  totalScore = 0;
+  aliveCount = 4;
+  
+  initGame();
+  
+  document.getElementById('message').innerHTML = `
+    <i class="fas fa-play-circle"></i> PRÊT POUR LE COMBAT !
+  `;
+}
+
+function togglePause() {
+  gamePaused = !gamePaused;
+  
+  if (gamePaused) {
+    document.getElementById('message').innerHTML = `
+      <i class="fas fa-pause"></i> JEU EN PAUSE
+    `;
+  } else {
+    document.getElementById('message').innerHTML = `
+      <i class="fas fa-fight"></i> COMBAT EN COURS !
+    `;
+  }
+}
+
+function toggleSpeed() {
+  if (gameSpeed === 150) {
+    gameSpeed = 75; // Rapide
+    document.getElementById('speed').textContent = 'Rapide';
+    document.getElementById('speedBtn').textContent = 'Rapide';
+  } else if (gameSpeed === 75) {
+    gameSpeed = 300; // Lent
+    document.getElementById('speed').textContent = 'Lent';
+    document.getElementById('speedBtn').textContent = 'Lent';
+  } else {
+    gameSpeed = 150; // Normal
+    document.getElementById('speed').textContent = 'Normal';
+    document.getElementById('speedBtn').textContent = 'Normal';
+  }
+  
+  if (gameRunning) {
+    clearInterval(gameLoop);
+    gameLoop = setInterval(update, gameSpeed);
+  }
+}
+
+// ===== INITIALISATION =====
+window.addEventListener('load', () => {
+  initGame();
+  draw();
+  
+  // Effet de frappe pour le titre
+  const title = document.querySelector('.neon-title');
+  const text = title.textContent;
+  title.textContent = '';
+  
+  text.split('').forEach((char, i) => {
+    const span = document.createElement('span');
+    span.textContent = char;
+    span.style.animationDelay = `${i * 0.05}s`;
+    span.style.opacity = '0';
+    span.style.animation = `fadeIn 0.3s forwards ${i * 0.05}s`;
+    title.appendChild(span);
+  });
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px) rotateX(90deg); }
+      to { opacity: 1; transform: translateY(0) rotateX(0); }
+    }
+  `;
+  document.head.appendChild(style);
+});
+</script>
+</body>
+</html>
