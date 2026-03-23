@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
         /* ============================================
@@ -41,6 +41,7 @@
             color: var(--text-primary);
             min-height: 100vh;
             padding: 60px 20px;
+            overflow-x: hidden;
         }
 
         /* ============================================
@@ -56,6 +57,12 @@
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 0;
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
         }
 
         /* ============================================
@@ -69,36 +76,55 @@
         }
 
         /* ============================================
-           TITLE
+           HEADER
            ============================================ */
-        .page-title {
+        .header {
             text-align: center;
             margin-bottom: 60px;
         }
 
-        .page-title h1 {
-            font-family: 'Cinzel', serif;
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 400;
-            color: var(--text-primary);
-            margin-bottom: 10px;
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
-        .page-title h1 .gold {
-            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 50%, var(--gold-dark) 100%);
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo-text {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .logo-text span {
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-primary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .page-title p {
-            font-size: 0.95rem;
+        .tagline {
+            font-size: 1rem;
             color: var(--text-secondary);
-            letter-spacing: 0.1em;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 300;
         }
 
         .divider {
-            width: 60px;
+            width: 80px;
             height: 2px;
             background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
             margin: 25px auto;
@@ -249,20 +275,6 @@
         }
 
         /* ============================================
-           ANIMATIONS
-           ============================================ */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ============================================
            RESPONSIVE
            ============================================ */
         @media (max-width: 768px) {
@@ -275,14 +287,28 @@
                 gap: 20px;
             }
 
-            .page-title {
-                margin-bottom: 40px;
+            .logo-text {
+                font-size: 2rem;
+            }
+
+            .tagline {
+                font-size: 0.85rem;
             }
         }
 
         @media (max-width: 480px) {
             .games-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .logo-text {
+                font-size: 1.6rem;
             }
         }
     </style>
@@ -293,11 +319,14 @@
 
     <!-- Main Container -->
     <div class="container">
-        <!-- Title -->
-        <div class="page-title">
-            <h1>Arcade <span class="gold">Royale</span></h1>
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">🎮</div>
+                <h1 class="logo-text">Arcade <span>Royale</span></h1>
+            </div>
+            <p class="tagline">L'excellence du divertissement</p>
             <div class="divider"></div>
-            <p>Sélection de Jeux</p>
         </div>
 
         <!-- Games Grid -->
@@ -455,7 +484,7 @@
         }
 
         // ============================================
-        // CARD HOVER EFFECT
+        // CARD HOVER PARALLAX EFFECT
         // ============================================
         function initCardHover() {
             document.querySelectorAll('.game-card').forEach(card => {
