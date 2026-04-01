@@ -5,71 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuJEUX - Plateforme de Jeux</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
+    <!-- ✨ FOND ANIMÉ -->
+    <div class="animated-background">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
     <!-- Navigation -->
-    <nav class="navbar" id="navbar">
+    <nav class="navbar">
         <div class="logo">LuJEUX</div>
         <ul class="nav-links">
             <li><a href="#accueil">Accueil</a></li>
             <li><a href="#categories">Catégories</a></li>
             <li><a href="#jeux">Jeux</a></li>
         </ul>
-        <button class="theme-toggle" id="themeToggle">🌙</button>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero" id="accueil">
         <div class="hero-content">
-            <h1>Bienvenue sur LuJEUX</h1>
-            <p>Découvrez notre collection de jeux gratuits. Simple, propre et directement playable.</p>
-            <button class="btn-primary" onclick="scrollToSection('jeux')">Commencer à jouer</button>
+            <h1>LuJEUX</h1>
+            <p class="subtitle">Des jeux simples, des moments parfaits</p>
+            <button class="btn-primary" onclick="scrollToSection('jeux')">
+                <i class="fas fa-gamepad"></i> Jouer maintenant
+            </button>
         </div>
     </section>
 
     <!-- Statistiques -->
-    <section class="stats">
-        <div class="stats-container">
-            <div class="stat-item">
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
                 <div class="stat-number">12</div>
-                <div class="stat-label">Jeux disponibles</div>
+                <div class="stat-text">Jeux disponibles</div>
             </div>
-            <div class="stat-item">
+            <div class="stat-card">
                 <div class="stat-number">6</div>
-                <div class="stat-label">Catégories</div>
+                <div class="stat-text">Catégories</div>
             </div>
-            <div class="stat-item">
+            <div class="stat-card">
                 <div class="stat-number">100%</div>
-                <div class="stat-label">Gratuit</div>
+                <div class="stat-text">Gratuit</div>
             </div>
         </div>
     </section>
 
     <!-- Catégories -->
-    <section class="categories" id="categories">
+    <section class="categories-section" id="categories">
         <h2 class="section-title">Catégories</h2>
-        <div class="category-grid">
-            <div class="category-card" data-category="action">
+        <div class="categories-grid">
+            <div class="category-card" data-category="action" onclick="filterGames('action')">
                 <span class="category-icon">⚡</span>
                 <h3>Action</h3>
             </div>
-            <div class="category-card" data-category="puzzle">
+            <div class="category-card" data-category="puzzle" onclick="filterGames('puzzle')">
                 <span class="category-icon">🧩</span>
                 <h3>Puzzle</h3>
             </div>
-            <div class="category-card" data-category="arcade">
+            <div class="category-card" data-category="arcade" onclick="filterGames('arcade')">
                 <span class="category-icon">👾</span>
                 <h3>Arcade</h3>
             </div>
-            <div class="category-card" data-category="strategie">
+            <div class="category-card" data-category="strategie" onclick="filterGames('strategie')">
                 <span class="category-icon">♟️</span>
                 <h3>Stratégie</h3>
             </div>
-            <div class="category-card" data-category="reflexe">
-                <span class="category-icon">⚡</span>
+            <div class="category-card" data-category="reflexe" onclick="filterGames('reflexe')">
+                <span class="category-icon">🎯</span>
                 <h3>Réflexe</h3>
             </div>
-            <div class="category-card" data-category="classique">
+            <div class="category-card" data-category="classique" onclick="filterGames('classique')">
                 <span class="category-icon">🎮</span>
                 <h3>Classiques</h3>
             </div>
@@ -79,31 +89,38 @@
     <!-- Grille de Jeux -->
     <section class="games-section" id="jeux">
         <h2 class="section-title">Tous les Jeux</h2>
-        <div class="games-grid" id="gamesGrid">
-            <!-- Les jeux seront générés par JavaScript -->
-        </div>
+        <div class="games-grid" id="gamesGrid"></div>
     </section>
 
     <!-- Modal du Jeu -->
-    <div class="modal" id="gameModal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeGame()">×</button>
-            <h2 class="modal-title" id="modalTitle">Jeu</h2>
-            <div class="game-info-bar">
-                <span id="gameScore">Score: 0</span>
-                <span id="gameLevel">Niveau: 1</span>
+    <div class="modal-overlay" id="gameModal">
+        <div class="modal-container">
+            <button class="close-modal-btn" onclick="closeGame()">×</button>
+            
+            <div class="modal-header">
+                <h2 id="modalTitle">Nom du Jeu</h2>
+                <div class="modal-stats">
+                    <span id="gameScore"><i class="fas fa-star"></i> Score: 0</span>
+                    <span id="gameLevel"><i class="fas fa-layer-group"></i> Niveau: 1</span>
+                </div>
             </div>
-            <div class="game-container" id="gameContainer"></div>
-            <div class="game-controls">
-                <button class="btn-secondary" onclick="restartGame()">🔄 Recommencer</button>
-                <button class="btn-primary" onclick="closeGame()">Fermer</button>
+            
+            <div class="game-canvas-area" id="gameContainer"></div>
+            
+            <div class="modal-footer">
+                <button class="btn-outline" onclick="restartGame()">
+                    <i class="fas fa-redo"></i> Recommencer
+                </button>
+                <button class="btn-filled" onclick="closeGame()">
+                    <i class="fas fa-times"></i> Fermer
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 LuJEUX - Plateforme de jeux gratuite</p>
+    <footer class="footer">
+        <p>© 2024 LuJEUX — Créé avec ❤️ pour les vrais gamers</p>
     </footer>
 
     <script src="script.js"></script>
