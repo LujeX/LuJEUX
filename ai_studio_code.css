@@ -1,0 +1,231 @@
+/* ========================================= */
+/* VARIABLES & RESET                         */
+/* ========================================= */
+:root {
+    --bg-dark: #07070a;
+    --neon-cyan: #00f3ff;
+    --neon-pink: #ff007f;
+    --neon-green: #00ff66;
+    --glass: rgba(10, 15, 25, 0.7);
+    --font-head: 'Orbitron', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-dark);
+    color: white;
+    font-family: var(--font-mono);
+    overflow: hidden;
+    user-select: none;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* ========================================= */
+/* EFFETS GLOBAUX (CRT & SCANLINES)          */
+/* ========================================= */
+.scanlines {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 4px, 6px 100%;
+    z-index: 999; pointer-events: none;
+}
+.crt-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+    z-index: 998; pointer-events: none;
+}
+
+/* ========================================= */
+/* TYPOGRAPHIE & COULEURS                    */
+/* ========================================= */
+.neon-text-green { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
+.neon-text-cyan { color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); }
+.neon-text-pink { color: var(--neon-pink); text-shadow: 0 0 8px var(--neon-pink); }
+
+.glitch-title {
+    font-family: var(--font-head); font-size: 4rem; font-weight: 900;
+    color: #fff; text-shadow: 0 0 10px var(--neon-cyan);
+    position: relative; text-align: center; margin-bottom: 10px;
+}
+/* Effet de Glitch avancé avec ::before/::after et clip-path */
+.glitch-title::before, .glitch-title::after {
+    content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+}
+.glitch-title::before {
+    left: 2px; text-shadow: -2px 0 var(--neon-pink);
+    clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+    animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
+}
+.glitch-title::after {
+    left: -2px; text-shadow: -2px 0 var(--neon-cyan);
+    clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+    animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+@keyframes glitch-anim-1 {
+    0% { clip-path: inset(20% 0 80% 0); }
+    20% { clip-path: inset(60% 0 10% 0); }
+    40% { clip-path: inset(40% 0 50% 0); }
+    60% { clip-path: inset(80% 0 5% 0); }
+    80% { clip-path: inset(10% 0 70% 0); }
+    100% { clip-path: inset(30% 0 50% 0); }
+}
+@keyframes glitch-anim-2 {
+    0% { clip-path: inset(10% 0 60% 0); }
+    20% { clip-path: inset(30% 0 20% 0); }
+    40% { clip-path: inset(70% 0 10% 0); }
+    60% { clip-path: inset(20% 0 50% 0); }
+    80% { clip-path: inset(50% 0 30% 0); }
+    100% { clip-path: inset(5% 0 80% 0); }
+}
+
+/* ========================================= */
+/* LAYOUTS & NAVIGATION (SPA)                */
+/* ========================================= */
+.screen {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease;
+    opacity: 0; pointer-events: none; filter: blur(10px); transform: scale(1.05);
+}
+.screen.active { opacity: 1; pointer-events: all; filter: blur(0); transform: scale(1); z-index: 10;}
+.hidden { display: none !important; }
+
+#global-hud {
+    position: fixed; top: 20px; right: 20px; z-index: 100;
+    display: flex; gap: 20px; align-items: center;
+    background: var(--glass); padding: 10px 20px;
+    border: 1px solid var(--neon-cyan); border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0,243,255,0.2);
+    backdrop-filter: blur(5px);
+}
+
+/* ========================================= */
+/* BOUTONS NÉON                              */
+/* ========================================= */
+.btn-neon {
+    font-family: var(--font-head); font-size: 1.2rem;
+    color: var(--neon-cyan); background: transparent;
+    border: 1px solid var(--neon-cyan); padding: 15px 30px;
+    cursor: pointer; position: relative; overflow: hidden;
+    text-shadow: 0 0 5px var(--neon-cyan);
+    box-shadow: inset 0 0 10px rgba(0,243,255,0.2), 0 0 10px rgba(0,243,255,0.2);
+    transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px;
+}
+.btn-neon:hover {
+    background: var(--neon-cyan); color: #000;
+    box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
+}
+.btn-neon.pink {
+    color: var(--neon-pink); border-color: var(--neon-pink);
+    text-shadow: 0 0 5px var(--neon-pink);
+    box-shadow: inset 0 0 10px rgba(255,0,127,0.2), 0 0 10px rgba(255,0,127,0.2);
+}
+.btn-neon.pink:hover { background: var(--neon-pink); color: #fff; box-shadow: 0 0 30px var(--neon-pink); }
+.btn-neon.small { padding: 10px 20px; font-size: 1rem; }
+.btn-neon.square { padding: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
+.btn-back {
+    position: absolute; top: 20px; left: 20px;
+    background: none; border: none; color: #aaa;
+    font-family: var(--font-head); font-size: 1rem; cursor: pointer;
+    transition: 0.3s; z-index: 50;
+}
+.btn-back:hover { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); transform: translateX(-5px); }
+
+/* ========================================= */
+/* TERMINAL BOOT                             */
+/* ========================================= */
+.terminal-text {
+    width: 80%; max-width: 800px; height: 300px;
+    color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green);
+    font-size: 1.2rem; white-space: pre-wrap; line-height: 1.5;
+    text-align: left;
+}
+
+/* ========================================= */
+/* MENU HUB & CARDS                          */
+/* ========================================= */
+.carousel { display: flex; gap: 40px; margin-top: 50px; flex-wrap: wrap; justify-content: center;}
+.game-card {
+    background: rgba(10, 10, 15, 0.8); width: 320px; padding: 40px 20px;
+    border: 1px solid #333; border-radius: 10px;
+    text-align: center; cursor: pointer; position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.game-card::before {
+    content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(45deg, var(--neon-cyan), transparent, var(--neon-pink));
+    z-index: -1; border-radius: 12px; opacity: 0; transition: 0.4s;
+}
+.game-card:hover { transform: translateY(-20px); border-color: transparent; }
+.game-card:hover::before { opacity: 1; animation: rotateBg 3s linear infinite; }
+.card-icon { font-size: 4rem; margin-bottom: 20px; filter: drop-shadow(0 0 10px var(--neon-cyan)); }
+.game-card h3 { font-family: var(--font-head); font-size: 1.5rem; color: #fff; margin-bottom: 15px; }
+.game-card p { color: #888; margin-bottom: 25px; line-height: 1.4; }
+
+/* ========================================= */
+/* JEU : BLACKJACK (Cartes 3D)               */
+/* ========================================= */
+.table-bg { background: radial-gradient(circle at center, #0a1922 0%, #03060a 100%); }
+.bj-layout { display: flex; flex-direction: column; justify-content: space-between; height: 80vh; width: 100%; max-width: 1000px;}
+.zone-title { text-align: center; color: #555; font-family: var(--font-head); letter-spacing: 3px; margin-bottom: 20px;}
+.card-row { display: flex; justify-content: center; min-height: 160px; gap: 15px; perspective: 1000px; }
+
+/* Carte 3D Flip */
+.card-3d-wrapper {
+    width: 110px; height: 160px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    /* Animation d'entrée : la carte tombe sur la table */
+    animation: dealCard 0.4s ease-out forwards;
+    transform: translateY(-100px) rotateY(180deg) scale(1.5); opacity: 0;
+}
+@keyframes dealCard {
+    to { transform: translateY(0) rotateY(180deg) scale(1); opacity: 1; }
+}
+.card-3d-wrapper.revealed { transform: translateY(0) rotateY(0deg) scale(1); }
+
+.card-face {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden; border-radius: 10px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+.card-front {
+    background: #fff; color: #000;
+    border: 2px solid #ccc;
+}
+.card-back {
+    background: repeating-linear-gradient(45deg, #111, #111 10px, #222 10px, #222 20px);
+    border: 2px solid var(--neon-cyan);
+    transform: rotateY(180deg);
+}
+.card-front.red { color: #ff0055; }
+.card-value { font-size: 1.5rem; font-weight: bold; font-family: sans-serif;}
+.card-suit { font-size: 3rem; text-align: center; align-self: center; }
+.card-value.bottom { align-self: flex-end; transform: rotate(180deg); }
+
+.bj-center-console { text-align: center; margin: 20px 0; }
+.system-message { font-family: var(--font-head); font-size: 1.5rem; color: #fff; margin-bottom: 20px; height: 30px; text-shadow: 0 0 10px #fff; }
+.bet-controls, .play-controls { display: flex; gap: 15px; justify-content: center; align-items: center; }
+
+/* ========================================= */
+/* JEU : RUNNER (Canvas)                     */
+/* ========================================= */
+#runner-canvas {
+    width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1;
+}
+.runner-hud {
+    position: absolute; top: 80px; left: 20px; z-index: 5;
+    font-size: 1.5rem; background: var(--glass); padding: 15px; border-left: 4px solid var(--neon-pink);
+}
+.game-modal {
+    position: absolute; z-index: 10; background: rgba(0,0,0,0.85);
+    border: 2px solid var(--neon-pink); padding: 50px; text-align: center;
+    border-radius: 15px; box-shadow: 0 0 50px rgba(255,0,127,0.3); backdrop-filter: blur(10px);
+}
+.game-modal p { font-size: 1.2rem; color: #ccc; margin-bottom: 30px; line-height: 1.6;}

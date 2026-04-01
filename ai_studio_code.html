@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON SYNDICATE - OS</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Polices Sci-Fi -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Effets visuels superposés (CRT & Scanlines) -->
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+
+    <!-- HUD Global (Affiché une fois connecté) -->
+    <div id="global-hud" class="hidden">
+        <div class="hud-item">SYS.CREDITS: <span id="user-credits" class="neon-text-green">1000</span> ¤</div>
+        <button id="btn-mute" class="btn-icon">🔊</button>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ÉCRAN 0 : TERMINAL BOOT (Intro immersive)      -->
+    <!-- ============================================== -->
+    <div id="screen-boot" class="screen active terminal-bg">
+        <div class="terminal-text" id="boot-text"></div>
+        <button id="btn-enter" class="btn-neon glitch-btn hidden">INITIALISER LA CONNEXION</button>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ÉCRAN 1 : MENU PRINCIPAL (Hub)                 -->
+    <!-- ============================================== -->
+    <div id="screen-menu" class="screen hidden main-bg">
+        <h1 class="glitch-title" data-text="NEON SYNDICATE">NEON SYNDICATE</h1>
+        <p class="subtitle">Sélectionnez un module de divertissement</p>
+        
+        <div class="carousel">
+            <div class="game-card" data-target="screen-blackjack">
+                <div class="card-hologram"></div>
+                <div class="card-icon">♠️</div>
+                <h3>Cyber Blackjack</h3>
+                <p>Misez vos crédits face à l'IA du Croupier. Risque élevé.</p>
+                <div class="btn-neon small card-btn">LANCER</div>
+            </div>
+            
+            <div class="game-card" data-target="screen-runner">
+                <div class="card-hologram"></div>
+                <div class="card-icon">🏎️</div>
+                <h3>Grid Runner</h3>
+                <p>Esquivez les pare-feu. Gagnez des crédits selon la distance.</p>
+                <div class="btn-neon small card-btn">LANCER</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ÉCRAN 2 : CYBER BLACKJACK                      -->
+    <!-- ============================================== -->
+    <div id="screen-blackjack" class="screen hidden table-bg">
+        <button class="btn-back" data-target="screen-menu">◄ RETOUR AU HUB</button>
+        
+        <div class="bj-layout">
+            <div class="bj-dealer-zone">
+                <h3 class="zone-title">IA CROUPIER [<span id="bj-dealer-score">?</span>]</h3>
+                <div id="bj-dealer-cards" class="card-row"></div>
+            </div>
+
+            <div class="bj-center-console">
+                <div id="bj-message" class="system-message">INITIALISATION...</div>
+                
+                <!-- Zone de mise -->
+                <div id="bj-bet-controls" class="bet-controls">
+                    <p>MISE ACTUELLE : <span id="bj-current-bet" class="neon-text-pink">100</span> ¤</p>
+                    <div class="bet-buttons">
+                        <button class="btn-neon small square" onclick="Blackjack.adjustBet(-50)">-50</button>
+                        <button class="btn-neon small square" onclick="Blackjack.adjustBet(50)">+50</button>
+                        <button class="btn-neon small pink" onclick="Blackjack.deal()">DISTRIBUER</button>
+                    </div>
+                </div>
+
+                <!-- Actions en jeu -->
+                <div id="bj-play-controls" class="play-controls hidden">
+                    <button class="btn-neon cyan" onclick="Blackjack.hit()">TIRER (HIT)</button>
+                    <button class="btn-neon pink" onclick="Blackjack.stand()">RESTER (STAND)</button>
+                </div>
+            </div>
+
+            <div class="bj-player-zone">
+                <h3 class="zone-title">UTILISATEUR [<span id="bj-player-score">0</span>]</h3>
+                <div id="bj-player-cards" class="card-row"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ÉCRAN 3 : GRID RUNNER                          -->
+    <!-- ============================================== -->
+    <div id="screen-runner" class="screen hidden">
+        <button class="btn-back" data-target="screen-menu" onclick="Runner.exit()">◄ ABORTER</button>
+        
+        <div class="runner-hud">
+            <div>DISTANCE: <span id="rn-score" class="neon-text-cyan">0</span>m</div>
+            <div>MULTIPLIER: x<span id="rn-mult" class="neon-text-pink">1.0</span></div>
+        </div>
+
+        <canvas id="runner-canvas"></canvas>
+
+        <div id="rn-overlay" class="game-modal">
+            <h2 id="rn-modal-title" class="glitch-title" style="font-size:3rem">GRID RUNNER</h2>
+            <p id="rn-modal-desc">Déplacez-vous avec les ◄ FLÈCHES ► ou CLIQUEZ.<br>Chaque 100m rapporte 10 crédits.</p>
+            <button class="btn-neon" onclick="Runner.start()">DÉMARRER LA COURSE</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
