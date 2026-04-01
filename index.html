@@ -3,125 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Onyx Arcade</title>
-    
-    <!-- Polices -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Icônes -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <!-- CSS -->
+    <title>LuJEUX - Plateforme de Jeux</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- NAV (Visible par défaut maintenant) -->
-    <nav class="main-nav visible" id="main-nav" role="navigation">
-        <div class="nav-brand">ONYX</div>
-        <button class="nav-btn" id="nav-menu"><i class="fas fa-th-large"></i> Jeux</button>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="logo">LuJEUX</div>
+        <ul class="nav-links">
+            <li><a href="#accueil">Accueil</a></li>
+            <li><a href="#categories">Catégories</a></li>
+            <li><a href="#jeux">Jeux</a></li>
+        </ul>
+        <button class="theme-toggle" id="themeToggle">🌙</button>
     </nav>
 
-    <!-- MENU (Devenu la page 'active' par défaut) -->
-    <section id="page-menu" class="page active" aria-label="Menu des jeux">
-        <div class="menu-header">
-            <h2>Choisissez votre jeu</h2>
-            <p>Deux expériences, un seul endroit</p>
+    <!-- Hero Section -->
+    <section class="hero" id="accueil">
+        <div class="hero-content">
+            <h1>Bienvenue sur LuJEUX</h1>
+            <p>Découvrez notre collection de jeux gratuits. Simple, propre et directement playable.</p>
+            <button class="btn-primary" onclick="scrollToSection('jeux')">Commencer à jouer</button>
         </div>
-        <div class="menu-grid">
-            <article class="game-card gc-bj" data-game="blackjack" tabindex="0" role="button" aria-label="Blackjack">
-                <div class="card-visual"><i class="fas fa-diamond"></i></div>
-                <div class="card-info">
-                    <h3>Blackjack</h3>
-                    <p>Affrontez le dealer sur un tapis vert classique. Misez, tirez, doublez — tentez d'atteindre 21 sans dépasser.</p>
-                    <span class="card-tag">Cartes &amp; Stratégie</span>
-                </div>
-            </article>
-            <article class="game-card gc-run" data-game="runner" tabindex="0" role="button" aria-label="Dodge Rush">
-                <div class="card-visual"><i class="fas fa-bolt"></i></div>
-                <div class="card-info">
-                    <h3>Dodge Rush</h3>
-                    <p>Esquivez les obstacles sur 5 couloirs. La vitesse augmente sans cesse — tenez le plus longtemps possible.</p>
-                    <span class="card-tag">Réflexes &amp; Vitesse</span>
-                </div>
-            </article>
-        </div>
-        <div class="scores-bar">
-            <div class="score-box">
-                <div class="label">Meilleur solde Blackjack</div>
-                <div class="value" id="menu-bj-score">0</div>
+    </section>
+
+    <!-- Statistiques -->
+    <section class="stats">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Jeux disponibles</div>
             </div>
-            <div class="score-box">
-                <div class="label">Record Dodge Rush</div>
-                <div class="value" id="menu-runner-score">0</div>
+            <div class="stat-item">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Catégories</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Gratuit</div>
             </div>
         </div>
     </section>
 
-    <!-- BLACKJACK -->
-    <section id="page-blackjack" class="page" aria-label="Blackjack">
-        <div class="bj-container">
-            <div class="bj-top-bar">
-                <div class="bj-chips-display"><i class="fas fa-coins"></i> <span id="bj-chips">1000</span></div>
-                <div class="bj-bet-display">Mise : <span id="bj-bet">0</span></div>
+    <!-- Catégories -->
+    <section class="categories" id="categories">
+        <h2 class="section-title">Catégories</h2>
+        <div class="category-grid">
+            <div class="category-card" data-category="action">
+                <span class="category-icon">⚡</span>
+                <h3>Action</h3>
             </div>
-            <div class="bj-table">
-                <div class="hand-area">
-                    <div class="hand-label">Dealer <span class="score" id="dealer-score"></span></div>
-                    <div class="hand-cards" id="dealer-hand"></div>
-                </div>
-                <div id="bj-result" class="bj-result-banner"></div>
-                <div class="hand-area">
-                    <div class="hand-label">Vous <span class="score" id="player-score"></span></div>
-                    <div class="hand-cards" id="player-hand"></div>
-                </div>
+            <div class="category-card" data-category="puzzle">
+                <span class="category-icon">🧩</span>
+                <h3>Puzzle</h3>
             </div>
-            <div class="bj-controls">
-                <div class="bj-chips-row" id="bj-chips-row">
-                    <div class="chip chip-10" data-value="10" tabindex="0">10</div>
-                    <div class="chip chip-25" data-value="25" tabindex="0">25</div>
-                    <div class="chip chip-50" data-value="50" tabindex="0">50</div>
-                    <div class="chip chip-100" data-value="100" tabindex="0">100</div>
-                </div>
-                <div class="bj-actions" id="bj-actions-bet">
-                    <button class="bj-btn bj-btn-deal" id="bj-deal" disabled>Distribuer</button>
-                    <button class="bj-btn bj-btn-clear" id="bj-clear">Effacer</button>
-                </div>
-                <div class="bj-actions" id="bj-actions-play" style="display:none">
-                    <button class="bj-btn bj-btn-hit" id="bj-hit">Tirer</button>
-                    <button class="bj-btn bj-btn-stand" id="bj-stand">Rester</button>
-                    <button class="bj-btn bj-btn-double" id="bj-double">Doubler</button>
-                </div>
+            <div class="category-card" data-category="arcade">
+                <span class="category-icon">👾</span>
+                <h3>Arcade</h3>
+            </div>
+            <div class="category-card" data-category="strategie">
+                <span class="category-icon">♟️</span>
+                <h3>Stratégie</h3>
+            </div>
+            <div class="category-card" data-category="reflexe">
+                <span class="category-icon">⚡</span>
+                <h3>Réflexe</h3>
+            </div>
+            <div class="category-card" data-category="classique">
+                <span class="category-icon">🎮</span>
+                <h3>Classiques</h3>
             </div>
         </div>
     </section>
 
-    <!-- RUNNER -->
-    <section id="page-runner" class="page" aria-label="Dodge Rush">
-        <div class="runner-wrapper">
-            <canvas id="runner-canvas"></canvas>
-            <div class="runner-hud">
-                <div class="hud-item hud-score" id="runner-hud-score">0</div>
-                <div class="hud-item hud-speed" id="runner-hud-speed">x1.0</div>
-            </div>
-            <div class="runner-overlay" id="runner-overlay">
-                <h2 id="runner-overlay-title">Dodge Rush</h2>
-                <div class="final-score" id="runner-final-score" style="display:none"></div>
-                <div class="high-score-text" id="runner-high-text" style="display:none"></div>
-                <button class="runner-btn" id="runner-start-btn">Jouer</button>
-                <p class="hint" id="runner-hint">Flèches gauche/droite ou touchez l'écran</p>
-            </div>
-            <div class="runner-touch-zones" id="runner-touch">
-                <div class="touch-left" data-dir="left"></div>
-                <div class="touch-right" data-dir="right"></div>
-            </div>
+    <!-- Grille de Jeux -->
+    <section class="games-section" id="jeux">
+        <h2 class="section-title">Tous les Jeux</h2>
+        <div class="games-grid" id="gamesGrid">
+            <!-- Les jeux seront générés par JavaScript -->
         </div>
     </section>
 
-    <!-- TOAST (Notifications) -->
-    <div class="toast" id="toast"></div>
+    <!-- Modal du Jeu -->
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeGame()">×</button>
+            <h2 class="modal-title" id="modalTitle">Jeu</h2>
+            <div class="game-info-bar">
+                <span id="gameScore">Score: 0</span>
+                <span id="gameLevel">Niveau: 1</span>
+            </div>
+            <div class="game-container" id="gameContainer"></div>
+            <div class="game-controls">
+                <button class="btn-secondary" onclick="restartGame()">🔄 Recommencer</button>
+                <button class="btn-primary" onclick="closeGame()">Fermer</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- SCRIPT -->
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 LuJEUX - Plateforme de jeux gratuite</p>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 </html>
