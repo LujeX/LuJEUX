@@ -1,100 +1,92 @@
+// ============================================================
+// LUJEUX - SCRIPT PRINCIPAL AVEC 12 JEUX FONCTIONNELS
+// ============================================================
+
 // ===== DONNÉES DES JEUX =====
 const games = [
     {
         id: 'snake',
-        name: 'Snake',
+        name: 'Snake 🐍',
         category: 'classique',
         icon: '🐍',
-        description: 'Le classique jeu du serpent. Mangez les pommes pour grandir.',
-        instructions: 'Utilisez les flèches directionnelles pour vous déplacer'
+        description: 'Le classique jeu du serpent. Mangez pour grandir !'
     },
     {
         id: 'space-invaders',
-        name: 'Space Invaders',
+        name: 'Space Invaders 👾',
         category: 'arcade',
         icon: '👾',
-        description: 'Détruisez les envahisseurs spatiaux avant qu\'ils n\'arrivent.',
-        instructions: 'Flèches pour se déplacer, Espace pour tirer'
+        description: 'Détruisez les envahisseurs spatiaux !'
     },
     {
         id: 'tetris',
-        name: 'Tetris',
+        name: 'Tetris 🧱',
         category: 'puzzle',
         icon: '🧱',
-        description: 'Assemblez les blocs tombants pour compléter les lignes.',
-        instructions: 'Flèches gauche/droite pour déplacer, Haut pour tourner'
+        description: 'Assemblez les blocs tombants.'
     },
     {
         id: 'pong',
-        name: 'Pong',
+        name: 'Pong 🏓',
         category: 'classique',
         icon: '🏓',
-        description: 'Le jeu de tennis classique contre l\'ordinateur.',
-        instructions: 'Déplacez la souris ou utilisez les flèches haut/bas'
+        description: 'Le tennis classique contre l\'IA.'
     },
     {
         id: 'memory',
-        name: 'Memory',
+        name: 'Memory 🧠',
         category: 'puzzle',
         icon: '🧠',
-        description: 'Trouvez les paires de cartes identiques.',
-        instructions: 'Cliquez sur les cartes pour les retourner'
+        description: 'Trouvez les paires de cartes.'
     },
     {
         id: 'tictactoe',
-        name: 'Morpion',
+        name: 'Morpion ⭕',
         category: 'strategie',
         icon: '⭕',
-        description: 'Alignez 3 symboles pour gagner contre l\'IA.',
-        instructions: 'Cliquez sur une case pour jouer'
+        description: 'Alignez 3 symboles pour gagner.'
     },
     {
         id: 'breakout',
-        name: 'Breakout',
+        name: 'Breakout 🔴',
         category: 'arcade',
-        icon: '🧱',
-        description: 'Cassez toutes les briques avec la balle.',
-        instructions: 'Souris ou flèches pour déplacer la raquette'
+        icon: '🔴',
+        description: 'Cassez toutes les briques !'
     },
     {
         id: '2048',
-        name: '2048',
+        name: '2048 🔢',
         category: 'puzzle',
         icon: '🔢',
-        description: 'Fusionnez les nombres pour atteindre 2048.',
-        instructions: 'Flèches directionnelles pour déplacer les tuiles'
+        description: 'Fusionnez les tuiles pour atteindre 2048.'
     },
     {
         id: 'reaction',
-        name: 'Test de Réaction',
+        name: 'Test Réaction ⚡',
         category: 'reflexe',
         icon: '⚡',
-        description: 'Testez vos réflexes en cliquant le plus vite possible.',
-        instructions: 'Attendez le vert puis cliquez vite !'
+        description: 'Testez vos réflexes !'
     },
     {
         id: 'clickspeed',
-        name: 'Click Speed Test',
+        name: 'Click Speed 🖱️',
         category: 'reflexe',
         icon: '🖱️',
-        description: 'Combien de clics pouvez-vous faire en 10 secondes ?',
-        instructions: 'Cliquez le plus vite possible !'
+        description: 'Clics rapides en 10 secondes.'
     },
     {
         id: 'quiz',
-        name: 'Quiz Culture Générale',
+        name: 'Quiz Culture ❓',
         category: 'strategie',
         icon: '❓',
-        description: 'Testez vos connaissances avec ce quiz interactif.',
-        instructions: 'Choisissez la bonne réponse parmi les 4 propositions'
+        description: 'Testez vos connaissances.'
     },
     {
         id: 'numberguess',
-        name: 'Nombre Mystère',
+        name: 'Nombre Mystère 🔮',
         category: 'strategie',
-        icon: '🔢',
-        description: 'Devinez le nombre entre 1 et 100 en moins de coups possibles.',
-        instructions: 'Entrez un nombre et suivez les indices'
+        icon: '🔮',
+        description: 'Devinez le nombre secret.'
     }
 ];
 
@@ -110,6 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+// ===== FONCTIONS UTILITAIRES =====
+function scrollToSection(sectionId) {
+    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+}
+
+function updateScoreDisplay() {
+    document.getElementById('gameScore').innerHTML = `<i class="fas fa-star"></i> Score: ${score}`;
+    document.getElementById('gameLevel').innerHTML = `<i class="fas fa-layer-group"></i> Niveau: ${level}`;
+}
+
 // ===== RENDU DES JEUX =====
 function renderGames(filter = 'all') {
     const gamesGrid = document.getElementById('gamesGrid');
@@ -119,40 +121,48 @@ function renderGames(filter = 'all') {
         ? games 
         : games.filter(game => game.category === filter);
 
-    filteredGames.forEach(game => {
+    filteredGames.forEach((game, index) => {
         const gameCard = document.createElement('div');
         gameCard.className = 'game-card';
+        gameCard.style.animationDelay = `${index * 0.1}s`;
+        
+        // Dégradés différents pour chaque carte
+        const gradients = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)'
+        ];
+        
         gameCard.innerHTML = `
-            <div class="game-preview">${game.icon}</div>
+            <div class="game-preview" style="background: ${gradients[index % gradients.length]}">
+                ${game.icon}
+            </div>
             <div class="game-info">
                 <h3>${game.name}</h3>
                 <div class="game-meta">
-                    <span class="game-category-tag">${game.category}</span>
+                    <span class="game-tag">${game.category}</span>
                 </div>
                 <p class="game-description">${game.description}</p>
-                <button class="play-btn" onclick="openGame('${game.id}')">
-                    Jouer →
+                <button class="play-button" onclick="openGame('${game.id}')">
+                    <i class="fas fa-play"></i> Jouer
                 </button>
             </div>
         `;
+        
         gamesGrid.appendChild(gameCard);
     });
 }
 
+function filterGames(category) {
+    renderGames(category);
+    scrollToSection('jeux');
+}
+
 // ===== ÉVÉNEMENTS =====
 function setupEventListeners() {
-    // Thème sombre/clair
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    
-    // Catégories
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const category = card.dataset.category;
-            renderGames(category);
-            scrollToSection('jeux');
-        });
-    });
-
     // Fermer modal avec Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeGame();
@@ -162,19 +172,6 @@ function setupEventListeners() {
     document.getElementById('gameModal').addEventListener('click', (e) => {
         if (e.target.id === 'gameModal') closeGame();
     });
-}
-
-// ===== NAVIGATION =====
-function scrollToSection(sectionId) {
-    document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
-}
-
-function toggleTheme() {
-    const body = document.body;
-    const currentTheme = body.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    body.setAttribute('data-theme', newTheme);
-    document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
 }
 
 // ===== GESTION DES JEUX =====
@@ -187,10 +184,8 @@ function openGame(gameId) {
     document.getElementById('modalTitle').textContent = game.name;
     updateScoreDisplay();
     
-    // Charger le jeu correspondant
     loadGame(gameId);
     
-    // Afficher le modal
     document.getElementById('gameModal').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -208,13 +203,8 @@ function closeGame() {
 function restartGame() {
     if (currentGame) {
         closeGame();
-        setTimeout(() => openGame(currentGame), 100);
+        setTimeout(() => openGame(currentGame), 150);
     }
-}
-
-function updateScoreDisplay() {
-    document.getElementById('gameScore').textContent = `Score: ${score}`;
-    document.getElementById('gameLevel').textContent = `Niveau: ${level}`;
 }
 
 // ===== CHARGEMENT DES JEUX =====
@@ -222,55 +212,35 @@ function loadGame(gameId) {
     const container = document.getElementById('gameContainer');
     
     switch(gameId) {
-        case 'snake':
-            loadSnake(container);
-            break;
-        case 'space-invaders':
-            loadSpaceInvaders(container);
-            break;
-        case 'tetris':
-            loadTetris(container);
-            break;
-        case 'pong':
-            loadPong(container);
-            break;
-        case 'memory':
-            loadMemory(container);
-            break;
-        case 'tictactoe':
-            loadTicTacToe(container);
-            break;
-        case 'breakout':
-            loadBreakout(container);
-            break;
-        case '2048':
-            load2048(container);
-            break;
-        case 'reaction':
-            loadReactionTest(container);
-            break;
-        case 'clickspeed':
-            loadClickSpeed(container);
-            break;
-        case 'quiz':
-            loadQuiz(container);
-            break;
-        case 'numberguess':
-            loadNumberGuess(container);
-            break;
+        case 'snake': initSnake(container); break;
+        case 'space-invaders': initSpaceInvaders(container); break;
+        case 'tetris': initTetris(container); break;
+        case 'pong': initPong(container); break;
+        case 'memory': initMemory(container); break;
+        case 'tictactoe': initTicTacToe(container); break;
+        case 'breakout': initBreakout(container); break;
+        case '2048': init2048(container); break;
+        case 'reaction': initReactionTest(container); break;
+        case 'clickspeed': initClickSpeed(container); break;
+        case 'quiz': initQuiz(container); break;
+        case 'numberguess': initNumberGuess(container); break;
     }
 }
 
-// ====================================================================
-// ===== JEUX FONCTIONNELS ============================================
-// ====================================================================
+// ============================================================
+// JEUX FONCTIONNELS
+// ============================================================
 
 // ===== 1. SNAKE =====
-function loadSnake(container) {
+function initSnake(container) {
     container.innerHTML = `
         <div style="text-align:center;">
-            <canvas id="snakeCanvas" width="400" height="400" style="background:#f0f0f0;border:2px solid #ddd;"></canvas>
-            <p class="game-instructions">Utilisez les flèches pour diriger le serpent</p>
+            <canvas id="snakeCanvas" width="400" height="400" 
+                    style="background:#f8f9fa;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+            </canvas>
+            <p style="margin-top:1rem;color:#718096;font-size:0.9rem;">
+                <i class="fas fa-keyboard"></i> Utilisez les flèches directionnelles
+            </p>
         </div>
     `;
     
@@ -281,49 +251,38 @@ function loadSnake(container) {
     
     let snake = [{x: 10, y: 10}];
     let food = {x: 15, y: 15};
-    let dx = 0;
-    let dy = 0;
+    let dx = 0, dy = 0;
     
-    function drawGame() {
-        // Fond
+    function draw() {
         ctx.fillStyle = '#f8f9fa';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Serpent
-        ctx.fillStyle = '#2563eb';
-        snake.forEach((segment, index) => {
-            if (index === 0) ctx.fillStyle = '#1d4ed8';
-            else ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+        snake.forEach((segment, i) => {
+            ctx.fillStyle = i === 0 ? '#667eea' : '#764ba2';
+            ctx.beginPath();
+            ctx.roundRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2, 4);
+            ctx.fill();
         });
         
         // Nourriture
-        ctx.fillStyle = '#ef4444';
+        ctx.fillStyle = '#f093fb';
         ctx.beginPath();
         ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
         ctx.fill();
         
-        // Déplacement
+        // Mouvement
         if (dx !== 0 || dy !== 0) {
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
             
-            // Collision murs
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-                gameOver();
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount ||
+                snake.some(s => s.x === head.x && s.y === head.y)) {
+                clearInterval(gameInterval);
+                alert(`Game Over! Score: ${score}`);
                 return;
             }
             
-            // Collision soi-même
-            for (let segment of snake) {
-                if (head.x === segment.x && head.y === segment.y) {
-                    gameOver();
-                    return;
-                }
-            }
-            
             snake.unshift(head);
-            
-            // Manger nourriture
             if (head.x === food.x && head.y === food.y) {
                 score += 10;
                 updateScoreDisplay();
@@ -341,14 +300,8 @@ function loadSnake(container) {
         };
     }
     
-    function gameOver() {
-        clearInterval(gameInterval);
-        alert(`Game Over ! Score: ${score}`);
-    }
-    
     document.addEventListener('keydown', (e) => {
         if (currentGame !== 'snake') return;
-        
         switch(e.key) {
             case 'ArrowUp': if (dy !== 1) { dx = 0; dy = -1; } break;
             case 'ArrowDown': if (dy !== -1) { dx = 0; dy = 1; } break;
@@ -357,62 +310,65 @@ function loadSnake(container) {
         }
     });
     
-    gameInterval = setInterval(drawGame, 150);
+    gameInterval = setInterval(draw, 120);
 }
 
 // ===== 2. SPACE INVADERS =====
-function loadSpaceInvaders(container) {
+function initSpaceInvaders(container) {
     container.innerHTML = `
         <div style="text-align:center;">
-            <canvas id="spaceCanvas" width="500" height="400" style="background:#1a1a2e;border:2px solid #333;"></canvas>
-            <p class="game-instructions" style="color:#fff;">← → pour se déplacer, ESPACE pour tirer</p>
+            <canvas id="spaceCanvas" width="500" height="400"
+                    style="background:#1a1a2e;border-radius:12px;"></canvas>
+            <p style="margin-top:1rem;color:#718096;font-size:0.9rem;">
+                <i class="fas fa-arrows-alt"></i> Flèches: déplacer | Espace: tirer
+            </p>
         </div>
     `;
     
     const canvas = document.getElementById('spaceCanvas');
     const ctx = canvas.getContext('2d');
     
-    let player = { x: 225, y: 360, width: 50, height: 20 };
+    let player = { x: 225, y: 360, w: 50, h: 16 };
     let bullets = [];
     let enemies = [];
-    let enemyDirection = 1;
+    let dir = 1;
     
-    // Créer ennemis
     for (let i = 0; i < 8; i++) {
-        enemies.push({ x: 50 + i * 55, y: 50, width: 40, height: 30, alive: true });
+        enemies.push({ x: 50 + i * 55, y: 50, w: 40, h: 28, alive: true });
     }
     
     function draw() {
-        // Fond
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Joueur
         ctx.fillStyle = '#4ade80';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.beginPath();
+        ctx.roundRect(player.x, player.y, player.w, player.h, 4);
+        ctx.fill();
         
         // Balles
         ctx.fillStyle = '#fbbf24';
-        bullets.forEach((bullet, index) => {
-            bullet.y -= 8;
-            ctx.fillRect(bullet.x, bullet.y, 4, 12);
-            if (bullet.y < 0) bullets.splice(index, 1);
+        bullets.forEach((b, i) => {
+            b.y -= 7;
+            ctx.fillRect(b.x, b.y, 4, 12);
+            if (b.y < 0) bullets.splice(i, 1);
         });
         
         // Ennemis
-        enemies.forEach(enemy => {
-            if (enemy.alive) {
+        enemies.forEach(e => {
+            if (e.alive) {
                 ctx.fillStyle = '#ef4444';
-                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                ctx.beginPath();
+                ctx.roundRect(e.x, e.y, e.w, e.h, 4);
+                ctx.fill();
                 
-                enemy.x += enemyDirection;
+                e.x += dir * 1.5;
                 
-                // Collision balle-enemi
-                bullets.forEach((bullet, bIndex) => {
-                    if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
-                        bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
-                        enemy.alive = false;
-                        bullets.splice(bIndex, 1);
+                bullets.forEach((b, bi) => {
+                    if (b.x > e.x && b.x < e.x + e.w && b.y > e.y && b.y < e.y + e.h) {
+                        e.alive = false;
+                        bullets.splice(bi, 1);
                         score += 50;
                         updateScoreDisplay();
                     }
@@ -420,198 +376,120 @@ function loadSpaceInvaders(container) {
             }
         });
         
-        // Direction ennemis
-        if (enemies.some(e => e.alive && (e.x <= 0 || e.x >= canvas.width - e.width))) {
-            enemyDirection *= -1;
-            enemies.forEach(e => e.y += 20);
+        if (enemies.some(e => e.alive && (e.x <= 0 || e.x >= canvas.width - e.w))) {
+            dir *= -1;
+            enemies.forEach(e => e.y += 15);
         }
         
-        // Victoire
         if (enemies.every(e => !e.alive)) {
             clearInterval(gameInterval);
-            alert(`Victoire ! Score: ${score}`);
+            alert(`Victoire! Score: ${score}`);
         }
     }
     
     document.addEventListener('keydown', (e) => {
         if (currentGame !== 'space-invaders') return;
-        
-        if (e.key === 'ArrowLeft' && player.x > 0) player.x -= 15;
-        if (e.key === 'ArrowRight' && player.x < canvas.width - player.width) player.x += 15;
-        if (e.key === ' ') {
-            bullets.push({ x: player.x + player.width/2 - 2, y: player.y });
-        }
+        if (e.key === 'ArrowLeft' && player.x > 0) player.x -= 18;
+        if (e.key === 'ArrowRight' && player.x < canvas.width - player.w) player.x += 18;
+        if (e.key === ' ') bullets.push({ x: player.x + player.w/2 - 2, y: player.y });
     });
     
     gameInterval = setInterval(draw, 50);
 }
 
 // ===== 3. TETRIS =====
-function loadTetris(container) {
+function initTetris(container) {
     container.innerHTML = `
         <div style="text-align:center;">
-            <canvas id="tetrisCanvas" width="300" height="600" style="background:#e5e7eb;border:2px solid #ccc;"></canvas>
-            <p class="game-instructions">← → déplacer, ↑ tourner, ↓ descendre</p>
+            <canvas id="tetrisCanvas" width="300" height="600"
+                    style="background:#f1f3f5;border-radius:12px;"></canvas>
+            <p style="margin-top:1rem;color:#718096;font-size:0.9rem;">
+                <i class="fas fa-arrows-alt"></i> ← → déplacer | ↑ tourner | ↓ descendre
+            </p>
         </div>
     `;
     
     const canvas = document.getElementById('tetrisCanvas');
     const ctx = canvas.getContext('2d');
-    const COLS = 10;
-    const ROWS = 20;
-    const BLOCK_SIZE = 30;
+    const COLS = 10, ROWS = 20, BLOCK = 30;
     
     let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-    let currentPiece = generatePiece();
-    let nextPiece = generatePiece();
+    let piece = newPiece();
     
-    const PIECES = [
-        [[1,1,1,1]], // I
-        [[1,1],[1,1]], // O
-        [[0,1,0],[1,1,1]], // T
-        [[1,0,0],[1,1,1]], // L
-        [[0,0,1],[1,1,1]], // J
-        [[0,1,1],[1,1,0]], // S
-        [[1,1,0],[0,1,1]]  // Z
+    const SHAPES = [
+        [[1,1,1,1]], [[1,1],[1,1]], [[0,1,0],[1,1,1]],
+        [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]], [[0,1,1],[1,1,0]], [[1,1,0],[0,1,1]]
     ];
-    
     const COLORS = ['#00f0f0', '#f0f000', '#a000f0', '#f0a000', '#0000f0', '#00f000', '#f00000'];
     
-    function generatePiece() {
-        const type = Math.floor(Math.random() * PIECES.length);
-        return {
-            shape: PIECES[type],
-            color: COLORS[type],
-            x: Math.floor(COLS / 2) - 1,
-            y: 0
-        };
+    function newPiece() {
+        const t = Math.floor(Math.random() * SHAPES.length);
+        return { shape: SHAPES[t], color: COLORS[t], x: Math.floor(COLS/2)-1, y: 0 };
     }
     
     function draw() {
-        // Fond
-        ctx.fillStyle = '#f3f4f6';
+        ctx.fillStyle = '#f1f3f5';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Grille
-        board.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value) {
-                    ctx.fillStyle = value;
-                    ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-                }
-            });
-        });
+        board.forEach((row, y) => row.forEach((v, x) => {
+            if (v) { ctx.fillStyle = v; ctx.fillRect(x*BLOCK, y*BLOCK, BLOCK-1, BLOCK-1); }
+        }));
         
-        // Pièce courante
-        ctx.fillStyle = currentPiece.color;
-        currentPiece.shape.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value) {
-                    ctx.fillRect(
-                        (currentPiece.x + x) * BLOCK_SIZE,
-                        (currentPiece.y + y) * BLOCK_SIZE,
-                        BLOCK_SIZE - 1,
-                        BLOCK_SIZE - 1
-                    );
-                }
-            });
-        });
+        ctx.fillStyle = piece.color;
+        piece.shape.forEach((r, y) => r.forEach((v, x) => {
+            if (v) ctx.fillRect((piece.x+x)*BLOCK, (piece.y+y)*BLOCK, BLOCK-1, BLOCK-1);
+        }));
         
         // Grille
-        ctx.strokeStyle = '#d1d5db';
-        for (let i = 0; i <= COLS; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * BLOCK_SIZE, 0);
-            ctx.lineTo(i * BLOCK_SIZE, canvas.height);
-            ctx.stroke();
-        }
-        for (let i = 0; i <= ROWS; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, i * BLOCK_SIZE);
-            ctx.lineTo(canvas.width, i * BLOCK_SIZE);
-            ctx.stroke();
-        }
+        ctx.strokeStyle = '#dee2e6';
+        for(let i=0;i<=COLS;i++) { ctx.beginPath(); ctx.moveTo(i*BLOCK,0); ctx.lineTo(i*BLOCK,canvas.height); ctx.stroke(); }
+        for(let i=0;i<=ROWS;i++) { ctx.beginPath(); ctx.moveTo(0,i*BLOCK); ctx.lineTo(canvas.width,i*BLOCK); ctx.stroke(); }
     }
     
     function moveDown() {
-        currentPiece.y++;
+        piece.y++;
         if (collision()) {
-            currentPiece.y--;
-            mergePiece();
+            piece.y--;
+            merge();
             clearLines();
-            currentPiece = nextPiece;
-            nextPiece = generatePiece();
-            if (collision()) {
-                clearInterval(gameInterval);
-                alert(`Game Over ! Score: ${score}`);
-            }
+            piece = newPiece();
+            if (collision()) { clearInterval(gameInterval); alert(`Game Over! Score: ${score}`); }
         }
     }
     
     function collision() {
-        return currentPiece.shape.some((row, y) => {
-            return row.some((value, x) => {
-                if (!value) return false;
-                const newX = currentPiece.x + x;
-                const newY = currentPiece.y + y;
-                return newX < 0 || newX >= COLS || newY >= ROWS || (newY >= 0 && board[newY][newX]);
-            });
-        });
+        return piece.shape.some((r,y) => r.some((v,x) => 
+            v && (piece.x+x<0 || piece.x+x>=COLS || piece.y+y>=ROWS || (piece.y+y>=0 && board[piece.y+y][piece.x+x]))
+        ));
     }
     
-    function mergePiece() {
-        currentPiece.shape.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value) {
-                    board[currentPiece.y + y][currentPiece.x + x] = currentPiece.color;
-                }
-            });
-        });
+    function merge() {
+        piece.shape.forEach((r,y) => r.forEach((v,x) => {
+            if (v) board[piece.y+y][piece.x+x] = piece.color;
+        }));
     }
     
     function clearLines() {
-        let linesCleared = 0;
+        let cleared = 0;
         board.forEach((row, y) => {
-            if (row.every(cell => cell)) {
-                board.splice(y, 1);
-                board.unshift(Array(COLS).fill(0));
-                linesCleared++;
-            }
+            if (row.every(c => c)) { board.splice(y,1); board.unshift(Array(COLS).fill(0)); cleared++; }
         });
-        if (linesCleared > 0) {
-            score += linesCleared * 100;
-            updateScoreDisplay();
-        }
+        if (cleared) { score += cleared * 100; updateScoreDisplay(); }
     }
     
     function rotate() {
-        const rotated = currentPiece.shape[0].map((_, i) =>
-            currentPiece.shape.map(row => row[i]).reverse()
-        );
-        const prevShape = currentPiece.shape;
-        currentPiece.shape = rotated;
-        if (collision()) currentPiece.shape = prevShape;
+        const rot = piece.shape[0].map((_,i) => piece.shape.map(row => row[i]).reverse());
+        const prev = piece.shape;
+        piece.shape = rot;
+        if (collision()) piece.shape = prev;
     }
     
     document.addEventListener('keydown', (e) => {
         if (currentGame !== 'tetris') return;
-        
-        switch(e.key) {
-            case 'ArrowLeft':
-                currentPiece.x--;
-                if (collision()) currentPiece.x++;
-                break;
-            case 'ArrowRight':
-                currentPiece.x++;
-                if (collision()) currentPiece.x--;
-                break;
-            case 'ArrowDown':
-                moveDown();
-                break;
-            case 'ArrowUp':
-                rotate();
-                break;
-        }
+        if (e.key === 'ArrowLeft') { piece.x--; if (collision()) piece.x++; }
+        if (e.key === 'ArrowRight') { piece.x++; if (collision()) piece.x--; }
+        if (e.key === 'ArrowDown') moveDown();
+        if (e.key === 'ArrowUp') rotate();
     });
     
     draw();
@@ -619,750 +497,402 @@ function loadTetris(container) {
 }
 
 // ===== 4. PONG =====
-function loadPong(container) {
+function initPong(container) {
     container.innerHTML = `
         <div style="text-align:center;">
-            <canvas id="pongCanvas" width="600" height="400" style="background:#fafafa;border:2px solid #ddd;"></canvas>
-            <p class="game-instructions">Déplacez la souris pour contrôler votre raquette</p>
+            <canvas id="pongCanvas" width="600" height="400"
+                    style="background:#ffffff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.08);"></canvas>
+            <p style="margin-top:1rem;color:#718096;font-size:0.9rem;">
+                <i class="fas fa-mouse-pointer"></i> Déplacez la souris pour contrôler votre raquette
+            </p>
         </div>
     `;
     
     const canvas = document.getElementById('pongCanvas');
     const ctx = canvas.getContext('2d');
     
-    let playerY = 175;
-    let aiY = 175;
-    let ballX = 300;
-    let ballY = 200;
-    let ballDX = 5;
-    let ballDY = 3;
-    let playerScore = 0;
-    let aiScore = 0;
+    let py = 175, aiY = 175, bx=300, by=200, bdx=5, bdy=3, pS=0, aiS=0;
     
     function draw() {
-        // Fond
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
         
         // Ligne centrale
-        ctx.setLineDash([10, 10]);
-        ctx.strokeStyle = '#ddd';
-        ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 0);
-        ctx.lineTo(canvas.width / 2, canvas.height);
-        ctx.stroke();
+        ctx.setLineDash([10,10]);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.beginPath(); ctx.moveTo(canvas.width/2,0); ctx.lineTo(canvas.width/2,canvas.height); ctx.stroke();
         ctx.setLineDash([]);
         
         // Raquettes
-        ctx.fillStyle = '#2563eb';
-        ctx.fillRect(20, playerY, 10, 50);
-        ctx.fillStyle = '#ef4444';
-        ctx.fillRect(canvas.width - 30, aiY, 10, 50);
+        ctx.fillStyle = '#667eea';
+        ctx.beginPath(); ctx.roundRect(20,py,10,50,5); ctx.fill();
+        ctx.fillStyle = '#f093fb';
+        ctx.beginPath(); ctx.roundRect(canvas.width-30,aiY,10,50,5); ctx.fill();
         
         // Balle
-        ctx.fillStyle = '#1f2937';
-        ctx.beginPath();
-        ctx.arc(ballX, ballY, 8, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = '#2d3748';
+        ctx.beginPath(); ctx.arc(bx,by,8,0,Math.PI*2); ctx.fill();
         
         // Scores
-        ctx.font = 'bold 24px sans-serif';
-        ctx.fillStyle = '#2563eb';
-        ctx.fillText(playerScore, canvas.width / 4, 40);
-        ctx.fillStyle = '#ef4444';
-        ctx.fillText(aiScore, 3 * canvas.width / 4, 40);
+        ctx.font = 'bold 28px Inter'; ctx.fillStyle='#667eea'; ctx.fillText(pS, canvas.width/4,50);
+        ctx.fillStyle='#f093fb'; ctx.fillText(aiS, 3*canvas.width/4,50);
         
-        // Mouvement balle
-        ballX += ballDX;
-        ballY += ballDY;
+        bx+=bdx; by+=bdy;
+        if(by<=8||by>=canvas.height-8) bdy*=-1;
+        if(bx<=30&&by>py&&by<py+50){bdx*=1.05;bx=31;}
+        if(bx>=canvas.width-30&&by>aiY&&by<aiY+50){bdx*=-1.05;bx=canvas.width-31;}
+        if(bx<0){aiS++;reset();}
+        if(bx>canvas.width){pS++;score+=10;updateScoreDisplay();reset();}
         
-        // Rebond haut/bas
-        if (ballY <= 8 || ballY >= canvas.height - 8) ballDY *= -1;
-        
-        // Collision joueur
-        if (ballX <= 30 && ballY > playerY && ballY < playerY + 50) {
-            ballDX *= -1.1;
-            ballX = 31;
-        }
-        
-        // Collision IA
-        if (ballX >= canvas.width - 30 && ballY > aiY && ballY < aiY + 50) {
-            ballDX *= -1.1;
-            ballX = canvas.width - 31;
-        }
-        
-        // Point marqué
-        if (ballX < 0) {
-            aiScore++;
-            resetBall();
-        }
-        if (ballX > canvas.width) {
-            playerScore++;
-            score += 10;
-            updateScoreDisplay();
-            resetBall();
-        }
-        
-        // IA
-        if (aiY + 25 < ballY - 20) aiY += 4;
-        else if (aiY + 25 > ballY + 20) aiY -= 4;
+        if(aiY+25<by-20) aiY+=4; else if(aiY+25>by+20) aiY-=4;
     }
     
-    function resetBall() {
-        ballX = canvas.width / 2;
-        ballY = canvas.height / 2;
-        ballDX = 5 * (Math.random() > 0.5 ? 1 : -1);
-        ballDY = 3 * (Math.random() > 0.5 ? 1 : -1);
-    }
+    function reset(){bx=canvas.width/2;by=canvas.height/2;bdx=5*(Math.random()>.5?1:-1);bdy=3*(Math.random()>.5?1:-1);}
     
-    canvas.addEventListener('mousemove', (e) => {
+    canvas.addEventListener('mousemove', e => {
         const rect = canvas.getBoundingClientRect();
-        playerY = e.clientY - rect.top - 25;
-        if (playerY < 0) playerY = 0;
-        if (playerY > canvas.height - 50) playerY = canvas.height - 50;
+        py = e.clientY - rect.top - 25;
+        py = Math.max(0, Math.min(py, canvas.height-50));
     });
     
     gameInterval = setInterval(draw, 16);
 }
 
 // ===== 5. MEMORY GAME =====
-function loadMemory(container) {
-    const emojis = ['🎮', '🎲', '🎯', '🎨', '🎭', '🎪', '🎬', '🎤'];
-    let cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
-    let flippedCards = [];
-    let matchedPairs = 0;
-    let canFlip = true;
+function initMemory(container) {
+    const emojis = ['🎮','🎲','🎯','🎨','🎭','🎪','🎬','🎤'];
+    let cards = [...emojis,...emojis].sort(()=>Math.random()-0.5);
+    let flipped = [], matched = 0, canFlip = true;
     
-    container.innerHTML = `
-        <div style="text-align:center;">
-            <div class="memory-grid" id="memoryGrid"></div>
-            <p class="game-instructions">Trouvez les paires de cartes identiques</p>
-        </div>
-    `;
+    container.innerHTML = `<div style="text-align:center;"><div id="memGrid" style="display:inline-grid;grid-template-columns:repeat(4,85px);gap:10px;"></div>
+        <p style="margin-top:1rem;color:#718096;"><i class="fas fa-hand-pointer"></i> Cliquez pour retourner les cartes</p></div>`;
     
-    const grid = document.getElementById('memoryGrid');
+    const grid = document.getElementById('memGrid');
     
-    cards.forEach((emoji, index) => {
+    cards.forEach((emoji, i) => {
         const card = document.createElement('div');
-        card.className = 'memory-card';
-        card.dataset.index = index;
-        card.dataset.emoji = emoji;
+        card.style.cssText = `width:85px;height:85px;cursor:pointer;perspective:1000px;`;
         card.innerHTML = `
-            <div class="memory-card-front">?</div>
-            <div class="memory-card-back">${emoji}</div>
-        `;
-        card.addEventListener('click', () => flipCard(card));
+            <div class="mem-card" data-i="${i}" data-e="${emoji}" style="
+                width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.5s;
+            ">
+                <div style="position:absolute;width:100%;height:100%;backface-visibility:hidden;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:bold;">?</div>
+                <div style="position:absolute;width:100%;height:100%;backface-visibility:hidden;background:#f8f9fa;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;transform:rotateY(180deg);border:2px solid #e2e8f0;">${emoji}</div>
+            </div>`;
+        card.addEventListener('click', () => flip(card));
         grid.appendChild(card);
     });
     
-    function flipCard(card) {
-        if (!canFlip || card.classList.contains('flipped') || flippedCards.includes(card)) return;
-        
-        card.classList.add('flipped');
-        flippedCards.push(card);
-        
-        if (flippedCards.length === 2) {
-            canFlip = false;
-            const [card1, card2] = flippedCards;
-            
-            if (card1.dataset.emoji === card2.dataset.emoji) {
-                matchedPairs++;
-                score += 50;
-                updateScoreDisplay();
-                flippedCards = [];
-                canFlip = true;
-                
-                if (matchedPairs === emojis.length) {
-                    setTimeout(() => alert(`Félicitations ! Score: ${score}`), 300);
-                }
-            } else {
-                setTimeout(() => {
-                    card1.classList.remove('flipped');
-                    card2.classList.remove('flipped');
-                    flippedCards = [];
-                    canFlip = true;
-                }, 1000);
+    function flip(card) {
+        if(!canFlip||flipped.includes(card)||card.querySelector('.mem-card').style.transform==='rotateY(180deg)') return;
+        card.querySelector('.mem-card').style.transform='rotateY(180deg)';
+        flipped.push(card);
+        if(flipped.length===2){
+            canFlip=false;
+            const [c1,c2]=flipped;
+            if(c1.dataset.e===c2.dataset.e){
+                matched++; score+=50; updateScoreDisplay(); flipped=[];
+                canFlip=true;
+                if(matched===emojis.length) setTimeout(()=>alert(`Félicitations! Score: ${score}`),300);
+            }else{
+                setTimeout(()=>{
+                    c1.querySelector('.mem-card').style.transform='';
+                    c2.querySelector('.mem-card').style.transform='';
+                    flipped=[]; canFlip=true;
+                },1000);
             }
         }
     }
 }
 
 // ===== 6. TIC-TAC-TOE =====
-function loadTicTacToe(container) {
+function initTicTacToe(container) {
     let board = Array(9).fill('');
-    let currentPlayer = 'X';
-    let gameActive = true;
+    let turn = 'X', active = true;
     
-    container.innerHTML = `
-        <div style="text-align:center;">
-            <div class="tictactoe-board" id="tttBoard"></div>
-            <p class="game-instructions" id="tttStatus">Tour du joueur X</p>
-        </div>
-    `;
+    container.innerHTML = `<div style="text-align:center;">
+        <div id="tttBoard" style="display:inline-grid;grid-template-columns:repeat(3,100px);gap:8px;"></div>
+        <p id="tttStatus" style="margin-top:1.2rem;font-size:1.1rem;color:#667eea;font-weight:600;">Tour de X</p></div>`;
     
     const boardEl = document.getElementById('tttBoard');
-    const statusEl = document.getElementById('tttStatus');
+    const status = document.getElementById('tttStatus');
     
-    board.forEach((cell, index) => {
-        const cellEl = document.createElement('div');
-        cellEl.className = 'tictactoe-cell';
-        cellEl.dataset.index = index;
-        cellEl.addEventListener('click', () => makeMove(index, cellEl));
-        boardEl.appendChild(cellEl);
+    board.forEach((_,i)=>{
+        const cell=document.createElement('div');
+        cell.style.cssText=`width:100px;height:100px;background:#f8f9fa;border:2px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:bold;cursor:pointer;transition:all 0.2s;`;
+        cell.addEventListener('click',()=>move(i,cell));
+        boardEl.appendChild(cell);
     });
     
-    function makeMove(index, cellEl) {
-        if (board[index] || !gameActive) return;
+    function move(i,cell){
+        if(board[i]||!active)return;
+        board[i]=turn;
+        cell.textContent=turn;
+        cell.style.color=turn==='X'?'#667eea':'#f093fb';
         
-        board[index] = currentPlayer;
-        cellEl.textContent = currentPlayer;
-        cellEl.style.color = currentPlayer === 'X' ? '#2563eb' : '#ef4444';
-        
-        if (checkWin()) {
-            statusEl.textContent = `${currentPlayer} a gagné !`;
-            gameActive = false;
-            score += 100;
-            updateScoreDisplay();
-            return;
-        }
-        
-        if (board.every(cell => cell)) {
-            statusEl.textContent = 'Match nul !';
-            gameActive = false;
-            return;
-        }
-        
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        statusEl.textContent = `Tour du joueur ${currentPlayer}`;
+        if(checkWin()){status.textContent=`${turn} a gagné!`; active=false; score+=100; updateScoreDisplay(); return;}
+        if(board.every(c=>c)){status.textContent='Match nul!'; active=false; return;}
+        turn=turn==='X'?'O':'X';
+        status.textContent=`Tour de ${turn}`;
     }
     
-    function checkWin() {
-        const wins = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
-        return wins.some(([a, b, c]) => board[a] && board[a] === board[b] && board[a] === board[c]);
+    function checkWin(){
+        const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        return wins.some(([a,b,c])=>board[a]&&board[a]===board[b]&&board[a]===board[c]);
     }
 }
 
 // ===== 7. BREAKOUT =====
-function loadBreakout(container) {
+function initBreakout(container) {
     container.innerHTML = `
         <div style="text-align:center;">
-            <canvas id="breakoutCanvas" width="480" height="320" style="background:#f3f4f6;border:2px solid #ddd;"></canvas>
-            <p class="game-instructions">Souris ou flèches pour déplacer la raquette</p>
-        </div>
-    `;
+            <canvas id="breakCanvas" width="480" height="320"
+                    style="background:#f8f9fa;border-radius:12px;"></canvas>
+            <p style="margin-top:1rem;color:#718096;"><i class="fas fa-mouse-pointer"></i> Souris pour déplacer la raquette</p></div>`;
     
-    const canvas = document.getElementById('breakoutCanvas');
+    const canvas = document.getElementById('breakCanvas');
     const ctx = canvas.getContext('2d');
     
-    let paddleWidth = 80;
-    let paddleX = (canvas.width - paddleWidth) / 2;
-    let ballX = canvas.width / 2;
-    let ballY = canvas.height - 30;
-    let ballDX = 4;
-    let ballDY = -4;
+    let pw=80, px=(canvas.width-pw)/2, bx=240, by=300, bdx=4, bdy=-4;
+    let bricks=[];
+    for(let c=0;c<8;c++){bricks[c]=[];for(let r=0;r<4;r++)bricks[c][r]={status:1};}
     
-    let bricks = [];
-    const brickRowCount = 4;
-    const brickColumnCount = 8;
-    const brickWidth = 54;
-    const brickHeight = 18;
-    const brickPadding = 4;
-    const brickOffsetTop = 30;
-    const brickOffsetLeft = 14;
-    
-    // Créer briques
-    for (let c = 0; c < brickColumnCount; c++) {
-        bricks[c] = [];
-        for (let r = 0; r < brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 1 };
-        }
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        bricks.forEach((col,c)=>col.forEach((b,r)=>{if(b.status){
+            ctx.fillStyle=['#ef4444','#f97316','#eab308','#22c55e'][r];
+            ctx.beginPath();ctx.roundRect(c*(54+4)+14,r*(18+4)+30,54,18,4);ctx.fill();
+            b.x=c*(54+4)+14;b.y=r*(18+4)+30;b.w=54;b.h=18;
+        }}));
+        ctx.fillStyle='#667eea';ctx.beginPath();ctx.roundRect(px,canvas.height-20,pw,10,5);ctx.fill();
+        ctx.fillStyle='#2d3748';ctx.beginPath();ctx.arc(bx,by,6,0,Math.PI*2);ctx.fill();
+        
+        bx+=bdx;by+=bdy;
+        if(bx<6||bx>canvas.width-6)bdx*=-1;if(by<6)bdy*=-1;
+        if(by>canvas.height-26&&bx>px&&bx<px+pw){bdy*=-1;}
+        if(by>canvas.height-6){clearInterval(gameInterval);alert(`Game Over! Score: ${score}`);}
+        
+        bricks.forEach(col=>col.forEach(b=>{
+            if(b.status&&bx>b.x&&bx<b.x+b.w&&by>b.y&&by<b.y+b.h){bdy*=-1;b.status=0;score+=10;updateScoreDisplay();}
+        }));
+        
+        if(bricks.every(col=>col.every(b=>!b.status))){clearInterval(gameInterval);alert(`Victoire! Score: ${score}`);}
     }
     
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Briques
-        bricks.forEach((col, c) => {
-            col.forEach((brick, r) => {
-                if (brick.status === 1) {
-                    const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-                    const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-                    brick.x = brickX;
-                    brick.y = brickY;
-                    
-                    ctx.fillStyle = ['#ef4444', '#f97316', '#eab308', '#22c55e'][r];
-                    ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
-                }
-            });
-        });
-        
-        // Raquette
-        ctx.fillStyle = '#2563eb';
-        ctx.fillRect(paddleX, canvas.height - 20, paddleWidth, 10);
-        
-        // Balle
-        ctx.fillStyle = '#1f2937';
-        ctx.beginPath();
-        ctx.arc(ballX, ballY, 6, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Mouvement balle
-        ballX += ballDX;
-        ballY += ballDY;
-        
-        // Rebonds murs
-        if (ballX + ballDX > canvas.width - 6 || ballX + ballDX < 6) ballDX = -ballDX;
-        if (ballY + ballDY < 6) ballDY = -ballDY;
-        
-        // Rebond raquette
-        if (ballY + ballDY > canvas.height - 26) {
-            if (ballX > paddleX && ballX < paddleX + paddleWidth) {
-                ballDY = -ballDY;
-            } else if (ballY + ballDY > canvas.height - 6) {
-                clearInterval(gameInterval);
-                alert(`Game Over ! Score: ${score}`);
-            }
-        }
-        
-        // Collision briques
-        bricks.forEach(col => {
-            col.forEach(brick => {
-                if (brick.status === 1) {
-                    if (ballX > brick.x && ballX < brick.x + brickWidth &&
-                        ballY > brick.y && ballY < brick.y + brickHeight) {
-                        ballDY = -ballDY;
-                        brick.status = 0;
-                        score += 10;
-                        updateScoreDisplay();
-                    }
-                }
-            });
-        });
-        
-        // Victoire
-        if (bricks.every(col => col.every(brick => brick.status === 0))) {
-            clearInterval(gameInterval);
-            alert(`Victoire ! Score: ${score}`);
-        }
-    }
-    
-    canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        paddleX = mouseX - paddleWidth / 2;
-        if (paddleX < 0) paddleX = 0;
-        if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
+    canvas.addEventListener('mousemove',e=>{
+        const rect=canvas.getBoundingClientRect();
+        px=e.clientX-rect.left-pw/2;
+        px=Math.max(0,Math.min(px,canvas.width-pw));
     });
     
-    gameInterval = setInterval(draw, 16);
+    gameInterval=setInterval(draw,16);
 }
 
 // ===== 8. 2048 =====
-function load2048(container) {
-    let grid = Array(4).fill().map(() => Array(4).fill(0));
-    addNewTile();
-    addNewTile();
+function init2048(container) {
+    let grid=Array(4).fill().map(()=>Array(4).fill(0));
+    addTile();addTile();
     
-    container.innerHTML = `
-        <div style="text-align:center;">
-            <div id="grid2048" style="display:inline-grid;grid-template-columns:repeat(4,90px);gap:8px;background:#bbada0;padding:10px;border-radius:8px;"></div>
-            <p class="game-instructions">Flèches directionnelles pour déplacer les tuiles</p>
-        </div>
-    `;
+    container.innerHTML=`<div style="text-align:center;">
+        <div id="g2048" style="display:inline-grid;grid-template-columns:repeat(4,90px);gap:8px;background:#bbada0;padding:12px;border-radius:10px;"></div>
+        <p style="margin-top:1rem;color:#718096;"><i class="fas fa-arrows-alt"></i> Flèches directionnelles</p></div>`;
     
-    const gridEl = document.getElementById('grid2048');
+    const g=document.getElementById('g2048');
     
-    function render() {
-        gridEl.innerHTML = '';
-        grid.forEach(row => {
-            row.forEach(value => {
-                const cell = document.createElement('div');
-                cell.style.cssText = `
-                    width:90px;height:90px;display:flex;align-items:center;justify-content:center;
-                    font-size:${value > 512 ? '24px' : '32px'};font-weight:bold;
-                    background:${getTileColor(value)};color:${value > 4 ? '#fff' : '#776e65'};
-                    border-radius:6px;
-                `;
-                cell.textContent = value || '';
-                gridEl.appendChild(cell);
-            });
-        });
-    }
-    
-    function getTileColor(value) {
-        const colors = {
-            0: '#cdc1b4', 2: '#eee4da', 4: '#ede0c8', 8: '#f2b179',
-            16: '#f59563', 32: '#f67c5f', 64: '#f65e3b', 128: '#edcf72',
-            256: '#edcc61', 512: '#edc850', 1024: '#edc53f', 2048: '#edc22e'
-        };
-        return colors[value] || '#3c3a32';
-    }
-    
-    function addNewTile() {
-        const empty = [];
-        grid.forEach((row, y) => row.forEach((cell, x) => {
-            if (cell === 0) empty.push({x, y});
+    function render(){
+        g.innerHTML='';
+        grid.forEach(row=>row.forEach(v=>{
+            const c=document.createElement('div');
+            c.style.cssText=`width:90px;height:90px;display:flex;align-items:center;justify-content:center;font-size:${v>512?'24px':'32px'};font-weight:bold;background:${getColor(v)};color:${v>4?'#fff':'#776e65'};border-radius:6px;transition:all 0.15s;`;
+            c.textContent=v||'';g.appendChild(c);
         }));
-        if (empty.length > 0) {
-            const {x, y} = empty[Math.floor(Math.random() * empty.length)];
-            grid[y][x] = Math.random() < 0.9 ? 2 : 4;
-        }
     }
     
-    function move(direction) {
-        let moved = false;
-        
-        if (direction === 'left' || direction === 'right') {
-            grid.forEach(row => {
-                if (direction === 'right') row.reverse();
-                let newRow = row.filter(val => val !== 0);
-                for (let i = 0; i < newRow.length - 1; i++) {
-                    if (newRow[i] === newRow[i + 1]) {
-                        newRow[i] *= 2;
-                        score += newRow[i];
-                        updateScoreDisplay();
-                        newRow[i + 1] = 0;
-                    }
+    function getColor(v){return{0:'#cdc1b4',2:'#eee4da',4:'#ede0c8',8:'#f2b179',16:'#f59563',32:'#f67c5f',64:'#f65e3b',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'}[v]||'#3c3a32'}
+    
+    function addTile(){
+        const empty=[];
+        grid.forEach((r,y)=>r.forEach((c,x)=>{if(!c)empty.push({x,y});}));
+        if(empty.length){const{x,y}=empty[Math.floor(Math.random()*empty.length)];grid[y][x]=Math.random()<0.9?2:4;}
+    }
+    
+    function move(dir){
+        let moved=false;
+        if(dir==='left'||dir==='right'){
+            grid.forEach(row=>{
+                if(dir==='right')row.reverse();
+                let nr=row.filter(v=>v);
+                for(let i=0;i<nr.length-1;i++){
+                    if(nr[i]===nr[i+1]){nr[i]*=2;score+=nr[i];updateScoreDisplay();nr[i+1]=0;}
                 }
-                newRow = newRow.filter(val => val !== 0);
-                while (newRow.length < 4) newRow.push(0);
-                if (direction === 'right') newRow.reverse();
-                if (row.join(',') !== newRow.join(',')) moved = true;
-                row.splice(0, 4, ...newRow);
+                nr=nr.filter(v=>v);
+                while(nr.length<4)nr.push(0);
+                if(dir==='right')nr.reverse();
+                if(row.join(',')!==nr.join(','))moved=true;
+                row.splice(0,4,...nr);
             });
-        } else {
-            for (let x = 0; x < 4; x++) {
-                let col = [grid[0][x], grid[1][x], grid[2][x], grid[3][x]];
-                if (direction === 'down') col.reverse();
-                let newCol = col.filter(val => val !== 0);
-                for (let i = 0; i < newCol.length - 1; i++) {
-                    if (newCol[i] === newCol[i + 1]) {
-                        newCol[i] *= 2;
-                        score += newCol[i];
-                        updateScoreDisplay();
-                        newCol[i + 1] = 0;
-                    }
-                }
-                newCol = newCol.filter(val => val !== 0);
-                while (newCol.length < 4) newCol.push(0);
-                if (direction === 'down') newCol.reverse();
-                if (col.join(',') !== newCol.join(',')) moved = true;
-                grid[0][x] = newCol[0];
-                grid[1][x] = newCol[1];
-                grid[2][x] = newCol[2];
-                grid[3][x] = newCol[3];
+        }else{
+            for(let x=0;x<4;x++){
+                let col=[grid[0][x],grid[1][x],grid[2][x],grid[3][x]];
+                if(dir==='down')col.reverse();
+                let nc=col.filter(v=>v);
+                for(let i=0;i<nc.length-1;i++){if(nc[i]===nc[i+1]){nc[i]*=2;score+=nc[i];updateScoreDisplay();nc[i+1]=0;}}
+                nc=nc.filter(v=>v);while(nc.length<4)nc.push(0);
+                if(dir==='down')nc.reverse();
+                if(col.join(',')!==nc.join(','))moved=true;
+                grid[0][x]=nc[0];grid[1][x]=nc[1];grid[2][x]=nc[2];grid[3][x]=nc[3];
             }
         }
-        
-        if (moved) {
-            addNewTile();
-            render();
-        }
+        if(moved){addTile();render();}
     }
     
     render();
-    
-    document.addEventListener('keydown', (e) => {
-        if (currentGame !== '2048') return;
-        const moves = {'ArrowLeft': 'left', 'ArrowRight': 'right', 'ArrowUp': 'up', 'ArrowDown': 'down'};
-        if (moves[e.key]) move(moves[e.key]);
+    document.addEventListener('keydown',e=>{
+        if(currentGame!=='2048')return;
+        const m={'ArrowLeft':'left','ArrowRight':'right','ArrowUp':'up','ArrowDown':'down'};
+        if(m[e.key])move(m[e.key]);
     });
 }
 
 // ===== 9. TEST DE RÉACTION =====
-function loadReactionTest(container) {
-    let state = 'waiting'; // waiting, ready, go, result
-    let startTime = 0;
-    let timeout = null;
+function initReactionTest(container) {
+    let state='waiting', start=0, timeout;
     
-    container.innerHTML = `
-        <div style="text-align:center;">
-            <div id="reactionBox" style="
-                width:400px;height:300px;border-radius:12px;display:flex;
-                align-items:center;justify-content:center;font-size:24px;
-                font-weight:bold;cursor:pointer;background:#ef4444;color:white;
-                transition:background 0.3s;
-            ">
-                Cliquez pour commencer
-            </div>
-            <p class="game-instructions" id="reactionResult"></p>
-        </div>
-    `;
+    container.innerHTML=`<div style="text-align:center;">
+        <div id="reactBox" style="
+            width:380px;height:280px;border-radius:16px;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;font-size:1.4rem;font-weight:600;
+            cursor:pointer;background:#ef4444;color:white;transition:all 0.3s;user-select:none;
+        ">Cliquez pour commencer</div>
+        <p id="reactResult" style="margin-top:1rem;font-size:1.1rem;"></p></div>`;
     
-    const box = document.getElementById('reactionBox');
-    const result = document.getElementById('reactionResult');
+    const box=document.getElementById('reactBox'), res=document.getElementById('reactResult');
     
-    box.addEventListener('click', () => {
-        if (state === 'waiting' || state === 'result') {
-            state = 'ready';
-            box.style.background = '#ef4444';
-            box.textContent = 'Attendez le vert...';
-            result.textContent = '';
-            
-            const delay = Math.random() * 3000 + 2000;
-            timeout = setTimeout(() => {
-                state = 'go';
-                box.style.background = '#22c55e';
-                box.textContent = 'CLIQUEZ !';
-                startTime = Date.now();
-            }, delay);
-        } else if (state === 'ready') {
-            clearTimeout(timeout);
-            state = 'waiting';
-            box.style.background = '#3b82f6';
-            box.textContent = 'Trop tôt ! Cliquez pour recommencer';
-            result.textContent = '';
-        } else if (state === 'go') {
-            const reactionTime = Date.now() - startTime;
-            state = 'result';
-            box.style.background = '#3b82f6';
-            box.textContent = `${reactionTime}ms`;
-            result.textContent = reactionTime < 200 ? 'Excellent ! ⚡' :
-                                  reactionTime < 300 ? 'Très bien ! 👏' :
-                                  reactionTime < 400 ? 'Bien 🙂' : 'Peut mieux faire 💪';
-            score = Math.max(score, 1000 - reactionTime);
-            updateScoreDisplay();
+    box.addEventListener('click',()=>{
+        if(state==='waiting'||state==='result'){
+            state='ready';box.style.background='#ef4444';box.textContent='Attendez le vert...';res.textContent='';
+            timeout=setTimeout(()=>{state='go';box.style.background='#22c55e';box.textContent='CLIQUEZ!';start=Date.now();},Math.random()*3000+2000);
+        }else if(state==='ready'){
+            clearTimeout(timeout);state='waiting';box.style.background='#3b82f6';box.textContent='Trop tôt! Réessayez';res.textContent='';
+        }else if(state==='go'){
+            const t=Date.now()-start;state='result';
+            box.style.background='#3b82f6';box.textContent=t+'ms';
+            res.textContent=t<200?'⚡ Excellent!':t<300?'👏 Très bien!':t<400?'🙂 Bien':'💪 Peut mieux faire';
+            score=Math.max(score,1000-t);updateScoreDisplay();
         }
     });
 }
 
-// ===== 10. CLICK SPEED TEST =====
-function loadClickSpeed(container) {
-    let clicks = 0;
-    let timeLeft = 10;
-    let gameRunning = false;
-    let interval = null;
+// ===== 10. CLICK SPEED =====
+function initClickSpeed(container) {
+    let clicks=0, time=10, running=false, interval;
     
-    container.innerHTML = `
-        <div style="text-align:center;">
-            <div id="clickArea" style="
-                width:350px;height:250px;border-radius:12px;display:flex;
-                flex-direction:column;align-items:center;justify-content:center;
-                font-size:28px;font-weight:bold;cursor:pointer;
-                background:#f3f4f6;border:3px dashed #cbd5e1;
-                transition:all 0.1s;user-select:none;
-            ">
-                <div id="clickCounter">0</div>
-                <div id="clickTimer" style="font-size:48px;margin:10px 0;">10</div>
-                <div>Cliquez pour commencer</div>
-            </div>
-            <p class="game-instructions" id="clickResult"></p>
-        </div>
-    `;
+    container.innerHTML=`<div style="text-align:center;">
+        <div id="clickArea" style="
+            width:340px;height:240px;border-radius:16px;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;font-size:2rem;font-weight:bold;
+            cursor:pointer;background:#f8f9fa;border:3px dashed #cbd5e1;transition:all 0.1s;user-select:none;
+        "><div id="clickCnt">0</div><div id="clickTimer" style="font-size:3.5rem;margin:10px 0;">10</div><div>Cliquez pour commencer</div></div>
+        <p id="clickRes" style="margin-top:1rem;"></p></div>`;
     
-    const area = document.getElementById('clickArea');
-    const counter = document.getElementById('clickCounter');
-    const timer = document.getElementById('clickTimer');
-    const result = document.getElementById('clickResult');
+    const area=document.getElementById('clickArea'), cnt=document.getElementById('clickCnt'), timer=document.getElementById('clickTimer'), res=document.getElementById('clickRes');
     
-    area.addEventListener('click', () => {
-        if (!gameRunning) {
-            // Démarrer
-            gameRunning = true;
-            clicks = 0;
-            timeLeft = 10;
-            counter.textContent = clicks;
-            timer.textContent = timeLeft;
-            area.style.borderColor = '#2563eb';
-            result.textContent = '';
-            
-            interval = setInterval(() => {
-                timeLeft--;
-                timer.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                    gameRunning = false;
-                    area.style.borderColor = '#22c55e';
-                    const cps = (clicks / 10).toFixed(1);
-                    result.textContent = `Résultat: ${clicks} clics (${cps} CPS)`;
-                    score = clicks * 10;
-                    updateScoreDisplay();
-                    
-                    setTimeout(() => {
-                        area.style.borderColor = '#cbd5e1';
-                        area.lastElementChild.textContent = 'Cliquez pour recommencer';
-                    }, 2000);
+    area.addEventListener('click',()=>{
+        if(!running){
+            running=true;clicks=0;time=10;cnt.textContent=clicks;timer.textContent=time;
+            area.style.borderColor='#667eea';res.textContent='';
+            interval=setInterval(()=>{time--;timer.textContent=time;
+                if(time<=0){clearInterval(interval);running=false;area.style.borderColor='#22c55e';
+                    const cps=(clicks/10).toFixed(1);res.textContent=`Résultat: ${clicks} clics (${cps} CPS)`;
+                    score=clicks*10;updateScoreDisplay();
+                    setTimeout(()=>{area.style.borderColor='#cbd5e1';area.lastElementChild.textContent='Réessayer';},2000);
                 }
-            }, 1000);
-        } else {
-            clicks++;
-            counter.textContent = clicks;
-            area.style.transform = 'scale(0.95)';
-            setTimeout(() => area.style.transform = 'scale(1)', 50);
+            },1000);
+        }else{
+            clicks++;cnt.textContent=clicks;area.style.transform='scale(0.96)';
+            setTimeout(()=>area.style.transform='scale(1)',50);
         }
     });
 }
 
 // ===== 11. QUIZ =====
-function loadQuiz(container) {
-    const questions = [
-        {
-            question: "Quelle est la capitale de la France ?",
-            options: ["Londres", "Berlin", "Paris", "Madrid"],
-            correct: 2
-        },
-        {
-            question: "Combien de continents y a-t-il sur Terre ?",
-            options: ["5", "6", "7", "8"],
-            correct: 2
-        },
-        {
-            question: "Qui a peint la Joconde ?",
-            options: ["Van Gogh", "Picasso", "Léonard de Vinci", "Michel-Ange"],
-            correct: 2
-        },
-        {
-            question: "Quel est le plus grand océan ?",
-            options: ["Atlantique", "Indien", "Arctique", "Pacifique"],
-            correct: 3
-        },
-        {
-            question: "En quelle année l'homme a-t-il marché sur la Lune ?",
-            options: ["1965", "1969", "1972", "1975"],
-            correct: 1
-        }
+function initQuiz(container) {
+    const qs=[
+        {q:'Capitale de la France?',o:['Londres','Berlin','Paris','Madrid'],a:2},
+        {q:'Combien de continents?',o:['5','6','7','8'],a:2},
+        {q:'Qui a peint la Joconde?',o:['Van Gogh','Picasso','Léonard de Vinci','Michel-Ange'],a:2},
+        {q:'Plus grand océan?',o:['Atlantique','Indien','Arctique','Pacifique'],a:3},
+        {q:'Année premier pas lune?',o:['1965','1969','1972','1975'],a:1}
     ];
+    let qi=0, correct=0;
     
-    let currentQuestion = 0;
-    let correctAnswers = 0;
+    container.innerHTML=`<div style="max-width:600px;margin:0 auto;text-align:left;">
+        <div id="quizQ" style="font-size:1.3rem;font-weight:600;margin-bottom:1.5rem;"></div>
+        <div id="quizOpts" style="display:flex;flex-direction:column;gap:0.8rem;"></div>
+        <div id="quizProg" style="margin-top:1.5rem;text-align:center;color:#718096;"></div></div>`;
     
-    container.innerHTML = `
-        <div style="text-align:left;max-width:600px;margin:0 auto;">
-            <div id="quizQuestion" style="font-size:1.3rem;font-weight:600;margin-bottom:1.5rem;"></div>
-            <div class="quiz-options" id="quizOptions"></div>
-            <div id="quizProgress" style="margin-top:1.5rem;text-align:center;color:#6c757d;"></div>
-        </div>
-    `;
+    const qEl=document.getElementById('quizQ'), oEl=document.getElementById('quizOpts'), pEl=document.getElementById('quizProg');
     
-    const questionEl = document.getElementById('quizQuestion');
-    const optionsEl = document.getElementById('quizOptions');
-    const progressEl = document.getElementById('quizProgress');
-    
-    function showQuestion() {
-        const q = questions[currentQuestion];
-        questionEl.textContent = `Question ${currentQuestion + 1}/${questions.length}: ${q.question}`;
-        
-        optionsEl.innerHTML = '';
-        q.options.forEach((option, index) => {
-            const btn = document.createElement('button');
-            btn.className = 'quiz-option';
-            btn.textContent = option;
-            btn.addEventListener('click', () => selectAnswer(index, btn));
-            optionsEl.appendChild(btn);
-        });
-        
-        progressEl.textContent = `${currentQuestion + 1} / ${questions.length}`;
+    function showQ(){
+        const q=qs[qi];qEl.textContent=`Question ${qi+1}/${qs.length}: ${q.q}`;
+        oEl.innerHTML='';q.o.forEach((opt,i)=>{
+            const btn=document.createElement('button');
+            btn.style.cssText=`padding:1rem 1.5rem;background:#f8f9fa;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:1rem;text-align:left;transition:all 0.2s;`;
+            btn.textContent=opt;btn.addEventListener('click',()=>sel(i,btn));oEl.appendChild(btn);
+        });pEl.textContent=`${qi+1}/${qs.length}`;
     }
     
-    function selectAnswer(index, btn) {
-        const buttons = optionsEl.querySelectorAll('.quiz-option');
-        buttons.forEach(b => b.disabled = true);
-        
-        if (index === questions[currentQuestion].correct) {
-            btn.classList.add('correct');
-            correctAnswers++;
-            score += 100;
-        } else {
-            btn.classList.add('incorrect');
-            buttons[questions[currentQuestion].correct].classList.add('correct');
-        }
-        
+    function sel(i,btn){
+        const btns=oEl.querySelectorAll('button');btns.forEach(b=>b.disabled=true);
+        if(i===qs[qi].a){btn.classList.add('correct');btn.style.background='#22c55e';btn.style.color='white';btn.style.borderColor='#22c55e';correct++;score+=100;}
+        else{btn.classList.add('incorrect');btn.style.background='#ef4444';btn.style.color='white';btn.style.borderColor='#ef4444';btns[qs[qi].a].style.background='#22c55e';btns[qs[qi].a].style.color='white';}
         updateScoreDisplay();
-        
-        setTimeout(() => {
-            currentQuestion++;
-            if (currentQuestion < questions.length) {
-                showQuestion();
-            } else {
-                showResults();
-            }
-        }, 1500);
+        setTimeout(()=>{qi++;if(qi<qs.length)showQ();else showRes();},1200);
     }
     
-    function showResults() {
-        const percentage = Math.round((correctAnswers / questions.length) * 100);
-        questionEl.textContent = `Quiz terminé !`;
-        optionsEl.innerHTML = `
-            <div style="text-align:center;padding:2rem;">
-                <div style="font-size:3rem;font-weight:bold;color:#2563eb;margin-bottom:1rem;">
-                    ${correctAnswers}/${questions.length}
-                </div>
-                <div style="color:#6c757d;margin-bottom:1rem;">${percentage}% de bonnes réponses</div>
-                <div style="font-size:1.1rem;">
-                    ${percentage >= 80 ? 'Excellent ! 🌟' : percentage >= 60 ? 'Bien joué ! 👍' : 'Continuez à apprendre ! 📚'}
-                </div>
-            </div>
-        `;
-        progressEl.textContent = '';
+    function showRes(){
+        const pct=Math.round((correct/qs.length)*100);
+        qEl.textContent='Quiz terminé!';
+        oEl.innerHTML=`<div style="text-align:center;padding:2.5rem;">
+            <div style="font-size:3.5rem;font-weight:bold;color:#667eea;margin-bottom:1rem;">${correct}/${qs.length}</div>
+            <div style="color:#718096;margin-bottom:1rem;">${pct}% de bonnes réponses</div>
+            <div>${pct>=80?'🌟 Excellent!':pct>=60?'👏 Bien joué!':'📚 Continuez à apprendre!'}</div></div>`;
+        pEl.textContent='';
     }
     
-    showQuestion();
+    showQ();
 }
 
 // ===== 12. NOMBRE MYSTÈRE =====
-function loadNumberGuess(container) {
-    let secretNumber = Math.floor(Math.random() * 100) + 1;
-    let attempts = 0;
-    let history = [];
+function initNumberGuess(container) {
+    let secret=Math.floor(Math.random()*100)+1, attempts=0, hist=[];
     
-    container.innerHTML = `
-        <div style="text-align:center;max-width:400px;margin:0 auto;">
-            <p style="font-size:1.1rem;margin-bottom:1.5rem;color:#6c757d;">
-                Devinez le nombre entre 1 et 100
-            </p>
-            <input type="number" id="guessInput" min="1" max="100"
-                   style="width:100%;padding:1rem;font-size:1.2rem;border:2px solid #dee2e6;
-                          border-radius:8px;text-align:center;margin-bottom:1rem;"
-                   placeholder="Entrez un nombre...">
-            <button onclick="makeGuess()" class="btn-primary" style="width:100%;margin-bottom:1.5rem;">
-                Deviner
-            </button>
-            <div id="guessHistory" style="max-height:200px;overflow-y:auto;text-align:left;"></div>
-            <p id="guessHint" style="font-size:1.2rem;font-weight:600;margin-top:1rem;"></p>
-        </div>
-    `;
+    container.innerHTML=`<div style="text-align:center;max-width:420px;margin:0 auto;">
+        <p style="color:#718096;margin-bottom:1.5rem;font-size:1.05rem;">Devinez le nombre entre 1 et 100</p>
+        <input type="number" id="guessInput" min="1" max="100" placeholder="Votre nombre..."
+               style="width:100%;padding:1rem;font-size:1.2rem;border:2px solid #e2e8f0;border-radius:10px;text-align:center;margin-bottom:1rem;outline:none;transition:border 0.3s;"
+               onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+        <button onclick="window.makeGuess()" class="play-button" style="width:100%;margin-bottom:1.5rem;">
+            <i class="fas fa-search"></i> Deviner
+        </button>
+        <div id="guessHist" style="max-height:180px;overflow-y:auto;text-align:left;padding:1rem;background:#f8f9fa;border-radius:10px;font-size:0.95rem;"></div>
+        <p id="guessHint" style="margin-top:1.2rem;font-size:1.2rem;font-weight:600;"></p></div>`;
     
-    window.makeGuess = () => {
-        const input = document.getElementById('guessInput');
-        const guess = parseInt(input.value);
-        const hint = document.getElementById('guessHint');
-        const historyEl = document.getElementById('guessHistory');
-        
-        if (isNaN(guess) || guess < 1 || guess > 100) {
-            hint.textContent = '⚠️ Entrez un nombre entre 1 et 100';
-            hint.style.color = '#f59e0b';
-            return;
-        }
-        
+    window.makeGuess=()=>{
+        const input=document.getElementById('guessInput'), guess=parseInt(input.value),
+              hint=document.getElementById('guessHint'), histEl=document.getElementById('guessHist');
+        if(isNaN(guess)||guess<1||guess>100){hint.textContent='⚠️ Entre 1 et 100!';hint.style.color='#f59e0b';return;}
         attempts++;
-        history.push(guess);
-        
-        if (guess === secretNumber) {
-            hint.textContent = `🎉 Bravo ! Vous avez trouvé en ${attempts} essais !`;
-            hint.style.color = '#22c55e';
-            score = Math.max(0, 1000 - attempts * 50);
-            updateScoreDisplay();
-            input.disabled = true;
-        } else if (guess < secretNumber) {
-            hint.textContent = '⬆️ Plus grand !';
-            hint.style.color = '#3b82f6';
-        } else {
-            hint.textContent = '⬇️ Plus petit !';
-            hint.style.color = '#3b82f6';
-        }
-        
-        historyEl.innerHTML = `<strong>Historique:</strong> ${history.join(' → ')}`;
-        input.value = '';
-        input.focus();
+        hist.push(guess);
+        if(guess===secret){
+            hint.textContent=`🎉 Trouvé en ${attempts} essais!`;hint.style.color='#22c55e';
+            score=Math.max(0,1000-attempts*50);updateScoreDisplay();input.disabled=true;
+        }else if(guess<secret){hint.textContent='⬆️ Plus grand!';hint.style.color='#3b82f6';}
+        else{hint.textContent='⬇️ Plus petit!';hint.style.color='#3b82f6';}
+        histEl.innerHTML=`<strong>Historique:</strong> ${hist.join(' → ')}`;
+        input.value='';input.focus();
     };
     
-    document.getElementById('guessInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') makeGuess();
-    });
-    
-    document.getElementById('guessInput').focus();
+    document.getElementById('guessInput').addEventListener('keypress',e=>{if(e.key==='Enter')window.makeGuess();});
+    setTimeout(()=>document.getElementById('guessInput').focus(),100);
 }
