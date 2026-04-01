@@ -92,7 +92,7 @@ const Scores = {
 
 // ===== Routeur SPA =====
 const Router = {
-    cur: 'landing',
+    cur: 'menu', // On démarre directement sur le menu
     go(page) {
         if (page === this.cur) return;
         if (this.cur === 'runner') Runner.stop();
@@ -104,7 +104,6 @@ const Router = {
         setTimeout(() => {
             nxt.classList.add('active');
             this.cur = page;
-            $('#main-nav').classList.toggle('visible', page !== 'landing');
             if (page === 'blackjack') BJ.init();
             if (page === 'runner') Runner.init();
             if (page === 'menu') {
@@ -114,22 +113,6 @@ const Router = {
         }, 320);
     }
 };
-
-// ===== Parallax Accueil =====
-let mx = 0, my = 0, parallaxId = 0;
-document.addEventListener('mousemove', e => {
-    mx = (e.clientX / window.innerWidth - .5) * 2;
-    my = (e.clientY / window.innerHeight - .5) * 2;
-});
-function parallaxLoop() {
-    parallaxId = requestAnimationFrame(parallaxLoop);
-    if (Router.cur !== 'landing') return;
-    $$('.float-shape').forEach((s, i) => {
-        const d = (i % 3 + 1) * 10;
-        s.style.translate = `${mx*d}px ${my*d}px`;
-    });
-}
-parallaxLoop();
 
 // ===== Effet 3D Cartes Menu =====
 function initTilt() {
@@ -570,7 +553,10 @@ const Runner = {
 
 // ===== Initialisation Globale =====
 document.addEventListener('DOMContentLoaded', () => {
-    $('#btn-enter').addEventListener('click', () => { ensureAudio(); playSound('click'); Router.go('menu'); });
+    // Initialisation des scores sur le menu
+    $('#menu-bj-score').textContent = Scores.bjBest;
+    $('#menu-runner-score').textContent = Scores.runBest;
+
     $('#nav-menu').addEventListener('click', () => { playSound('click'); Router.go('menu'); });
     
     $$('.game-card').forEach(card => {
