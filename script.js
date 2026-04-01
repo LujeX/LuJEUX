@@ -1,333 +1,590 @@
-const AudioEngine = {
-    ctx: null, muted: false,
-    init() {
-        if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
+/* ==========================================================
+   ONYX ARCADE — Code JavaScript
+   ========================================================== */
+
+// Polyfill roundRect pour anciens navigateurs Safari/Mobile
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        r = Math.min(Math.max(0, r), w / 2, h / 2);
+        this.moveTo(x + r, y);
+        this.lineTo(x + w - r, y);
+        this.arcTo(x + w, y, x + w, y + r, r);
+        this.lineTo(x + w, y + h - r);
+        this.arcTo(x + w, y + h, x + w - r, y + h, r);
+        this.lineTo(x + r, y + h);
+        this.arcTo(x, y + h, x, y + h - r, r);
+        this.lineTo(x, y + r);
+        this.arcTo(x, y, x + r, y, r);
+        this.closePath();
+    };
+}
+
+// ===== Utilitaires DOM =====
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+// ===== Toast (Notifications) =====
+function showToast(msg, dur = 2400) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ===== Audio (Web Audio API) =====
+let audioCtx;
+function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playSound(type) {
+    try {
+        ensureAudio();
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        switch (type) {
+            case 'click':
+                o.type='sine'; o.frequency.setValueAtTime(500,t); o.frequency.exponentialRampToValueAtTime(250,t+.05);
+                g.gain.setValueAtTime(.06,t); g.gain.exponentialRampToValueAtTime(.001,t+.05);
+                o.start(t); o.stop(t+.05); break;
+            case 'card':
+                o.type='triangle'; o.frequency.setValueAtTime(1000,t); o.frequency.exponentialRampToValueAtTime(500,t+.07);
+                g.gain.setValueAtTime(.06,t); g.gain.exponentialRampToValueAtTime(.001,t+.07);
+                o.start(t); o.stop(t+.07); break;
+            case 'chip':
+                o.type='sine'; o.frequency.setValueAtTime(1600,t);
+                g.gain.setValueAtTime(.04,t); g.gain.exponentialRampToValueAtTime(.001,t+.04);
+                o.start(t); o.stop(t+.04); break;
+            case 'win':
+                o.type='sine'; o.frequency.setValueAtTime(523,t); o.frequency.setValueAtTime(659,t+.08);
+                o.frequency.setValueAtTime(784,t+.16); o.frequency.setValueAtTime(1047,t+.24);
+                g.gain.setValueAtTime(.08,t); g.gain.exponentialRampToValueAtTime(.001,t+.4);
+                o.start(t); o.stop(t+.4); break;
+            case 'lose':
+                o.type='sawtooth'; o.frequency.setValueAtTime(250,t); o.frequency.exponentialRampToValueAtTime(80,t+.35);
+                g.gain.setValueAtTime(.06,t); g.gain.exponentialRampToValueAtTime(.001,t+.35);
+                o.start(t); o.stop(t+.35); break;
+            case 'gameover':
+                o.type='square'; o.frequency.setValueAtTime(180,t); o.frequency.exponentialRampToValueAtTime(40,t+.5);
+                g.gain.setValueAtTime(.08,t); g.gain.exponentialRampToValueAtTime(.001,t+.5);
+                o.start(t); o.stop(t+.5); break;
+            case 'dodge':
+                o.type='sine'; o.frequency.setValueAtTime(800,t); o.frequency.exponentialRampToValueAtTime(1200,t+.04);
+                g.gain.setValueAtTime(.03,t); g.gain.exponentialRampToValueAtTime(.001,t+.06);
+                o.start(t); o.stop(t+.06); break;
         }
-        if(this.ctx.state === 'suspended') this.ctx.resume();
-    },
-    toggleMute() {
-        this.muted = !this.muted;
-        document.getElementById('btn-mute').innerText = this.muted ? "🔇" : "🔊";
-    },
-    playTone(freq, type, duration, vol=0.1) {
-        if (this.muted || !this.ctx) return;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(); osc.stop(this.ctx.currentTime + duration);
-    },
-    sfxHover() { this.playTone(400, 'sine', 0.1, 0.05); },
-    sfxClick() { this.playTone(800, 'square', 0.1, 0.1); },
-    sfxDeal()  { this.playTone(300, 'triangle', 0.1, 0.1); },
-    sfxWin()   { 
-        if(this.muted) return;
-        setTimeout(()=>this.playTone(440, 'square', 0.1, 0.1), 0);
-        setTimeout(()=>this.playTone(554, 'square', 0.1, 0.1), 100);
-        setTimeout(()=>this.playTone(659, 'square', 0.3, 0.1), 200);
-    },
-    sfxLose()  {
-        if(this.muted) return;
-        setTimeout(()=>this.playTone(300, 'sawtooth', 0.2, 0.1), 0);
-        setTimeout(()=>this.playTone(250, 'sawtooth', 0.4, 0.1), 150);
-    }
+    } catch(e) {}
+}
+
+// ===== Scores (localStorage) =====
+const Scores = {
+    _g(k) { try { return parseInt(localStorage.getItem('onyx_'+k))||0; } catch{ return 0; } },
+    _s(k,v) { try { localStorage.setItem('onyx_'+k,v); } catch{} },
+    get bjBest() { return this._g('bj'); },
+    set bjBest(v) { if(v>this.bjBest) this._s('bj',v); },
+    get runBest() { return this._g('run'); },
+    set runBest(v) { if(v>this.runBest) this._s('run',v); }
 };
 
-const App = {
-    credits: parseInt(localStorage.getItem('neonCredits')) || 1000,
-    init() {
-        this.updateCreditsDisplay();
-        document.querySelectorAll('.game-card, .btn-back').forEach(el => {
-            el.addEventListener('mouseenter', () => AudioEngine.sfxHover());
-            el.addEventListener('click', (e) => {
-                AudioEngine.sfxClick();
-                this.navigate(e.currentTarget.dataset.target);
-            });
-        });
-        document.getElementById('btn-mute').addEventListener('click', () => AudioEngine.toggleMute());
-        this.runBootSequence();
-    },
-    updateCredits(amount) {
-        this.credits += amount;
-        localStorage.setItem('neonCredits', this.credits);
-        this.updateCreditsDisplay();
-    },
-    updateCreditsDisplay() { document.getElementById('user-credits').innerText = Math.floor(this.credits); },
-    navigate(screenId) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+// ===== Routeur SPA =====
+const Router = {
+    cur: 'landing',
+    go(page) {
+        if (page === this.cur) return;
+        if (this.cur === 'runner') Runner.stop();
+        const old = $(`#page-${this.cur}`);
+        const nxt = $(`#page-${page}`);
+        if (!nxt) return;
+        
+        old.classList.remove('active');
         setTimeout(() => {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            const target = document.getElementById(screenId);
-            target.classList.remove('hidden');
-            void target.offsetWidth;
-            target.classList.add('active');
-            if(screenId !== 'screen-boot') document.getElementById('global-hud').classList.remove('hidden');
-            if(screenId === 'screen-blackjack') Blackjack.init();
-            if(screenId === 'screen-runner') Runner.init();
-        }, 500);
-    },
-    runBootSequence() {
-        const text = "> CONNEXION AU SERVEUR NEON...\n> ANALYSE DES PROTOCOLES...\n> DÉCRYPTAGE MATRICE...\n> ACCÈS AUTORISÉ.\n> BIENVENUE, UTILISATEUR.";
-        const bootEl = document.getElementById('boot-text');
-        let i = 0;
-        const typeWriter = setInterval(() => {
-            bootEl.textContent += text.charAt(i);
-            if(text.charAt(i) !== ' ') AudioEngine.playTone(800 + Math.random()*200, 'square', 0.05, 0.02);
-            i++;
-            if (i >= text.length) {
-                clearInterval(typeWriter);
-                document.getElementById('btn-enter').classList.remove('hidden');
+            nxt.classList.add('active');
+            this.cur = page;
+            $('#main-nav').classList.toggle('visible', page !== 'landing');
+            if (page === 'blackjack') BJ.init();
+            if (page === 'runner') Runner.init();
+            if (page === 'menu') {
+                $('#menu-bj-score').textContent = Scores.bjBest;
+                $('#menu-runner-score').textContent = Scores.runBest;
             }
-        }, 50);
-        document.getElementById('btn-enter').addEventListener('click', () => {
-            AudioEngine.init(); 
-            AudioEngine.sfxClick();
-            this.navigate('screen-menu');
-        });
+        }, 320);
     }
 };
 
-const Blackjack = {
-    deck: [], playerHand: [], dealerHand: [], bet: 100, playing: false,
+// ===== Parallax Accueil =====
+let mx = 0, my = 0, parallaxId = 0;
+document.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth - .5) * 2;
+    my = (e.clientY / window.innerHeight - .5) * 2;
+});
+function parallaxLoop() {
+    parallaxId = requestAnimationFrame(parallaxLoop);
+    if (Router.cur !== 'landing') return;
+    $$('.float-shape').forEach((s, i) => {
+        const d = (i % 3 + 1) * 10;
+        s.style.translate = `${mx*d}px ${my*d}px`;
+    });
+}
+parallaxLoop();
+
+// ===== Effet 3D Cartes Menu =====
+function initTilt() {
+    $$('.game-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width - .5;
+            const y = (e.clientY - r.top) / r.height - .5;
+            card.style.transform = `perspective(700px) rotateY(${x*8}deg) rotateX(${-y*8}deg) translateY(-6px) scale(1.01)`;
+        });
+        card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+    });
+}
+
+// ===================================================================
+//  JEU 1 : BLACKJACK
+// ===================================================================
+const BJ = {
+    deck:[], pH:[], dH:[], chips:1000, bet:0, selChip:10, phase:'betting', _init:false,
+
     init() {
-        this.resetTable();
-        document.getElementById('bj-message').innerText = "PLACEZ VOTRE MISE";
-        this.updateBetDisplay();
-    },
-    buildDeck() {
-        const suits = ['♠', '♥', '♦', '♣'];
-        const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-        this.deck = [];
-        for(let s of suits) {
-            for(let v of values) { this.deck.push({suit: s, value: v, color: (s==='♥'||s==='♦') ? 'red' : 'black'}); }
+        if (!this._init) {
+            this._init = true;
+            $$('.chip').forEach(c => {
+                c.addEventListener('click', () => this.pickChip(c));
+                c.addEventListener('keydown', e => { if(e.key==='Enter') this.pickChip(c); });
+            });
+            $('#bj-deal').addEventListener('click', () => this.deal());
+            $('#bj-clear').addEventListener('click', () => this.clearBet());
+            $('#bj-hit').addEventListener('click', () => this.hit());
+            $('#bj-stand').addEventListener('click', () => this.stand());
+            $('#bj-double').addEventListener('click', () => this.double());
         }
-        for(let i = this.deck.length - 1; i > 0; i--){
-            const j = Math.floor(Math.random() * (i + 1));
-            [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
-        }
+        this.updUI();
     },
-    adjustBet(amount) {
-        AudioEngine.sfxHover();
-        if(this.bet + amount > 0 && this.bet + amount <= App.credits) {
-            this.bet += amount; this.updateBetDisplay();
-        }
+    pickChip(el) {
+        if (this.phase !== 'betting') return;
+        playSound('chip');
+        $$('.chip').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        this.selChip = parseInt(el.dataset.value);
+        this.addBet(this.selChip);
     },
-    updateBetDisplay() { document.getElementById('bj-current-bet').innerText = this.bet; },
-    getScore(hand) {
-        let score = 0, aces = 0;
-        for(let c of hand) {
-            if(['J','Q','K'].includes(c.value)) score += 10;
-            else if(c.value === 'A') { score += 11; aces += 1; }
-            else score += parseInt(c.value);
-        }
-        while(score > 21 && aces > 0) { score -= 10; aces -= 1; }
-        return score;
+    addBet(v) {
+        if (this.phase !== 'betting' || this.chips < v) { if(this.chips<v) showToast('Jetons insuffisants'); return; }
+        this.chips -= v; this.bet += v; playSound('chip'); this.updUI();
     },
-    createCardHTML(card, isHidden = false) {
-        return `
-            <div class="card-3d-wrapper ${isHidden ? '' : 'revealed'}">
-                <div class="card-face card-front ${card.color}">
-                    <div class="card-value">${card.value}</div>
-                    <div class="card-suit">${card.suit}</div>
-                    <div class="card-value bottom">${card.value}</div>
-                </div>
-                <div class="card-face card-back"></div>
-            </div>`;
+    clearBet() {
+        if (this.phase !== 'betting') return;
+        this.chips += this.bet; this.bet = 0; playSound('click'); this.updUI();
+    },
+    mkDeck() {
+        const suits=['♠','♥','♦','♣'], vals=['A','2','3','4','5','6','7','8','9','10','J','Q','K'], d=[];
+        for(let n=0;n<6;n++) for(let s of suits) for(let v of vals) d.push({s,v});
+        for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+        return d;
+    },
+    cVal(c) { if(c.v==='A') return 11; if('KQJ'.includes(c.v)) return 10; return parseInt(c.v); },
+    hVal(h) { let t=0,a=0; for(let c of h){t+=this.cVal(c);if(c.v==='A')a++;} while(t>21&&a>0){t-=10;a--;} return t; },
+    isBJ(h) { return h.length===2 && this.hVal(h)===21; },
+    mkCardEl(c, fd=false) {
+        const d=document.createElement('div');
+        const red = c.s==='♥'||c.s==='♦';
+        d.className='bj-card '+(red?'card-red':'card-black')+(fd?' face-down':'');
+        d.innerHTML=`<div class="card-face"><div class="card-corner tl"><span class="cv">${c.v}</span><span class="cs">${c.s}</span></div><div class="card-center-suit">${c.s}</div><div class="card-corner br"><span class="cv">${c.v}</span><span class="cs">${c.s}</span></div></div><div class="card-back-face"></div>`;
+        return d;
     },
     async deal() {
-        if(App.credits < this.bet) { document.getElementById('bj-message').innerText = "FONDS INSUFFISANTS"; return; }
-        App.updateCredits(-this.bet); 
-        AudioEngine.sfxClick();
-        document.getElementById('bj-bet-controls').classList.add('hidden');
-        document.getElementById('bj-message').innerText = "DISTRIBUTION...";
-        this.resetTable(); this.buildDeck(); this.playing = true;
-        await this.addCardToHand(this.playerHand, 'bj-player-cards', false);
-        await this.addCardToHand(this.dealerHand, 'bj-dealer-cards', false);
-        await this.addCardToHand(this.playerHand, 'bj-player-cards', false);
-        await this.addCardToHand(this.dealerHand, 'bj-dealer-cards', true); 
-        this.updateScores(false);
-        if(this.getScore(this.playerHand) === 21) {
-            this.endGame("BLACKJACK ! PAIEMENT 3:2", this.bet * 2.5);
-        } else {
-            document.getElementById('bj-play-controls').classList.remove('hidden');
-            document.getElementById('bj-message').innerText = "A VOUS DE JOUER";
-        }
-    },
-    async addCardToHand(hand, elementId, isHidden) {
-        return new Promise(resolve => {
-            setTimeout(() => {
-                const card = this.deck.pop(); hand.push(card);
-                document.getElementById(elementId).insertAdjacentHTML('beforeend', this.createCardHTML(card, isHidden));
-                AudioEngine.sfxDeal(); resolve();
-            }, 500);
-        });
-    },
-    updateScores(revealDealer) {
-        document.getElementById('bj-player-score').innerText = this.getScore(this.playerHand);
-        if(revealDealer) document.getElementById('bj-dealer-score').innerText = this.getScore(this.dealerHand);
+        if(this.phase!=='betting'||this.bet===0) return;
+        this.phase='playing';
+        if(this.deck.length<60) this.deck=this.mkDeck();
+        this.pH=[]; this.dH=[];
+        $('#player-hand').innerHTML=''; $('#dealer-hand').innerHTML='';
+        $('#bj-result').className='bj-result-banner'; $('#bj-result').textContent='';
+        this.showAct('play');
+
+        const c=[this.deck.pop(),this.deck.pop(),this.deck.pop(),this.deck.pop()];
+        this.pH.push(c[0]); $('#player-hand').appendChild(this.mkCardEl(c[0])); playSound('card'); await delay(220);
+        this.dH.push(c[1]); $('#dealer-hand').appendChild(this.mkCardEl(c[1])); playSound('card'); await delay(220);
+        this.pH.push(c[2]); $('#player-hand').appendChild(this.mkCardEl(c[2])); playSound('card'); await delay(220);
+        this.dH.push(c[3]); $('#dealer-hand').appendChild(this.mkCardEl(c[3],true)); playSound('card'); await delay(280);
+        this.updScores();
+
+        if(this.isBJ(this.pH)){ await this.reveal(); this.end(this.isBJ(this.dH)?'push':'blackjack'); return; }
+        if(this.isBJ(this.dH)){ await this.reveal(); this.end('lose'); return; }
+        $('#bj-double').disabled = this.chips < this.bet;
     },
     async hit() {
-        if(!this.playing) return;
-        document.getElementById('bj-play-controls').classList.add('hidden');
-        await this.addCardToHand(this.playerHand, 'bj-player-cards', false);
-        this.updateScores(false);
-        if(this.getScore(this.playerHand) > 21) this.endGame("SURCHARGE ! VOUS PERDEZ.", 0);
-        else if (this.getScore(this.playerHand) === 21) this.stand();
-        else document.getElementById('bj-play-controls').classList.remove('hidden');
+        if(this.phase!=='playing') return;
+        const c=this.deck.pop(); this.pH.push(c);
+        $('#player-hand').appendChild(this.mkCardEl(c)); playSound('card');
+        this.updScores(); $('#bj-double').disabled=true;
+        if(this.hVal(this.pH)>21){ await delay(350); await this.reveal(); this.end('lose'); }
+        else if(this.hVal(this.pH)===21) await this.stand();
     },
     async stand() {
-        if(!this.playing) return;
-        this.playing = false;
-        document.getElementById('bj-play-controls').classList.add('hidden');
-        document.getElementById('bj-dealer-cards').children[1].classList.add('revealed');
-        this.updateScores(true);
-        document.getElementById('bj-message').innerText = "TOUR DU CROUPIER...";
-        while(this.getScore(this.dealerHand) < 17) {
-            await this.addCardToHand(this.dealerHand, 'bj-dealer-cards', false);
-            this.updateScores(true);
+        if(this.phase!=='playing') return;
+        this.phase='dealer'; this.showAct('none');
+        await this.reveal(); await delay(350);
+        while(this.hVal(this.dH)<17){
+            const c=this.deck.pop(); this.dH.push(c);
+            $('#dealer-hand').appendChild(this.mkCardEl(c)); playSound('card');
+            this.updScores(); await delay(420);
         }
-        this.checkWinner();
+        await delay(250);
+        const pv=this.hVal(this.pH), dv=this.hVal(this.dH);
+        if(dv>21) this.end('win');
+        else if(pv>dv) this.end('win');
+        else if(pv<dv) this.end('lose');
+        else this.end('push');
     },
-    checkWinner() {
-        const pScore = this.getScore(this.playerHand), dScore = this.getScore(this.dealerHand);
-        if(dScore > 21) this.endGame("CROUPIER CRASH ! VOUS GAGNEZ.", this.bet * 2);
-        else if(pScore > dScore) this.endGame("VICTOIRE !", this.bet * 2);
-        else if(pScore < dScore) this.endGame("DÉFAITE...", 0);
-        else this.endGame("ÉGALITÉ. MISE REMBOURSÉE.", this.bet);
+    async double() {
+        if(this.phase!=='playing'||this.chips<this.bet) return;
+        this.chips-=this.bet; this.bet*=2; this.updUI();
+        await this.hit();
+        if(this.phase==='playing') await this.stand();
     },
-    endGame(msg, payout) {
-        this.playing = false;
-        document.getElementById('bj-play-controls').classList.add('hidden');
-        document.getElementById('bj-message').innerText = msg;
-        if(payout > 0) { App.updateCredits(payout); AudioEngine.sfxWin(); }
-        else if (payout === 0) { AudioEngine.sfxLose(); }
-        setTimeout(() => {
-            document.getElementById('bj-bet-controls').classList.remove('hidden');
-            if(this.bet > App.credits) this.bet = App.credits;
-            this.updateBetDisplay();
-        }, 2000);
+    async reveal() {
+        const fd=$('#dealer-hand .bj-card.face-down');
+        if(fd){ fd.classList.remove('face-down'); playSound('card'); await delay(350); }
+        this.updScores();
     },
-    resetTable() {
-        this.playerHand = []; this.dealerHand = [];
-        document.getElementById('bj-player-cards').innerHTML = '';
-        document.getElementById('bj-dealer-cards').innerHTML = '';
-        document.getElementById('bj-player-score').innerText = '0';
-        document.getElementById('bj-dealer-score').innerText = '?';
+    end(r) {
+        this.phase='result';
+        const b=$('#bj-result'); let w=0;
+        if(r==='blackjack'){ w=Math.floor(this.bet*2.5); b.textContent=`BLACKJACK ! +${w}`; b.className='bj-result-banner blackjack show'; playSound('win'); }
+        else if(r==='win'){ w=this.bet*2; b.textContent=`VICTOIRE ! +${w}`; b.className='bj-result-banner win show'; playSound('win'); }
+        else if(r==='push'){ w=this.bet; b.textContent='ÉGALITÉ — Mise rendue'; b.className='bj-result-banner push show'; playSound('click'); }
+        else { w=0; b.textContent=`DÉFAITE — -${this.bet}`; b.className='bj-result-banner lose show'; playSound('lose'); }
+        
+        this.chips+=w;
+        if(r==='win'||r==='blackjack') Scores.bjBest=Math.max(Scores.bjBest,this.chips);
+        this.bet=0; this.updUI();
+        
+        setTimeout(()=>{
+            this.phase='betting'; this.showAct('bet');
+            this.pH=[]; this.dH=[];
+            $('#player-hand').innerHTML=''; $('#dealer-hand').innerHTML='';
+            $('#bj-result').className='bj-result-banner';
+            $('#player-score').textContent=''; $('#dealer-score').textContent='';
+            if(this.chips<=0){ this.chips=1000; showToast('Jetons rechargés à 1000'); this.updUI(); }
+        },2000);
+    },
+    showAct(m) {
+        $('#bj-actions-bet').style.display=m==='bet'?'flex':'none';
+        $('#bj-actions-play').style.display=m==='play'?'flex':'none';
+    },
+    updScores() {
+        const pv=this.hVal(this.pH), dv=this.hVal(this.dH);
+        $('#player-score').textContent=pv>0?pv:'';
+        $('#dealer-score').textContent=this.phase==='playing'?(this.cVal(this.dH[0])+' + ?'):(dv>0?dv:'');
+    },
+    updUI() { 
+        $('#bj-chips').textContent=this.chips; 
+        $('#bj-bet').textContent=this.bet; 
+        $('#bj-deal').disabled=this.bet===0; 
     }
 };
 
+// ===================================================================
+//  JEU 2 : DODGE RUSH (5 couloirs)
+// ===================================================================
 const Runner = {
-    canvas: null, ctx: null, animFrame: null, isPlaying: false,
-    width: window.innerWidth, height: window.innerHeight,
-    player: { targetX: 0, x: 0, y: 0, size: 30 },
-    lanes: [-200, 0, 200], currentLane: 1,
-    speed: 10, baseSpeed: 10, distance: 0, multiplier: 1.0,
-    obstacles: [], particles: [], renderExplosionOnly: false,
+    canvas:null, ctx:null, running:false, animId:null, _init:false,
+    s: null, W:0, H:0, LANE_W:0, ROAD_X:0, ROAD_W:0, P_SIZE:0, WAVE_BASE:65,
+
     init() {
-        this.canvas = document.getElementById('runner-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.resize(); window.addEventListener('resize', () => this.resize());
-        this.ctx.fillStyle = '#07070a'; this.ctx.fillRect(0, 0, this.width, this.height);
+        if(!this._init){
+            this._init=true;
+            this.canvas=$('#runner-canvas');
+            this.ctx=this.canvas.getContext('2d');
+            
+            document.addEventListener('keydown', e => {
+                if(Router.cur!=='runner'||!this.s||!this.s.started||this.s.over) return;
+                if(e.key==='ArrowLeft'||e.key==='a'||e.key==='q'){ this.move(-1); e.preventDefault(); }
+                if(e.key==='ArrowRight'||e.key==='d'){ this.move(1); e.preventDefault(); }
+            });
+            $$('#runner-touch .touch-left').forEach(el=>el.addEventListener('touchstart',e=>{e.preventDefault();this.move(-1);}));
+            $$('#runner-touch .touch-right').forEach(el=>el.addEventListener('touchstart',e=>{e.preventDefault();this.move(1);}));
+            $('#runner-start-btn').addEventListener('click',()=>this.start());
+        }
+        this.resize();
+        this.drawIdle();
         
-        window.addEventListener('keydown', (e) => {
-            if(!this.isPlaying) return;
-            if(e.key === 'ArrowLeft' && this.currentLane > 0) this.currentLane--;
-            if(e.key === 'ArrowRight' && this.currentLane < 2) this.currentLane++;
-            this.player.targetX = this.lanes[this.currentLane];
-        });
-        this.canvas.addEventListener('mousedown', (e) => this.touchControl(e.clientX));
-        this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.touchControl(e.touches[0].clientX); }, {passive: false});
+        const ov=$('#runner-overlay');
+        ov.classList.remove('hidden');
+        $('#runner-overlay-title').textContent='Dodge Rush';
+        $('#runner-final-score').style.display='none';
+        $('#runner-high-text').style.display='none';
+        $('#runner-start-btn').textContent='Jouer';
+        $('#runner-hint').style.display='';
+        $('#runner-hud-score').textContent='0';
+        $('#runner-hud-speed').textContent='x1.0';
     },
-    touchControl(clientX) {
-        if(!this.isPlaying) return;
-        if(clientX < this.width/2 && this.currentLane > 0) this.currentLane--;
-        else if(clientX > this.width/2 && this.currentLane < 2) this.currentLane++;
-        this.player.targetX = this.lanes[this.currentLane];
-    },
+
     resize() {
         if(!this.canvas) return;
-        this.width = window.innerWidth; this.height = window.innerHeight;
-        this.canvas.width = this.width; this.canvas.height = this.height;
-        this.player.y = this.height - 150;
+        const r=this.canvas.parentElement.getBoundingClientRect();
+        const dpr=Math.min(window.devicePixelRatio||1,2);
+        this.W=r.width; this.H=r.height;
+        this.canvas.width=this.W*dpr; this.canvas.height=this.H*dpr;
+        this.canvas.style.width=this.W+'px'; this.canvas.style.height=this.H+'px';
+        this.ctx.setTransform(dpr,0,0,dpr,0,0);
+        this.ROAD_W=Math.min(this.W*.72,320);
+        this.ROAD_X=(this.W-this.ROAD_W)/2;
+        this.LANE_W=this.ROAD_W/5;
+        this.P_SIZE=this.LANE_W*.38;
     },
+
+    laneX(l) { return this.ROAD_X+this.LANE_W*l+this.LANE_W/2; },
+
+    move(dir) {
+        if(!this.s) return;
+        const nl=Math.max(0,Math.min(4,this.s.pl+dir));
+        if(nl!==this.s.pl){ this.s.pl=nl; playSound('dodge'); }
+    },
+
     start() {
-        document.getElementById('rn-overlay').classList.add('hidden');
-        this.isPlaying = true; this.distance = 0; this.speed = this.baseSpeed;
-        this.obstacles = []; this.particles = []; this.renderExplosionOnly = false;
-        this.currentLane = 1; this.player.targetX = this.lanes[1]; this.player.x = this.lanes[1];
-        AudioEngine.sfxClick(); this.loop();
+        this.resize();
+        this.s = {
+            pl:2, vx:this.laneX(2), py:this.H - this.P_SIZE*3.5,
+            obs:[], speed:3.2, score:0, frame:0, over:false, started:true,
+            particles:[], waveTimer:0
+        };
+        $('#runner-overlay').classList.add('hidden');
+        $('#runner-hud-score').textContent='0';
+        $('#runner-hud-speed').textContent='x1.0';
+        this.running=true;
+        this.loop();
     },
-    exit() { this.isPlaying = false; cancelAnimationFrame(this.animFrame); },
-    gameOver() {
-        this.isPlaying = false; AudioEngine.sfxLose();
-        this.createExplosion(this.width/2 + this.player.x, this.player.y);
-        const gain = Math.floor(this.distance / 100);
-        if(gain > 0) App.updateCredits(gain);
-        document.getElementById('rn-modal-title').innerText = "CRASH MATRICIEL";
-        document.getElementById('rn-modal-desc').innerHTML = `Distance: ${Math.floor(this.distance)}m<br>Gains transférés: <span class="neon-text-green">+${gain} ¤</span>`;
-        document.getElementById('rn-overlay').classList.remove('hidden');
-        this.renderExplosionOnly = true;
-    },
-    createExplosion(x, y) {
-        for(let i=0; i<30; i++) this.particles.push({x: x, y: y, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20, life: 1.0, color: Math.random()>0.5 ? '#00f3ff' : '#ff007f'});
-    },
+
+    stop() { this.running=false; if(this.animId) cancelAnimationFrame(this.animId); },
+
     loop() {
-        if(!this.isPlaying && !this.renderExplosionOnly) return;
+        if(!this.running) return;
+        this.animId=requestAnimationFrame(()=>this.loop());
         this.update(); this.draw();
-        this.animFrame = requestAnimationFrame(() => this.loop());
-        if(!this.isPlaying && this.particles.length === 0) this.renderExplosionOnly = false;
     },
+
     update() {
-        if(this.isPlaying) {
-            this.distance += this.speed / 10; this.speed += 0.005;
-            this.multiplier = (this.speed / this.baseSpeed).toFixed(1);
-            document.getElementById('rn-score').innerText = Math.floor(this.distance);
-            document.getElementById('rn-mult').innerText = this.multiplier;
-            this.player.x += (this.player.targetX - this.player.x) * 0.2;
-            if(Math.random() < 0.03 + (this.speed * 0.001)) {
-                let laneId = Math.floor(Math.random() * 3);
-                if(this.obstacles.filter(o => o.y < 150).length < 2) this.obstacles.push({ x: this.lanes[laneId], y: -100, width: 80, height: 20 });
+        const s=this.s;
+        s.frame++;
+        
+        // Vitesse progressive
+        s.speed = 3.2 + s.frame * 0.0009;
+        const sm = s.speed / 3.2;
+
+        // Score
+        if(s.frame%5===0){
+            s.score+=Math.ceil(sm);
+            $('#runner-hud-score').textContent=s.score;
+            $('#runner-hud-speed').textContent='x'+sm.toFixed(1);
+        }
+
+        // Interpolation joueur
+        const tx=this.laneX(s.pl);
+        s.vx+=(tx-s.vx)*.2;
+
+        // Spawn vague
+        s.waveTimer++;
+        const interval=Math.max(28, this.WAVE_BASE - s.frame*0.012);
+        if(s.waveTimer>=interval){
+            s.waveTimer=0;
+            this.spawnWave();
+        }
+
+        // Déplacer obstacles
+        for(let i=s.obs.length-1;i>=0;i--){
+            s.obs[i].y+=s.speed;
+            if(s.obs[i].y>this.H+50) s.obs.splice(i,1);
+        }
+
+        // Collision
+        const ps=this.P_SIZE*.75;
+        for(let o of s.obs){
+            const ox=this.laneX(o.lane);
+            const ow=this.LANE_W*.78, oh=36;
+            if(Math.abs(s.vx-ox)<(ps/2+ow/2) && Math.abs(s.py-o.y)<(ps/2+oh/2)){
+                this.gameOver(); return;
             }
         }
-        for(let i = this.obstacles.length - 1; i >= 0; i--) {
-            let obs = this.obstacles[i];
-            if(this.isPlaying) obs.y += this.speed;
-            if(this.isPlaying && obs.y + obs.height > this.player.y - this.player.size && obs.y < this.player.y + this.player.size) {
-                if(Math.abs(this.player.x - obs.x) < 40) this.gameOver();
-            }
-            if(obs.y > this.height) this.obstacles.splice(i, 1);
+
+        // Particules trail
+        if(s.frame%2===0){
+            s.particles.push({
+                x:s.vx+(Math.random()-.5)*6, y:s.py+this.P_SIZE*.35,
+                vx:(Math.random()-.5)*.4, vy:Math.random()*1.2+.4,
+                life:1, decay:Math.random()*.025+.018,
+                size:Math.random()*2.5+.8,
+                color:Math.random()>.5?'201,149,60':'184,92,56'
+            });
         }
-        for(let i = this.particles.length - 1; i >= 0; i--) {
-            let p = this.particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03;
-            if(p.life <= 0) this.particles.splice(i, 1);
+        for(let i=s.particles.length-1;i>=0;i--){
+            const p=s.particles[i];
+            p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
+            if(p.life<=0) s.particles.splice(i,1);
         }
     },
+
+    spawnWave() {
+        // Toujours bloquer 2 ou 3 couloirs sur 5 — garantit un chemin libre
+        const numBlocked = (this.s.frame > 3000 && Math.random() < .4) ? 3 : 2;
+        const lanes=[0,1,2,3,4];
+        for(let i=4;i>0;i--){const j=Math.floor(Math.random()*(i+1));[lanes[i],lanes[j]]=[lanes[j],lanes[i]];}
+        const blocked=lanes.slice(0,numBlocked);
+        for(const l of blocked) this.s.obs.push({lane:l, y:-40});
+    },
+
+    gameOver() {
+        const s=this.s;
+        s.over=true; s.started=false; this.running=false;
+        playSound('gameover');
+        
+        // Explosion
+        for(let i=0;i<35;i++){
+            const a=Math.random()*Math.PI*2, sp=Math.random()*3.5+1;
+            s.particles.push({
+                x:s.vx, y:s.py,
+                vx:Math.cos(a)*sp, vy:Math.sin(a)*sp,
+                life:1, decay:Math.random()*.015+.008,
+                size:Math.random()*3.5+1.5,
+                color:Math.random()>.5?'196,78,78':'201,149,60'
+            });
+        }
+        
+        let fr=0;
+        const exp=()=>{
+            if(fr>45) return; fr++;
+            for(let i=s.particles.length-1;i>=0;i--){
+                const p=s.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vx*=.96; p.vy*=.96; p.life-=p.decay;
+                if(p.life<=0) s.particles.splice(i,1);
+            }
+            this.draw(); requestAnimationFrame(exp);
+        };
+        exp();
+
+        const isNew=s.score>Scores.runBest;
+        if(isNew) Scores.runBest=s.score;
+        
+        setTimeout(()=>{
+            const ov=$('#runner-overlay'); ov.classList.remove('hidden');
+            $('#runner-overlay-title').textContent='Game Over';
+            $('#runner-final-score').style.display=''; $('#runner-final-score').textContent=s.score;
+            $('#runner-high-text').style.display='';
+            $('#runner-high-text').textContent=isNew?'Nouveau record !':'Record : '+Scores.runBest;
+            $('#runner-high-text').style.color=isNew?'var(--accent)':'var(--muted)';
+            $('#runner-start-btn').textContent='Rejouer';
+            $('#runner-hint').style.display='none';
+        }, 550);
+    },
+
     draw() {
-        const cx = this.width / 2;
-        this.ctx.fillStyle = 'rgba(7, 7, 10, 0.4)'; this.ctx.fillRect(0, 0, this.width, this.height);
-        this.ctx.strokeStyle = 'rgba(0, 243, 255, 0.15)'; this.ctx.lineWidth = 2; this.ctx.beginPath();
-        this.ctx.moveTo(cx - 100, 0); this.ctx.lineTo(cx - 100, this.height);
-        this.ctx.moveTo(cx + 100, 0); this.ctx.lineTo(cx + 100, this.height); this.ctx.stroke();
-        this.ctx.fillStyle = '#ff003c'; this.ctx.shadowColor = '#ff003c'; this.ctx.shadowBlur = 15;
-        for(let obs of this.obstacles) this.ctx.fillRect(cx + obs.x - obs.width/2, obs.y, obs.width, obs.height);
-        if(this.isPlaying) {
-            this.ctx.fillStyle = '#00f3ff'; this.ctx.shadowColor = '#00f3ff'; this.ctx.beginPath();
-            this.ctx.moveTo(cx + this.player.x, this.player.y - this.player.size);
-            this.ctx.lineTo(cx + this.player.x + this.player.size, this.player.y + this.player.size);
-            this.ctx.lineTo(cx + this.player.x - this.player.size, this.player.y + this.player.size); this.ctx.fill();
+        const ctx=this.ctx, s=this.s, W=this.W, H=this.H;
+        
+        // Fond
+        ctx.fillStyle='#09090e'; ctx.fillRect(0,0,W,H);
+
+        // Zone de route
+        const rg=ctx.createLinearGradient(this.ROAD_X,0,this.ROAD_X+this.ROAD_W,0);
+        rg.addColorStop(0,'rgba(201,149,60,0.015)');
+        rg.addColorStop(.5,'rgba(0,0,0,0)');
+        rg.addColorStop(1,'rgba(184,92,56,0.015)');
+        ctx.fillStyle=rg; ctx.fillRect(this.ROAD_X,0,this.ROAD_W,H);
+
+        // Bordures route
+        ctx.strokeStyle='rgba(201,149,60,0.18)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(this.ROAD_X,0); ctx.lineTo(this.ROAD_X,H); ctx.stroke();
+        ctx.strokeStyle='rgba(184,92,56,0.18)';
+        ctx.beginPath(); ctx.moveTo(this.ROAD_X+this.ROAD_W,0); ctx.lineTo(this.ROAD_X+this.ROAD_W,H); ctx.stroke();
+
+        // Lignes pointillées (animation rapide)
+        const dashOff=(s.frame*s.speed*.7)%36;
+        ctx.setLineDash([18,18]); ctx.lineDashOffset=-dashOff;
+        ctx.strokeStyle='rgba(236,230,218,0.04)'; ctx.lineWidth=1;
+        for(let i=1;i<5;i++){
+            const x=this.ROAD_X+this.LANE_W*i;
+            ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
         }
-        this.ctx.shadowBlur = 10;
-        for(let p of this.particles) {
-            this.ctx.fillStyle = p.color; this.ctx.shadowColor = p.color; this.ctx.globalAlpha = Math.max(0, p.life);
-            this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 4, 0, Math.PI*2); this.ctx.fill();
+        ctx.setLineDash([]);
+
+        // Highlight couloir
+        const plx=this.ROAD_X+this.LANE_W*s.pl;
+        ctx.fillStyle='rgba(201,149,60,0.03)';
+        ctx.fillRect(plx,0,this.LANE_W,H);
+
+        // Particules (trail & explosion)
+        for(const p of s.particles){
+            ctx.beginPath();
+            ctx.arc(p.x,p.y,Math.max(.4,p.size*p.life),0,Math.PI*2);
+            ctx.fillStyle=`rgba(${p.color},${p.life*.6})`;
+            ctx.fill();
         }
-        this.ctx.globalAlpha = 1.0; this.ctx.shadowBlur = 0;
+
+        // Obstacles
+        for(const o of s.obs){
+            const ox=this.laneX(o.lane), ow=this.LANE_W*.78, oh=36, r=5;
+            ctx.fillStyle='rgba(184,92,56,0.15)';
+            ctx.strokeStyle='rgba(184,92,56,0.7)';
+            ctx.lineWidth=1.5;
+            ctx.shadowColor='rgba(184,92,56,0.25)'; ctx.shadowBlur=10;
+            ctx.beginPath(); ctx.roundRect(ox-ow/2,o.y-oh/2,ow,oh,r); ctx.fill(); ctx.stroke();
+            ctx.shadowBlur=0;
+            ctx.strokeStyle='rgba(184,92,56,0.2)'; ctx.lineWidth=1;
+            ctx.beginPath(); ctx.roundRect(ox-ow/2+4,o.y-oh/2+4,ow-8,oh-8,3); ctx.stroke();
+        }
+
+        // Vaisseau (losange doré)
+        if(!s.over){
+            const px=s.vx, py=s.py, sz=this.P_SIZE;
+            ctx.shadowColor='rgba(201,149,60,0.35)'; ctx.shadowBlur=14;
+            ctx.fillStyle='rgba(201,149,60,0.2)';
+            ctx.strokeStyle='rgba(201,149,60,0.85)'; ctx.lineWidth=2;
+            ctx.beginPath();
+            ctx.moveTo(px,py-sz*.55); ctx.lineTo(px+sz*.45,py);
+            ctx.lineTo(px,py+sz*.4); ctx.lineTo(px-sz*.45,py);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.shadowBlur=0;
+            ctx.beginPath(); ctx.arc(px,py-sz*.05,2.5,0,Math.PI*2);
+            ctx.fillStyle='rgba(201,149,60,0.9)'; ctx.fill();
+        }
+    },
+
+    drawIdle() {
+        const ctx=this.ctx, W=this.W, H=this.H;
+        ctx.fillStyle='#09090e'; ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle='rgba(201,149,60,0.1)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(this.ROAD_X,0); ctx.lineTo(this.ROAD_X,H); ctx.stroke();
+        ctx.strokeStyle='rgba(184,92,56,0.1)';
+        ctx.beginPath(); ctx.moveTo(this.ROAD_X+this.ROAD_W,0); ctx.lineTo(this.ROAD_X+this.ROAD_W,H); ctx.stroke();
+        ctx.setLineDash([18,18]); ctx.strokeStyle='rgba(236,230,218,0.03)'; ctx.lineWidth=1;
+        for(let i=1;i<5;i++){
+            const x=this.ROAD_X+this.LANE_W*i;
+            ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+        }
+        ctx.setLineDash([]);
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => { App.init(); });
+// ===== Initialisation Globale =====
+document.addEventListener('DOMContentLoaded', () => {
+    $('#btn-enter').addEventListener('click', () => { ensureAudio(); playSound('click'); Router.go('menu'); });
+    $('#nav-menu').addEventListener('click', () => { playSound('click'); Router.go('menu'); });
+    
+    $$('.game-card').forEach(card => {
+        const h = () => { playSound('click'); Router.go(card.dataset.game); };
+        card.addEventListener('click', h);
+        card.addEventListener('keydown', e => { if(e.key==='Enter') h(); });
+    });
+    
+    initTilt();
+    
+    window.addEventListener('resize', () => {
+        if(Router.cur==='runner' && Runner._init){ 
+            Runner.resize(); 
+            if(!Runner.s||!Runner.s.started) Runner.drawIdle(); 
+        }
+    });
+});
