@@ -6,92 +6,91 @@
 <title>Neon Arcade</title>
 
 <style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:Arial; }
+
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: black;
-    color: white;
-    overflow: hidden;
+    background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+    color:white;
+    text-align:center;
 }
+
+/* PAGES */
+.page { display:none; }
+.active { display:block; }
 
 /* LANDING */
 #landing {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(circle, #0f0c29, #000);
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
 }
-
 h1 {
-    font-size: 3em;
-    text-shadow: 0 0 20px cyan;
+    font-size:60px;
+    text-shadow:0 0 20px cyan;
 }
-
 button {
-    padding: 15px 30px;
-    margin-top: 20px;
-    border: none;
-    background: cyan;
-    color: black;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 10px;
+    padding:12px 25px;
+    margin:10px;
+    border:none;
+    border-radius:10px;
+    background:cyan;
+    color:black;
+    cursor:pointer;
+    font-size:18px;
 }
 
 /* MENU */
-#menu {
-    display: none;
-    padding: 20px;
-}
-
 .card {
-    width: 200px;
-    height: 120px;
-    background: linear-gradient(45deg, purple, cyan);
-    margin: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 15px;
-    transition: 0.3s;
+    display:inline-block;
+    padding:40px;
+    margin:20px;
+    background:rgba(255,255,255,0.1);
+    border-radius:15px;
+    cursor:pointer;
+    transition:0.3s;
 }
-.card:hover {
-    transform: scale(1.1);
-}
+.card:hover { transform:scale(1.1); }
 
 /* BLACKJACK */
-#blackjack {
-    display: none;
-    text-align: center;
+#cards {
+    margin:20px;
+}
+.card-bj {
+    display:inline-block;
+    padding:15px;
+    margin:5px;
+    background:white;
+    color:black;
+    border-radius:8px;
+    font-weight:bold;
 }
 
 /* RUNNER */
-#runner {
-    display: none;
-    position: relative;
-    height: 400px;
-    background: #111;
-    overflow: hidden;
+#game {
+    position:relative;
+    width:300px;
+    height:400px;
+    margin:20px auto;
+    background:#111;
+    overflow:hidden;
 }
-
 .player {
-    width: 50px;
-    height: 50px;
-    background: cyan;
-    position: absolute;
-    bottom: 10px;
-    left: 150px;
+    position:absolute;
+    bottom:10px;
+    width:50px;
+    height:50px;
+    background:cyan;
+    border-radius:10px;
 }
-
 .obstacle {
-    width: 50px;
-    height: 50px;
-    background: red;
-    position: absolute;
-    bottom: 10px;
+    position:absolute;
+    top:0;
+    width:50px;
+    height:50px;
+    background:red;
+    border-radius:10px;
 }
 </style>
 </head>
@@ -99,115 +98,178 @@ button {
 <body>
 
 <!-- LANDING -->
-<div id="landing">
+<div id="landing" class="page active">
     <h1>NEON ARCADE</h1>
-    <button onclick="enterSite()">Entrer</button>
+    <button onclick="showPage('menu')">Entrer</button>
 </div>
 
 <!-- MENU -->
-<div id="menu">
+<div id="menu" class="page">
     <h2>Choisis ton jeu</h2>
     <div class="card" onclick="startBlackjack()">Blackjack</div>
     <div class="card" onclick="startRunner()">Runner</div>
 </div>
 
 <!-- BLACKJACK -->
-<div id="blackjack">
+<div id="blackjack" class="page">
     <h2>Blackjack</h2>
-    <p id="bj-status"></p>
+
+    <h3>Toi</h3>
+    <div id="playerCards"></div>
+
+    <h3>Dealer</h3>
+    <div id="dealerCards"></div>
+
+    <p id="bjResult"></p>
+
     <button onclick="hit()">Tirer</button>
     <button onclick="stand()">Rester</button>
-    <br><br>
-    <button onclick="backMenu()">Retour</button>
+    <button onclick="showPage('menu')">Retour</button>
 </div>
 
 <!-- RUNNER -->
-<div id="runner">
-    <div class="player" id="player"></div>
+<div id="runner" class="page">
+    <h2>Runner</h2>
+    <p>Score: <span id="score">0</span></p>
+    <div id="game">
+        <div id="player" class="player"></div>
+    </div>
+    <button onclick="showPage('menu')">Retour</button>
 </div>
 
 <script>
 // NAVIGATION
-function enterSite() {
-    landing.style.display = "none";
-    menu.style.display = "block";
+function showPage(id){
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
 }
 
-function backMenu() {
-    blackjack.style.display = "none";
-    runner.style.display = "none";
-    menu.style.display = "block";
+// ---------------- BLACKJACK ----------------
+let playerCards = [];
+let dealerCards = [];
+
+function randomCard(){
+    return Math.floor(Math.random()*11)+1;
 }
 
-// BLACKJACK
-let player = 0;
-let dealer = 0;
+function renderCards(){
+    const pDiv = document.getElementById("playerCards");
+    const dDiv = document.getElementById("dealerCards");
 
-function startBlackjack() {
-    menu.style.display = "none";
-    blackjack.style.display = "block";
-    player = Math.floor(Math.random()*10)+10;
-    dealer = Math.floor(Math.random()*10)+10;
-    updateBJ();
+    pDiv.innerHTML = "";
+    dDiv.innerHTML = "";
+
+    playerCards.forEach(c=>{
+        pDiv.innerHTML += `<div class="card-bj">${c}</div>`;
+    });
+
+    dealerCards.forEach(c=>{
+        dDiv.innerHTML += `<div class="card-bj">${c}</div>`;
+    });
 }
 
-function hit() {
-    player += Math.floor(Math.random()*10)+1;
-    updateBJ();
+function sum(cards){
+    return cards.reduce((a,b)=>a+b,0);
 }
 
-function stand() {
-    while (dealer < 17) {
-        dealer += Math.floor(Math.random()*10)+1;
+function startBlackjack(){
+    showPage("blackjack");
+
+    playerCards = [randomCard(), randomCard()];
+    dealerCards = [randomCard()];
+
+    renderCards();
+    document.getElementById("bjResult").innerText="";
+}
+
+function hit(){
+    playerCards.push(randomCard());
+    renderCards();
+
+    if(sum(playerCards) > 21){
+        document.getElementById("bjResult").innerText="Perdu (bust)";
     }
-    if (dealer > 21 || player > dealer) {
-        bjStatus.innerText = "Tu gagnes !";
+}
+
+function stand(){
+    while(sum(dealerCards) < 17){
+        dealerCards.push(randomCard());
+    }
+
+    renderCards();
+
+    let p = sum(playerCards);
+    let d = sum(dealerCards);
+
+    if(d > 21 || p > d){
+        bjResult.innerText="Gagné !";
+    } else if(p === d){
+        bjResult.innerText="Égalité";
     } else {
-        bjStatus.innerText = "Perdu...";
+        bjResult.innerText="Perdu";
     }
 }
 
-function updateBJ() {
-    bjStatus.innerText = "Toi: " + player + " | Dealer: ?";
-}
-
-// RUNNER GAME
-let playerPos = 150;
+// ---------------- RUNNER ----------------
+let playerLane = 1;
+let score = 0;
+let speed = 3;
 let obstacles = [];
 
-function startRunner() {
-    menu.style.display = "none";
-    runner.style.display = "block";
+function startRunner(){
+    showPage("runner");
+    playerLane = 1;
+    score = 0;
+    speed = 3;
+    obstacles = [];
 
-    document.addEventListener("keydown", movePlayer);
-
-    setInterval(() => {
-        let obs = document.createElement("div");
-        obs.classList.add("obstacle");
-        obs.style.left = "300px";
-        runner.appendChild(obs);
-        obstacles.push(obs);
-    }, 1500);
-
-    setInterval(updateGame, 50);
+    updatePlayer();
+    gameLoop();
 }
 
-function movePlayer(e) {
-    if (e.key === "ArrowLeft") playerPos -= 50;
-    if (e.key === "ArrowRight") playerPos += 50;
-    document.getElementById("player").style.left = playerPos + "px";
+function updatePlayer(){
+    document.getElementById("player").style.left = (playerLane*100 + 25) + "px";
 }
 
-function updateGame() {
-    obstacles.forEach((obs, i) => {
-        let left = parseInt(obs.style.left);
-        obs.style.left = left - 5 + "px";
+document.addEventListener("keydown", e=>{
+    if(e.key === "ArrowLeft" && playerLane > 0) playerLane--;
+    if(e.key === "ArrowRight" && playerLane < 2) playerLane++;
+    updatePlayer();
+});
 
-        if (left < playerPos + 50 && left > playerPos - 50) {
-            alert("GAME OVER");
-            location.reload();
+function spawnObstacle(){
+    let lane = Math.floor(Math.random()*3);
+    let obs = document.createElement("div");
+    obs.classList.add("obstacle");
+    obs.style.left = (lane*100 + 25) + "px";
+    obs.style.top = "0px";
+    document.getElementById("game").appendChild(obs);
+
+    obstacles.push({el:obs, lane:lane, y:0});
+}
+
+function gameLoop(){
+    setInterval(()=>{
+        score++;
+        document.getElementById("score").innerText = score;
+
+        if(Math.random() < 0.03){
+            spawnObstacle();
         }
-    });
+
+        obstacles.forEach(o=>{
+            o.y += speed;
+            o.el.style.top = o.y + "px";
+
+            if(o.y > 330 && o.lane === playerLane){
+                alert("GAME OVER");
+                location.reload();
+            }
+        });
+
+        speed += 0.002;
+
+    }, 20);
 }
 </script>
 
