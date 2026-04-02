@@ -4,18 +4,538 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎮 ARCADE ULTIMATE - Collection Premium</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="description" content="9 jeux classiques: Snake, Subway Runner, Tetris, Pac-Man, Puissance 4, Morpion, Blackjack, Pong, Air Hockey">
+    
+    <!-- FONTS -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS EMBEDDED (pas de fichier externe) -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* LOADING SCREEN */
+        #loadingScreen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #050510;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease;
+        }
+        
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+        
+        .loader-container {
+            position: relative;
+            width: 150px; height: 150px;
+            margin-bottom: 40px;
+        }
+        
+        .loader-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 4px solid transparent;
+            border-top-color: #6366f1;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .loader-ring:nth-child(2) {
+            width: 80%; height: 80%;
+            border-right-color: #ec4899;
+            animation-direction: reverse;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .loader-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: #94a3b8;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        
+        .loading-bar-container {
+            width: 300px; height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .loading-bar {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 3px;
+            transition: width 0.15s linear;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+        
+        /* MAIN MENU */
+        #mainMenu {
+            text-align: center;
+            padding: 30px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .main-title {
+            font-size: clamp(3rem, 7vw, 5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 5px;
+            line-height: 1.2;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        .title-sub {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            display: block;
+            letter-spacing: 12px;
+            margin-top: 10px;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(233, 69, 96, 0.5); }
+            to { text-shadow: 0 0 40px rgba(233, 69, 96, 0.8); }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 35px;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #06b6d4;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            color: #64748b;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            padding: 10px;
+            max-width: 1200px;
+        }
+        
+        .game-card {
+            background: rgba(15, 15, 25, 0.9);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            padding: 22px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: #6366f1;
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);
+        }
+        
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px;
+            margin: 0 auto 12px;
+            font-size: 36px;
+        }
+        
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #fff;
+            margin: 8px 0;
+        }
+        
+        .card-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        
+        .play-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.6);
+        }
+        
+        /* GAME CONTAINER */
+        #gameContainer {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0a0a0f;
+            z-index: 100;
+        }
+        
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        
+        .back-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .score-box {
+            padding: 8px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .score-label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: #94a3b8;
+        }
+        
+        .score-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+        
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            max-width: 100%;
+            max-height: calc(100vh - 140px);
+            border: 3px solid #6366f1;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+            image-rendering: crisp-edges;
+        }
+        
+        .canvas-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 8, 0.97);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .hidden-overlay {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .overlay-content {
+            text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .overlay-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .overlay-message {
+            font-size: 1.1rem;
+            color: #cbd5e1;
+            margin-bottom: 25px;
+        }
+        
+        .start-btn {
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+        }
+        
+        .controls-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 25px;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .ctrl-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .ctrl-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+        }
+        
+        /* MODAL */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(10px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, rgba(20, 20, 35, 0.98), rgba(10, 10, 20, 0.98));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 24px;
+            padding: 35px;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(99, 102, 241, 0.2);
+        }
+        
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+        
+        .modal-score-display {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 18px 28px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .modal-score-label {
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: #94a3b8;
+        }
+        
+        .modal-score-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #10b981;
+            text-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        
+        .modal-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255, 0.2);
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .main-title { font-size: 2.2rem; }
+            .title-sub { font-size: 1.2rem; letter-spacing: 8px; }
+            .games-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .game-card { padding: 16px; }
+            .card-icon { width: 60px; height: 60px; font-size: 28px; }
+            .card-title { font-size: 1.1rem; }
+            .game-header { flex-wrap: wrap; padding: 12px 15px; }
+            .game-title { order: -1; width: 100%; text-align: center; font-size: 1.1rem; }
+            .score-display { order: 0; width: 100%; justify-content: center; }
+            .controls-panel { flex-wrap: wrap; padding: 10px 15px; }
+            .ctrl-btn { padding: 8px 16px; font-size: 0.85rem; }
+        }
+    </style>
 </head>
-<body>
-    <!-- ============================================ -->
-    <!-- PARTICULES DE FOND ANIMÉES -->
-    <!-- ============================================ -->
-    <canvas id="particlesBg"></canvas>
 
-    <!-- ============================================ -->
+<body>
     <!-- ÉCRAN DE CHARGEMENT -->
-    <!-- ============================================ -->
     <div id="loadingScreen">
         <div class="loader-container">
             <div class="loader-ring"></div>
@@ -26,393 +546,137 @@
         <div class="loading-bar-container">
             <div class="loading-bar" id="loadingBar"></div>
         </div>
-        <p class="loading-percent" id="loadingPercent">0%</p>
+        <p style="color: #64748b; font-family: Rajdhani; margin-top: 15px;" id="loadingPercent">0%</p>
     </div>
 
-    <!-- ============================================ -->
-    <!-- MENU PRINCIPAL PREMIUM -->
-    <!-- ============================================ -->
-    <main id="mainMenu" class="hidden">
-        <!-- Header animé -->
-        <header class="menu-header">
-            <div class="logo-container">
-                <h1 class="main-title">
-                    <span class="title-letter">A</span><span class="title-letter">R</span><span class="title-letter">C</span><span class="title-letter">A</span><span class="title-letter">D</span><span class="title-letter">E</span>
-                    <br>
-                    <span class="title-sub">ULTIMATE</span>
-                </h1>
-                <div class="title-glow"></div>
+    <!-- MENU PRINCIPAL -->
+    <main id="mainMenu">
+        <h1 class="main-title">
+            A R C A D E<br><span class="title-sub">ULTIMATE</span>
+        </h1>
+        <p class="subtitle" id="typingText"></p>
+        <span style="color: #64748b;">|</span>
+        
+        <div class="header-stats">
+            <div class="stat-item"><span class="stat-number">9</span><span class="stat-label">JEUX</span></div>
+            <div class="stat-divider"></div>
+            <div class="stat-item"><span class="stat-number">∞</span><span class="stat-label">FUN</span></div>
+            <div class="stat-divider"></div>
+            <div class="stat-item"><span class="stat-number">60</span><span class="stat-label">FPS</span></div>
+        </div>
+        
+        <div class="games-grid" id="gamesGrid">
+            <!-- SNAKE -->
+            <div class="game-card" onclick='startGame("snake")'>
+                <div class="card-icon">🐍</div>
+                <h3 class="card-title">SNAKE</h3>
+                <p class="card-desc">Le serpent légendaire</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
             </div>
-            <p class="subtitle">
-                <span class="typing-text"></span><span class="cursor">|</span>
-            </p>
-            <div class="header-stats">
-                <div class="stat-item">
-                    <span class="stat-number">9</span>
-                    <span class="stat-label">JEUX</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-number">∞</span>
-                    <span class="stat-label">FUN</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-number">60</span>
-                    <span class="stat-label">FPS</span>
-                </div>
+            
+            <!-- SUBWAY RUNNER -->
+            <div class="game-card" onclick='startGame("subway")'>
+                <div class="card-icon">🏃</div>
+                <h3 class="card-title">SUBWAY RUNNER</h3>
+                <p class="card-desc">Course infinie</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
             </div>
-        </header>
-
-        <!-- Grille de jeux premium -->
-        <section class="games-showcase">
-            <div class="games-grid">
-                
-                <!-- SNAKE -->
-                <article class="game-card" data-game="snake">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <path d="M20 50 Q20 30 40 30 L60 30 Q80 30 80 50 Q80 70 60 70 L40 70 Q20 70 20 50" fill="#4ade80" stroke="#22c55e" stroke-width="3"/>
-                                <circle cx="35" cy="45" r="5" fill="#fff"/>
-                                <circle cx="65" cy="45" r="5" fill="#fff"/>
-                                <path d="M15 50 L10 45 M15 50 L10 55" stroke="#4ade80" stroke-width="4" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">SNAKE</h3>
-                        <p class="card-desc">Le serpent légendaire qui grandit à l'infini</p>
-                        <div class="card-stats">
-                            <span class="difficulty easy">FACILE</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                <!-- SUBWAY RUNNER -->
-                <article class="game-card" data-game="subway">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <ellipse cx="50" cy="75" rx="25" ry="8" fill="rgba(0,0,0,0.3)"/>
-                                <rect x="35" y="35" width="30" height="40" rx="5" fill="#f472b6"/>
-                                <circle cx="43" cy="28" r="12" fill="#fcd34d"/>
-                                <circle cx="39" cy="25" r="2" fill="#000"/>
-                                <circle cx="47" cy="25" r="2" fill="#000"/>
-                                <path d="M40 32 Q43 35 46 32" stroke="#000" fill="none" stroke-width="1.5"/>
-                                <rect x="38" y="48" width="24" height="6" rx="2" fill="#ec4899"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">SUBWAY RUNNER</h3>
-                        <p class="card-desc">Course infinie à travers la ville</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">MOYEN</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                <!-- TETRIS -->
-                <article class="game-card" data-game="tetris">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="20" y="20" width="22" height="22" rx="3" fill="#00f5ff"/>
-                                <rect x="44" y="20" width="22" height="22" rx="3" fill="#00f5ff"/>
-                                <rect x="44" y="44" width="22" height="22" rx="3" fill="#00f5ff"/>
-                                <rect x="68" y="44" width="22" height="22" rx="3" fill="#00f5ff"/>
-                                <rect x="20" y="58" width="22" height="22" rx="3" fill="#a855f7"/>
-                                <rect x="44" y="66" width="22" height="22" rx="3" fill="#f97316"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">TETRIS</h3>
-                        <p class="card-desc">Le puzzle classique qui défie le temps</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">MOYEN</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                <!-- PAC-MAN -->
-                <article class="game-card" data-game="pacman">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <circle cx="50" cy="50" r="35" fill="#fbbf24"/>
-                                <path d="M50 50 L85 30 A35 35 0 0 1 85 70 Z" fill="#1a1a2e"/>
-                                <circle cx="62" cy="38" r="5" fill="#1a1a2e"/>
-                                <circle cx="18" cy="25" r="8" fill="#ef4444"/>
-                                <circle cx="82" cy="25" r="8" fill="#00ffff"/>
-                                <circle cx="18" cy="75" r="8" fill="#ffb8ff"/>
-                                <circle cx="82" cy="75" r="8" fill="#ffb852"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">PAC-MAN</h3>
-                        <p class="card-desc">Mange les fantômes dans le labyrinthe</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">MOYEN</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                <!-- PUISSANCE 4 -->
-                <article class="game-card" data-game="puissance4">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="10" y="10" width="80" height="80" rx="5" fill="#1e40af"/>
-                                <circle cx="30" cy="30" r="12" fill="#ef4444"/>
-                                <circle cx="50" cy="30" r="12" fill="#fbbf24"/>
-                                <circle cx="70" cy="30" r="12" fill="#ef4444"/>
-                                <circle cx="40" cy="50" r="12" fill="#fbbf24"/>
-                                <circle cx="60" cy="50" r="12" fill="#ef4444"/>
-                                <circle cx="50" cy="70" r="12" fill="#fbbf24"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">PUISSANCE 4</h3>
-                        <p class="card-desc">Aligne 4 pions contre l'IA stratégique</p>
-                        <div class="card-stats">
-                            <span class="difficulty hard">DIFFICILE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                /* MORPION */
-                <article class="game-card" data-game="morpion">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <line x1="25" y1="25" x2="75" y2="75" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
-                                <line x1="75" y1="25" x2="25" y2="75" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
-                                <circle cx="50" cy="50" r="25" fill="none" stroke="#3b82f6" stroke-width="8"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">MORPION</h3>
-                        <p class="card-desc">Tic-Tac-Toe contre une IA imbattable</p>
-                        <div class="card-stats">
-                            <span class="difficulty hard">IMBATTABLE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                /* BLACKJACK */
-                <article class="game-card" data-game="blackjack">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="20" y="10" width="60" height="80" rx="5" fill="#fff" stroke="#333" stroke-width="2"/>
-                                <text x="50" y="40" text-anchor="middle" font-size="24" font-weight="bold" fill="#dc2626">A</text>
-                                <text x="50" y="70" text-anchor="middle" font-size="28" fill="#dc2626">♠</text>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">BLACKJACK</h3>
-                        <p class="card-desc">21 points pour battre le croupier</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">CLASSIQUE</span>
-                            <span class="players">VS CROUPIER</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                /* PONG */
-                <article class="game-card" data-game="pong">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="10" y="35" width="8" height="30" rx="2" fill="#4ade80"/>
-                                <rect x="82" y="35" width="8" height="30" rx="2" fill="#ef4444"/>
-                                <circle cx="50" cy="50" r="8" fill="#fff"/>
-                                <line x1="50" y1="10" x2="50" y2="90" stroke="#444" stroke-dasharray="5,5"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">PONG</h3>
-                        <p class="card-desc">Le tennis de table originel vs IA</p>
-                        <div class="card-stats">
-                            <span class="difficulty easy">FACILE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
-                /* AIR HOCKEY */
-                <article class="game-card" data-game="airhockey">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="5" y="5" width="90" height="90" rx="10" fill="#1e40af" stroke="#fbbf24" stroke-width="4"/>
-                                <circle cx="50" cy="50" r="12" fill="#333"/>
-                                <circle cx="25" cy="50" r="18" fill="#4ade80" stroke="#fff" stroke-width="2"/>
-                                <circle cx="75" cy="50" r="18" fill="#ef4444" stroke="#fff" stroke-width="2"/>
-                                <rect x="42" y="5" width="16" height="90" fill="none" stroke="rgba(255,255,255,0.3)" stroke-dasharray="8,4"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">AIR HOCKEY</h3>
-                        <p class="card-desc">Palet ultra-rapide avec physique réaliste</p>
-                        <div class="card-stats">
-                            <span class="difficulty hard">INTENSE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                    <div class="card-particles"></div>
-                </article>
-
+            
+            <!-- TETRIS -->
+            <div class="game-card" onclick='startGame("tetris")'>
+                <div class="card-icon">🧱</div>
+                <h3 class="card-title">TETRIS</h3>
+                <p class="card-desc">Le puzzle classique</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
             </div>
-        </section>
-
-        <!-- Footer info -->
-        <footer class="menu-footer">
-            <div class="footer-content">
-                <p class="footer-text">✨ Utilisez les flèches directionnelles ou WASD pour jouer ✨</p>
-                <div class="social-links">
-                    <span class="made-with">Créé avec ❤️ et ☕</span>
-                </div>
+            
+            <!-- PAC-MAN -->
+            <div class="game-card" onclick='startGame("pacman")'>
+                <div class="card-icon">👻</div>
+                <h3 class="card-title">PAC-MAN</h3>
+                <p class="card-desc">Mange les fantômes</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
             </div>
-        </footer>
+            
+            <!-- PUISSANCE 4 -->
+            <div class="game-card" onclick='startGame("puissance4")'>
+                <div class="card-icon">🔴</div>
+                <h3 class="card-title">PUISSANCE 4</h3>
+                <p class="card-desc">Aligne 4 pions vs IA</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
+            </div>
+            
+            /* MORPION */
+            <div class="game-card" onclick='startGame("morpion")'>
+                <div class="card-icon">⭕</div>
+                <h3 class="card-title">MORPION</h3>
+                <p class="card-desc">IA imbattable</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
+            </div>
+            
+            <!-- BLACKJACK -->
+            <div class="game-card" onclick='startGame("blackjack")'>
+                <div class="card-icon">🃏</div>
+                <h3 class="card-title">BLACKJACK</h3>
+                <p class="card-desc">21 points</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
+            </div>
+            
+            <!-- PONG -->
+            <div class="game-card" onclick='startGame("pong")'>
+                <div class="card-icon">🏓</div>
+                <h3 class="card-title">PONG</h3>
+                <p class="card-desc">Tennis de table</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
+            </div>
+            
+            <!-- AIR HOCKEY -->
+            <div class="game-card" onclick='startGame("airhockey")'>
+                <div class="card-icon">🥅</div>
+                <h3 class="card-title">AIR HOCKEY</h3>
+                <p class="card-desc">Physique réaliste</p>
+                <button class="play-btn" onclick='event.stopPropagation()'>JOUER ▶</button>
+            </div>
+        </div>
     </main>
 
-    <!-- ============================================ -->
     <!-- CONTENEUR DE JEU -->
-    <!-- ============================================ -->
-    <div id="gameContainer" class="hidden">
-        <!-- Header du jeu -->
+    <div id="gameContainer">
         <header class="game-header">
-            <button class="back-btn" id="backBtn" title="Retour au menu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-                <span>MENU</span>
-            </button>
-            
+            <button class="back-btn" onclick="backToMenu()">← Menu</button>
             <h2 class="game-title" id="gameTitle">NOM DU JEU</h2>
-            
-            <div class="game-score-display">
+            <div class="score-display">
                 <div class="score-box">
                     <span class="score-label">SCORE</span>
                     <span class="score-value" id="scoreValue">0</span>
                 </div>
             </div>
         </header>
-
-        <!-- Zone de canvas -->
+        
         <div class="canvas-wrapper">
             <canvas id="gameCanvas"></canvas>
             <div class="canvas-overlay" id="canvasOverlay">
                 <div class="overlay-content">
-                    <h3 class="overlay-title" id="overlayTitle">PRÊT ?</h3>
-                    <p class="overlay-message" id="overlayMessage">Appuyez pour commencer</p>
-                    <button class="start-game-btn" id="startGameBtn">COMMENCER</button>
+                    <h2 class="overlay-title" id="overlayTitle">PRÊT ?</h2>
+                    <p class="overlay-message" id="overlayMessage">Cliquez pour commencer</p>
+                    <button class="start-btn" onclick="hideOverlay()">COMMENCER ✓</button>
                 </div>
             </div>
         </div>
-
-        <!-- Contrôles du jeu -->
-        <div class="game-controls-panel">
-            <div class="controls-info" id="controlsInfo">
-                <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> Déplacer
+        
+        <div class="controls-panel">
+            <div id="controlsInfo" style="color: #94a3b8; font-size: 0.9rem;">
+                ← → ↑ ↓ Déplacer | ESPACE sauter
             </div>
-            <div class="control-buttons">
-                <button class="ctrl-btn restart-btn" id="restartBtn" title="Recommencer">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 4v6h-6M1 20v-6h6"/>
-                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-                    </svg>
-                    RESTART
-                </button>
-                <button class="ctrl-btn pause-btn" id="pauseBtn" title="Pause">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-                    </svg>
-                    PAUSE
-                </button>
-            </div>
-        </div>
-
-        <!-- Contrôles mobiles -->
-        <div class="mobile-controls" id="mobileControls">
-            <div class="dpad">
-                <button class="dpad-btn dpad-up" data-dir="up">▲</button>
-                <button class="dpad-btn dpad-left" data-dir="left">◀</button>
-                <button class="dpad-btn dpad-center"></button>
-                <button class="dpad-btn dpad-right" data-dir="right">▶</button>
-                <button class="dpad-btn dpad-down" data-dir="down">▼</button>
-            </div>
-            <div class="action-buttons">
-                <button class="action-btn action-a" data-action="a">A</button>
-                <button class="action-btn action-b" data-action="b">B</button>
+            <div>
+                <button class="ctrl-btn" onclick="restartGame()">🔄 Restart</button>
+                <button class="ctrl-btn" onclick="togglePause()">⏸️ Pause</button>
             </div>
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- MODAL GAME OVER / VICTOIRE -->
-    <!-- ============================================ -->
-    <div id="resultModal" class="modal hidden">
-        <div class="modal-backdrop"></div>
+    <!-- MODAL -->
+    <div class="modal" id="resultModal">
         <div class="modal-content">
             <div class="modal-icon" id="modalIcon">🏆</div>
             <h2 class="modal-title" id="modalTitle">VICTOIRE!</h2>
@@ -420,36 +684,1532 @@
                 <span class="modal-score-label">SCORE FINAL</span>
                 <span class="modal-score-value" id="modalScore">0</span>
             </div>
-            <div class="modal-stats" id="modalStats"></div>
             <div class="modal-actions">
-                <button class="modal-btn primary" id="modalRestart">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-                    </svg>
-                    REJOUER
-                </button>
-                <button class="modal-btn secondary" id="modalMenu">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    </svg>
-                    MENU
-                </button>
+                <button class="modal-btn btn-primary" onclick="restartGame()">🔄 Rejouer</button>
+                <button class="modal-btn btn-secondary" onclick="backToMenu()">🏠 Menu</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/core.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/games/snake.js"></script>
-    <script src="js/games/subwayRunner.js"></script>
-    <script src="js/games/tetris.js"></script>
-    <script src="js/games/pacman.js"></script>
-    <script src="js/games/puissance4.js"></script>
-    <script src="js/games/morpion.js"></script>
-    <script src="js/games/blackjack.js"></script>
-    <script src="js/games/pong.js"></script>
-    <script src="js/games/airHockey.js"></script>
-    <script src="main.js"></script>
-</body>
-</html>
+    <!-- SCRIPTS - TOUT EST DANS CE FICHIER -->
+    <script>
+    // ============================================
+    // CONFIGURATION GLOBALE
+    // ============================================
+    const CONFIG = {
+        TARGET_FPS: 60,
+        DELTA_TIME_CAP: 0.1,
+        DEBUG_MODE: false
+    };
+
+    // Variables globales
+    let currentGame = null;
+    let currentGameName = '';
+    let score = 0;
+    let lastTime = 0;
+    let deltaTime = 0;
+    let animationId = null;
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // ============================================
+    // CHARGEMENT
+    // ============================================
+    window.onload = function() {
+        console.log('🎮 Arcade Ultimate - Chargement...');
+        simulateLoading();
+    };
+    
+    function simulateLoading() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingBar = document.getElementById('loadingBar');
+        const loadingPercent = document.getElementById('loadingPercent');
+        const mainMenu = document.getElementById('mainMenu');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 15 + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                
+                if (loadingBar) loadingBar.style.width = '100%';
+                if (loadingPercent) loadingPercent.textContent = '100%';
+                
+                setTimeout(() => {
+                    if (loadingScreen) loadingScreen.classList.add('hidden');
+                    if (mainMenu) mainMenu.style.display = 'flex';
+                    
+                    // Initialiser le typing effect
+                    startTyping();
+                }, 400);
+            } else {
+                if (loadingBar) loadingBar.style.width = progress + '%';
+                if (loadingPercent) loadingPercent.textContent = Math.floor(progress) + '%';
+            }
+        }, 80);
+    }
+    
+    function startTyping() {
+        const el = document.getElementById('typingText');
+        const texts = ['9 Jeux Classiques', 'IA Intelligente', '60 FPS Fluides', 'Design Premium'];
+        let i = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        
+        const type = () => {
+            const currentText = texts[i];
+            
+            if (!isDeleting && charIndex <= currentText.length) {
+                el.innerHTML = currentText.substring(0, charIndex) + '<span>|</span>';
+                charIndex++;
+            } else {
+                isDeleting = true;
+            }
+            
+            if (isDeleting) {
+                el.innerHTML = currentText.substring(0, charIndex) + '<span>|</span>';
+                charIndex--;
+            }
+            
+            if (charIndex < 0) {
+                isDeleting = false;
+                i = (i + 1) % texts.length;
+                charIndex = 0;
+            }
+            
+            setTimeout(type, isDeleting ? 50 : 100);
+        };
+        
+        type();
+    }
+
+    // ============================================
+    // LANCEMENT DE JEU
+    // ============================================
+    function startGame(gameName) {
+        console.log(`🚀 Lancement: ${gameName}`);
+        
+        document.getElementById('mainMenu').style.display = 'none';
+        document.getElementById('gameContainer').style.display = 'block';
+        document.getElementById('resultModal').style.display = 'none';
+        
+        document.getElementById('gameTitle').textContent = getGameTitle(gameName);
+        document.getElementById('scoreValue').textContent = '0';
+        
+        // Reset
+        score = 0;
+        currentGameName = gameName;
+        
+        // Configurer le canvas selon le jeu
+        setupCanvas(gameName);
+        
+        // Créer le jeu
+        createGame(gameName);
+        
+        // Montrer overlay
+        showOverlay();
+        
+        // Démarrer le game loop
+        lastTime = performance.now();
+        if (animationId) cancelAnimationFrame(animationId);
+        gameLoop();
+    }
+    
+    function getGameTitle(name) {
+        const titles = {
+            snake: '🐍 SNAKE',
+            subway: '🏃 SUBWAY RUNNER',
+            tetris: '🧱 TETRIS',
+            pacman: '👻 PAC-MAN',
+            puissance4: '🔴 PUISSANCE 4',
+            morpion: '⭕ MORPION',
+            blackjack: '🃏 BLACKJACK',
+            pong: '🏓 PONG',
+            airhockey: '🥅 AIR HOCKEY'
+        };
+        return titles[name] || name.toUpperCase();
+    }
+    
+    function setupCanvas(name) {
+        const sizes = {
+            snake: { w: 600, h: 600 },
+            subway: { w: 450, h: 700 },
+            tetris: { w: 380, h: 720 },
+            pacman: { w: 560, h: 620 },
+            puissance4: { w: 560, h: 520 },
+            morpion: { w: 400, h: 480 },
+            black jack: { w: 720, h: 520 },
+            pong: { w: 850, h: 520 },
+            airhockey: { w: 850, h: 520 }
+        };
+        
+        const size = sizes[name] || sizes.snake;
+        canvas.width = size.w;
+        canvas.height = size.h;
+    }
+    
+    function createGame(name) {
+        switch(name) {
+            case 'snake': currentGame = new SnakeGame(); break;
+            case 'subway': currentGame = new SubwayRunner(); break;
+            case 'tetris': currentGame = new TetrisGame(); break;
+            case 'pacman': currentGame = new PacManGame(); break;
+            case 'puissance4': currentGame = new Puissance4(); break;
+            case 'morpion': currentGame = new Morpion(); break;
+            case 'blackjack': currentGame = new Blackjack(); break;
+            'pong': currentGame = new Pong(); break;
+            case 'airhockey': currentGame = new AirHockey(); break;
+            default: currentGame = new SnakeGame();
+        }
+    }
+    
+    // ============================================
+    // GAME LOOP PRINCIPAL
+    // ============================================
+    function gameLoop() {
+        const now = performance.now();
+        deltaTime = (now - lastTime) / 1000;
+        lastTime = now;
+        
+        // Cap à 100ms pour éviter les sauts
+        if (deltaTime > CONFIG.DELTA_TIME_CAP) {
+            deltaTime = CONFIG.DELTA_TIME_CAP;
+        }
+        
+        if (currentGame && !currentGame.gameOver) {
+            try {
+                currentGame.update(deltaTime);
+                currentGame.render();
+            } catch(e) {
+                console.error('Erreur jeu:', e);
+                showError('Erreur: ' + e.message);
+            }
+        }
+        
+        animationId = requestAnimationFrame(gameLoop);
+    }
+    
+    // ============================================
+    // OVERLAY & NAVIGATION
+    // ============================================
+    function showOverlay() {
+        document.getElementById('canvasOverlay').classList.remove('hidden-overlay');
+    }
+    
+    function hideOverlay() {
+        document.getElementById('canvasOverlay').classList.add('hidden-overlay');
+        if (currentGame && typeof currentGame.start === 'function') {
+            currentGame.start();
+        }
+    }
+    
+    function backToMenu() {
+        if (animationId) cancelAnimationFrame(animationId);
+        document.getElementById('gameContainer').style.display = 'none';
+        document.getElementById('resultModal').style.display = 'none';
+        mainMenu.style.display = 'flex';
+        currentGame = null;
+    }
+    
+    function restartGame() {
+        document.getElementById('resultModal').style.display = 'none';
+        hideOverlay();
+        createGame(currentGameName);
+        score = 0;
+        showOverlay();
+    }
+    
+    function togglePause() {
+        if (currentGame) {
+            if (currentGame.paused) {
+                currentGame.paused = false;
+                lastTime = performance.now();
+            } else {
+                currentGame.paused = true;
+            }
+        }
+    }
+    
+    function showModal(icon, title, finalScore) {
+        document.getElementById('modalIcon').textContent = icon;
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalScore').textContent = finalScore;
+        document.getElementById('resultModal').style.display = 'flex';
+    }
+    
+    function showError(msg) {
+        alert('⚠️ Erreur: ' + msg);
+        console.error(msg);
+    }
+    
+    // ============================================
+    // CLASSES DE JEU
+    // ============================================
+    
+    // ======== BASE GAME CLASS ========
+    class BaseGame {
+        constructor() {
+            this.gameOver = false;
+            this.score = 0;
+            this.paused = false;
+            this.time = 0;
+        }
+        
+        init() {}
+        update(dt) { this.time += dt; }
+        render() {}
+        start() { 
+            this.gameOver = false;
+            this.paused = false;
+            this.time = 0;
+        }
+        endGame(isVictory, title, icon) {
+            this.gameOver = true;
+            showModal(icon, title, this.score);
+        }
+    }
+    
+    // ======== SNAKE ========
+    class SnakeGame extends BaseGame {
+        constructor() {
+            super();
+            this.gridSize = 20;
+            this.tileCount = 30;
+            this.snake = [{x: 15, y: 15}, {x: 14, y: 15}, {x: 13, y: 15}];
+            this.direction = {x: 1, y: 0};
+            this.nextDirection = {x: 1, y: 0};
+            this.apple = this.spawnApple();
+            this.applePulse = 0;
+            this.baseSpeed = 8;
+            this.currentSpeed = 8;
+            this.moveTimer = 0;
+            this.moveInterval = 1 / this.currentSpeed;
+            this.comboCount = 0;
+            this.comboTimer = 0;
+            this.applesEaten = 0;
+            this.maxCombo = 0;
+            this.screenShake = {intensity: 0};
+            this.flashAlpha = 0;
+            this.particles = [];
+        }
+        
+        spawnApple() {
+            let pos;
+            let attempts = 0;
+            do {
+                pos = { x: Math.floor(Math.random() * this.tileCount), y: Math.floor(Math.random() * this.tileCount) };
+                attempts++;
+            } while (this.snake.some(s => s.x === pos.x && s.y === pos.y));
+            return pos;
+        }
+        
+        moveSnake() {
+            this.direction = {...this.nextDirection};
+            const head = {
+                x: this.snake[0].x + this.direction.x,
+                y: this.snake[0].y + this.direction.y
+            };
+            
+            if (head.x < 0 || head.x >= this.tileCount || head.y < 0 || head.y >= this.tileCount) {
+                this.die();
+                return;
+            }
+            
+            if (this.snake.some(s => s.x === head.x && s.y === head.y)) {
+                this.die();
+                return;
+            }
+            
+            this.snake.unshift(head);
+            
+            if (head.x === this.apple.x && head.y === this.apple.y) {
+                this.comboCount++;
+                this.comboTimer = 2;
+                this.score += 10 * Math.min(this.comboCount, 10);
+                this.applesEaten++;
+                this.screenShake.intensity = 5 + this.comboCount;
+                this.flashAlpha = 0.3;
+                this.apple = this.spawnApple();
+                this.currentSpeed = Math.min(20, this.baseSpeed + Math.floor(this.applesEaten / 3) * 0.5);
+                this.moveInterval = 1 / this.currentSpeed;
+                document.getElementById('scoreValue').textContent = this.score;
+            } else {
+                this.snake.pop();
+            }
+        }
+        
+        die() {
+            this.gameOver = true;
+            this.screenShake.intensity = 20;
+            showModal('💀', 'GAME OVER', this.score);
+        }
+        
+        update(dt) {
+            super.update(dt);
+            if (this.gameOver || this.paused) return;
+            
+            this.applePulse += dt * 5;
+            if (this.comboTimer > 0) this.comboTimer -= dt;
+            if (this.comboTimer <= 0) this.comboCount = 0;
+            
+            this.screenShake.intensity *= 0.9;
+            if (this.screenShake.intensity < 0.1) this.screenShake.intensity = 0;
+            if (this.flashAlpha > 0) this.flashAlpha -= dt * 3;
+            
+            this.moveTimer += dt;
+            if (this.moveTimer >= this.moveInterval) {
+                this.moveTimer = 0;
+                this.moveSnake();
+            }
+        }
+        
+        render() {
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            
+            // Screen shake
+            if (this.screenShake.intensity > 0) {
+                const sx = (Math.random() - 0.5) * this.screenShake.intensity * 2;
+                const sy = (Math.random() - 0.5) * this.screenShake.intensity * 2;
+                ctx.translate(sx, sy);
+            }
+            
+            // Fond
+            const gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#0f0f17');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grille
+            ctx.strokeStyle = 'rgba(99, 102, 1, 0.08)';
+            for (let i = 0; i <= this.tileCount; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * this.gridSize, 0);
+                ctx.lineTo(i * this.gridSize, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * this.gridSize);
+                ctx.lineTo(canvas.width, i * this.gridSize);
+                ctx.stroke();
+            }
+            
+            // Pomme
+            const ax = this.apple.x * this.gridSize + this.gridSize / 2;
+            const ay = this.apple.y * this.gridSize + this.gridSize / 2;
+            const pr = this.gridSize / 2 - 3;
+            const pulseR = pr + Math.sin(this.applePulse) * 2;
+            
+            ctx.fillStyle = 'rgba(239, 68, 68, 0)';
+            ctx.beginPath();
+            ctx.arc(ax, ay, pulseR, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(ax, ay, pr, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Serpent
+            for (let i = this.snake.length - 1; i >= 0; i--) {
+                const s = this.snake[i];
+                const sx = s.x * this.gridSize + this.gridSize / 2;
+                const sy = s.y * this.gridSize + this.gridSize / 2;
+                
+                const grad = ctx.createRadialGradient(sx - 5, sy - 5, 0, sx, sy, 14);
+                grad.addColorStop(0, i === 0 ? '#86efac' : 'rgba(74, 222, 128, 0.6)');
+                grad.addColorStop(1, i === 0 ? '#22c55e' : 'rgba(34, 197, 94, 0.4)');
+                
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.roundRect(sx - 16, sy - 16, 32, 32, 6);
+                ctx.fill();
+                
+                if (i === 0) {
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(sx - 6, sy - 6, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(sx + 6, sy - 6, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Flash
+            if (this.flashAlpha > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.flashAlpha})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // Combo
+            if (this.comboCount > 1 && this.comboTimer > 0) {
+                ctx.font = 'bold 26px Orbitron';
+                ctx.fillStyle = '#fbbf24';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${this.comboCount}x COMBO!`, canvas.width / 2, 70);
+            }
+            
+            ctx.restore();
+        }
+        
+        handleKey(key) {
+            const code = key.code;
+            switch(code) {
+                case 'ArrowUp':
+                if (this.direction.y !== 1) this.nextDirection = {x: 0, y: -1}; break;
+                case 'ArrowDown':
+                    if (this.direction.y !== -1) this.nextDirection = {x: 0, y: 1}; break;
+                case 'ArrowLeft':
+                    if (this.direction.x !== 1) this.nextDirection = {x: -1, y: 0}; break;
+                case 'ArrowRight':
+                    if (this.direction.x !== -1) this.nextDirection = {x: 1, y: 0}; break;
+            }
+        }
+    }
+    
+    // ======== SUBWAY RUNNER ========
+    class SubwayRunner extends BaseGame {
+        constructor() {
+            super();
+            this.lanes = [100, 250, 400];
+            this.currentLane = 1;
+            this.playerX = 250;
+            this.playerY = 480;
+            this.groundY = 480;
+            this.isJumping = false;
+            this.jumpVelocity = 0;
+            this.gravity = 2800;
+            this.jumpForce = -750;
+            this.speed = 350;
+            this.obstacles = [];
+            this.coins = [];
+            this.spawnTimer = 0;
+            this.spawnInterval = 1.2;
+            this.distance = 0;
+            this.score = 0;
+            this.comboCount = 0;
+            this.trailParticles = [];
+        }
+        
+        update(dt) {
+            super.update(dt);
+            if (this.gameOver || this.paused) return;
+            
+            this.distance += this.speed * dt;
+            this.score = Math.floor(this.distance / 5);
+            this.speed = Math.min(700, 350 + Math.floor(this.distance / 500) * 20);
+            this.spawnInterval = Math.max(0.5, 1.2 - this.distance / 2000);
+            
+            if (this.isJumping) {
+                this.jumpVelocity += this.gravity * dt;
+                this.playerY += this.jumpVelocity * dt;
+                if (this.playerY >= this.groundY) {
+                    this.playerY = this.groundY;
+                    this.isJumping = false;
+                }
+            }
+            
+            this.spawnTimer += dt;
+            if (this.spawnTimer >= this.spawnInterval) {
+                this.spawnObstacle();
+                this.spawnTimer = 0;
+            }
+            
+            this.updateObstacles(dt);
+            this.updateCoins(dt);
+            this.updateTrail();
+            
+            document.getElementById('scoreValue').textContent = this.score;
+        }
+        
+        spawnObstacle() {
+            const lane = Math.floor(Math.random() * 3);
+            const types = ['train', 'barrier', 'cone'];
+            this.obstacles.push({
+                x: this.lanes[lane],
+                y: -100,
+                type: types[Math.floor(Math.random() * 3)],
+                lane: lane,
+                width: types[types.indexOf('train') === 0 ? 90 : types[types.indexOf('barrier') === 0 ? 80 : 45],
+                height: types[types.indexOf('train') === 0 ? 180 : types[types.indexOf('cone') === 0 ? 55 : 40]
+            });
+        }
+        
+        updateObstacles(dt) {
+            for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                const obs = this.obstacles[i];
+                obs.y += this.speed * dt;
+                
+                if (obs.y > 700) {
+                    this.obstacles.splice(i, 1);
+                    continue;
+                }
+                
+                // Collision
+                const playerBox = {
+                    x: this.playerX - 25,
+                    y: this.playerY - 50,
+                    width: 50,
+                    height: 50
+                };
+                
+                const obsBox = {
+                    x: obs.x - obs.width / 2,
+                    y: obs.y - obs.height / 2,
+                    width: obs.width,
+                    height: obs.height
+                };
+                
+                if (this.checkCollision(playerBox, obsBox)) {
+                    this.crash();
+                    return;
+                }
+            }
+        }
+        
+        checkCollision(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
+        }
+        
+        crash() {
+            this.gameOver = true;
+            showModal('💥', 'CRASH!', this.score);
+        }
+        
+        updateCoins(dt) {
+            this.coinSpawnTimer += dt;
+            if (this.coinSpawnTimer >= 0.6) {
+                this.spawnCoin();
+                this.coinSpawnTimer = 0;
+            }
+            
+            for (let i = this.coins.length - 1; i >= 0; i--) {
+                const coin = this.coins[i];
+                coin.y += this.speed * dt;
+                
+                if (coin.y > 650) {
+                    this.coins.splice(i, 1);
+                    continue;
+                }
+                
+                if (!coin.collected) {
+                    const dist = Math.hypot(this.playerX - coin.x, this.playerY - 35 - coin.targetY + this.groundY);
+                    if (dist < 45) {
+                        coin.collected = true;
+                        this.score += 50;
+                        this.comboCount++;
+                        document.getElementById('scoreValue').textContent = this.score;
+                        
+                        this.particles.push({x: coin.x, y: coin.targetY, count: 12, speed: 5, colors: ['#fbbf24', '#ffffff'], life: 0.6, gravity: 100, spread: Math.PI * 2});
+                    }
+                }
+            }
+        }
+        
+        updateTrail() {
+            this.trailParticles.unshift({x: this.playerX, y: this.playerY - 30, speed: Math.sqrt(this.speed / 300)});
+            if (this.trailParticles.length > 15) this.trailParticles.pop();
+            
+            for (let p of this.trailParticles) {
+                p.y += 100 * dt;
+                p.alpha -= dt * 2;
+            }
+        }
+        
+        render() {
+            const ctx = ctx;
+            
+            // Fond
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColor(0.7, '#16213e');
+            gradient.addColor(1, '#0f3460');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Route
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, this.groundY + 52, canvas.width, canvas.height - this.groundY - 52);
+            
+            // Voies
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 3;
+            for (const lane of this.lanes) {
+                ctx.beginPath();
+                ctx.moveTo(lane, 0);
+                ctx.lineTo(lane, this.groundY + 52);
+                ctx.lineTo(lane + 60, this.groundY + 52);
+                ctx.lineTo(lane + 60, 700);
+                ctx.lineTo(lane, 0);
+                ctx.stroke();
+            }
+            
+            // Lignes animées
+            ctx.strokeStyle = 'rgba(251, 158, 11, 0.3)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 12; i++) {
+                const y = ((i * 60 + Date.now() * 0.05) % 700);
+                ctx.beginPath();
+                ctx.moveTo(175, y);
+                ctx.lineTo(325, y);
+                ctx.stroke();
+            }
+            
+            // Obstacles
+            for (const obs of this.obstacles) {
+                const ox = obs.x - obs.width / 2;
+                const oy = obs.y - obs.height / 2;
+                
+                if (obs.type === 'train') {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(ox, oy, obs.width, obs.height);
+                    ctx.fillStyle = '#dc2626';
+                    ctx.fillRect(ox + 10, oy + 15, 25, 30);
+                    ctx.fillStyle = '#fca5a5a';
+                    ctx.fillRect(ox + 45, oy + 15, 25, 30);
+                } else if (obs.type === 'barrier') {
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fillRect(ox, oy, obs.width, obs.height);
+                    ctx.fillStyle = '#78350f';
+                    for (let i = 0; i < 4; i++) {
+                        ctx.fillRect(ox + i * (obs.width / 4), oy + 5, obs.width / 4 - 4, obs.height - 10);
+                    }
+                } else {
+                    ctx.fillStyle = '#f97316';
+                    ctx.beginPath();
+                    ctx.moveTo(ox, oy + obs.height);
+                    ctx.lineTo(ox + obs.width / 2, oy);
+                    ctx.lineTo(ox + obs.width, oy + obs.height);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+            
+            // Pièces
+            for (const coin of this.coins) {
+                if (coin.collected) continue;
+                
+                const cy = Math.min(coin.y, coin.targetY);
+                const bobOffset = Math.sin(Date.now() * 0.008) * 5;
+                
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.8)';
+                ctx.beginPath();
+                ctx.arc(coin.x, cy + bobOffset, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(coin.x, cy + bobOffset, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Trail
+            for (const p of this.trailParticles) {
+                ctx.fillStyle = `rgba(251, 191, 36, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.alpha, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Joueur
+            const runBob = Math.sin(Date.now() * 0.015) * 4;
+            ctx.fillStyle = '#f472b6d';
+            ctx.beginPath();
+            ctx.roundRect(this.playerX - 20, this.playerY - 55, 40, 55, 12);
+            ctx.fill();
+            
+            // Tête
+            ctx.fillStyle = '#fcd34d';
+            ctx.beginPath();
+            ctx.arc(this.playerX, this.playerY - 62, 18, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#1f2937';
+            ctx.beginPath();
+            ctx.arc(this.playerX - 6, this.playerY - 68, 4, 0, Math.PI * 2);
+            ctx.arc(this.playerX + 6, this.playerY - 68, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Sourire
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.playerX, this.playerY - 42, 8, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(this.playerX - 12, this.playerY - 38, 24, 12);
+            
+            // Jambes
+            if (!this.isJumping) {
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(this.playerX - 12, this.playerY + 28, 24, 12);
+            } else {
+                ctx.fillStyle = '#93c5fd';
+                ctx.fillRect(this.playerX - 12, this.playerY + 48, 24, 12);
+            }
+            
+            // UI
+            ctx.font = 'bold 28px Orbitron';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.floor(this.distance)}m`, canvas.width / 2, 40);
+        }
+        
+        handleKey(key) {
+            const code = key.code;
+            switch(code) {
+                case 'ArrowLeft':
+                if (this.currentLane > 0) this.currentLane--;
+                break;
+                case 'ArrowRight':
+                    if (this.currentLane < 2) this.currentLane++;
+                    break;
+                case 'ArrowUp':
+                if (!this.isJumping) {
+                    this.isJumping = true;
+                    this.jumpVelocity = this.jumpForce;
+                }
+                break;
+                case 'Space':
+                    if (!this.isJumping) {
+                        this.isJumping = true;
+                        this.jumpVelocity = this.jumpForce;
+                    }
+                    break;
+            }
+        }
+    }
+    
+    // ======== TETRIS ========
+    class TetrisGame extends BaseGame {
+        constructor() {
+            super();
+            this.cols = 10;
+            this.rows = 20;
+            this.blockSize = 36;
+            this.shapes = [
+                [[1,1,1,1]], [[1,1],[1,1],[1,1]],
+                [[0,1,0],[1,1],[1,1]],
+                [[0,1,0],[1,1],[1,0],[0,1]],
+                [[1,0,0],[0,1,1],[1,1],[1,0]],
+                [[0,0,0],[1,1,0],[0,1,1],[1,0,0]]
+            ];
+            this.colors = ['#00f5ff', '#ffff00', '#a855f7', '#f97316', '#3b82f6', '#22c55e', '#ef4444'];
+            this.board = Array(this.rows).fill(null).map(() => Array(this.cols).fill(0));
+            this.currentPiece = null;
+            this.nextPiece = null;
+            this.score = 0;
+            this.lines = 0;
+            this.level = 1;
+            this.dropTimer = 0;
+            this.dropInterval = 1;
+            this.lockDelay = 500;
+            this.canHold = true;
+            this.heldPiece = null;
+            this.clearingLines = [];
+            this.clearAnimationTimer = 0;
+        }
+        
+        init() {
+            this.board = Array(this.rows).fill(null).map(() => Array(this.cols).fill(0));
+            this.nextPiece = this.newPiece();
+            this.currentPiece = this.nextPiece;
+            this.nextPiece = this.newPiece();
+            this.dropTimer = 0;
+        }
+        
+        newPiece() {
+            const idx = Math.floor(Math.random() * this.shapes.length);
+            return {
+                shape: this.shapes[idx].map(r => [...r]),
+                color: this.colors[idx],
+                x: Math.floor(this.cols / 2) - Math.ceil(this.shapes[idx][0].length / 2),
+                y: 0
+            };
+        }
+        
+        rotate(piece) {
+            const rows = piece.shape.length;
+            const cols = piece.shape[0].length;
+            const rotated = [];
+            for (let c = 0; c < cols; c++) {
+                rotated[c] = [];
+                for (let r = rows - 1; r >= 0; r--) {
+                    rotated[c][rows - 1 - r] = piece.shape[r][c];
+                }
+            }
+            return rotated;
+        }
+        
+        isValidMove(piece, offsetX, offsetY, newShape) {
+            const shape = newShape || piece.shape;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (shape[r][c]) {
+                        const newX = piece.x + c + offsetX;
+                        const newY = piece.y + r + offsetY;
+                        if (newX < 0 || newX >= this.cols || newY >= this.rows) return false;
+                        if (newY >= 0 && this.board[newY][newX]) return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        lockPiece() {
+            const piece = this.currentPiece;
+            for (let r = 0; r < piece.shape.length; r++) {
+                for (let c = 0; c < piece.shape[r].length; c++) {
+                    if (piece.shape[r][c]) {
+                        const row = piece.y + r;
+                        const col = piece.x + c;
+                        if (row >= 0) this.board[row][col] = {color: piece.color};
+                    }
+                }
+            }
+            
+            this.checkLines();
+        }
+        
+        checkLines() {
+            const lines = [];
+            for (let r = this.rows - 1; r >= 0; r--) {
+                if (this.board[r].every(cell => cell !== 0)) {
+                    lines.push(r);
+                }
+            }
+            
+            if (lines.length > 0) {
+                this.lines += lines.length;
+                this.score += [0, 100, 300, 500, 800][lines.length - 1] * this.level;
+                this.level = Math.floor(this.lines / 10) + 1;
+                this.dropInterval = Math.max(0.1, 1 - (this.level - 1) * 0.08);
+                document.getElementById('scoreValue').textContent = this.score;
+                
+                // Animation flash
+                for (const line of lines) {
+                    for (let c = 0; c < this.cols; c++) {
+                        this.board[line][c] = {color: '#ffffff'};
+                    }
+                }
+                
+                setTimeout(() => {
+                    for (const line of lines) {
+                        for (let c = 0; c < this.cols; c++) {
+                            this.board[line][c] = 0;
+                        }
+                    },
+                }, 300);
+            }
+        }
+        
+        update(dt) {
+            super.update(dt);
+            if (this.gameOver || this.paused) return;
+            
+            this.dropTimer += dt;
+            if (this.dropTimer >= this.dropInterval) {
+                this.dropTimer = 0;
+                if (this.isValidMove(this.currentPiece, 0, 1)) {
+                    this.currentPiece.y++;
+                } else {
+                    this.lockPiece();
+                    this.currentPiece = this.nextPiece;
+                    this.nextPiece = this.newPiece();
+                    if (!this.isValidMove(this.currentPiece, 0, 0)) {
+                        this.endGame(false);
+                    }
+                }
+            }
+        }
+        
+        render() {
+            const ctx = ctx;
+            const panelWidth = 115;
+            const playAreaWidth = this.cols * this.blockSize;
+            
+            ctx.fillStyle = '#111118';
+            ctx.fillRect(0, 0, playAreaWidth, this.rows * this.blockSize);
+            
+            // Board
+            for (let r = 0; r < this.rows; r++) {
+                for (let c = 0; c < this.cols; c++) {
+                    if (this.board[r][c]) {
+                        this.drawBlock(ctx, c * this.blockSize, r * this.blockSize, this.board[r][c].color);
+                    }
+                }
+            }
+            
+            // Piece courante
+            if (this.currentPiece) {
+                for (let r = 0; r < this.currentPiece.shape.length; r++) {
+                    for (let c = 0; c < this.currentPiece.shape[r].length; c++) {
+                        if (this.currentPiece.shape[r][c]) {
+                            this.drawBlock(ctx, 
+                                (this.currentPiece.x + c) * this.blockSize,
+                                (this.currentPiece.y + r) * this.blockSize,
+                                this.currentPiece.color
+                            );
+                        }
+                    }
+            }
+            
+            // Next piece preview
+            if (this.nextPiece) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Orbitron';
+                ctx.fillText('SUIVANT', panelWidth + 20, 30);
+                
+                if (this.heldPiece) {
+                    ctx.fillText('HOLD:', panelWidth + 20, 65);
+                    const heldShapeData = this.heldPiece;
+                    const heldShape = this.shapes.find(s => s.name === this.heldPiece);
+                    const heldShapeData = heldShape.shape;
+                    for (let r = 0; r < heldShapeData.length; r++) {
+                        for (let c = 0; c < heldShapeData[r].length; c++) {
+                            if (heldShapeData[r][c]) {
+                                ctx.fillStyle = this.heldPiece === this.heldPiece ? 'rgba(74, 222, 128, 0.4)' : 'rgba(148, 163, 184, 0.2)';
+                                ctx.fillRect(
+                                    panelWidth + 20 + (c * 22),
+                                    75 + (r * 28),
+                                    20, 20
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Score
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 22px Orbitron';
+            ctx.fillText('SCORE', panelWidth + 20, 105);
+            ctx.fillText(this.score.toString(), panelWidth + 20, 130);
+            ctx.fillText('NIVEAU', panelWidth + 20, 160);
+            ctx.fillText('LIGNES', panelWidth + 20, 185);
+        }
+        
+        drawBlock(ctx, x, y, color) {
+            const size = this.blockSize - 2;
+            const grad = ctx.createLinearGradient(x, y, x + size, y + size);
+            grad.addColorStop(0, this.lightenColor(color, 30));
+            grad.addColorStop(0.5, color);
+            grad.addColorStop(1, this.darkenColor(color, 20));
+            
+            ctx.fillStyle = grad;
+            ctx.fillRect(x + 1, y + 1, size, size, 5);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.fillRect(x + 2, y + 2, size - 4, size - 4, 4);
+        }
+        
+        lightenColor(hex, amount) {
+            const num = parseInt(hex.replace('#', ''), 16;
+            const r = Math.min(255, (num >> 16) + amount);
+            const g = Math.min(255, ((num >> 8) & 0xFF) + amount);
+            const b = Math.min(255, (num & 0xFF) + amount);
+            return '#' + [r.toString(16).padStart(2, '0'), g.toString(16).padStart(2, '0'), b.toString(16).padStart(2, '0')].join('');
+        }
+        
+        darkenColor(hex, amount) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const r = Math.max(0, (num >> 16) - amount);
+            const g = Math.max(0, ((num >> 8) & 0xFF) - amount);
+            const b = Math.max(0, (num & 0xFF) - amount);
+            return '#' + [r.toString(16).padStart(2, '0'), g.toString(16).padStart(2, '0'), b.toString(16).padStart(2, '0')].join('');
+        }
+        
+        handleKey(key) {
+            const code = key.code;
+            switch(code) {
+                case 'ArrowLeft':
+                    if (this.isValidMove(this.currentPiece, -1, 0)) this.currentPiece.x--;
+                    break;
+                case 'ArrowRight':
+                    if (this.isValidMove(this.currentPiece, 1, 0)) this.currentPiece.x++;
+                    break;
+                case 'ArrowDown':
+                    if (this.isValidMove(this.currentPiece, 0, 1)) {
+                        this.currentPiece.y++;
+                        this.score += 1;
+                        document.getElementById('scoreValue').textContent = this.score;
+                    }
+                    break;
+                case 'ArrowUp':
+                    this.rotate(this.currentPiece);
+                    break;
+                case 'Space':
+                    this.hardDrop();
+                    break;
+                case 'ShiftLeft':
+                case 'KeyC':
+                    this.holdPiece = this.currentPiece.name;
+                    this.canHold = false;
+                    this.currentPiece = this.nextPiece;
+                    this.nextPiece = this.newPiece();
+                    this.canHold = true;
+                    break;
+            }
+        }
+        
+        hardDrop() {
+            while (this.isValidMove(this.currentPiece, 0, 1)) {
+                this.currentPiece.y++;
+                this.score += 2;
+            }
+            this.lockPiece();
+            this.currentPiece = this.nextPiece;
+            this.nextPiece = this.newPiece();
+        }
+        
+        endGame(won) {
+            this.gameOver = true;
+            showModal(won ? '🎉 VICTOIRE!' : '💀 GAME OVER', this.score);
+        }
+    }
+    
+    // ======== PAC-MAN ========
+    class PacManGame extends BaseGame {
+        constructor() {
+            super();
+            this.tileSize = 28;
+            this.mapWidth = 19;
+            this.mapHeight = 21;
+            this.originalMap = [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,3,1,1,2,2,1,1,1,1,1,1,3,1,1,1,1,1,3],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,3,1,1,2,1,1,1,1,1,1,1,3,1,1,1,1,1,3],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,3,1,1,2,1,1,1,1,1,1,1,1,3,1,1,1,1,3],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1, 1,1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1,  1,  1, 1, 1, 1, 1, 1, 1,  1, 1, 1, 1],
+                [1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1,  1,  1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1, 1],
+                [1, 1, 1, 1,  1, 1,  1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1,   1, 1, 1, 1, 1,  1, 1, 1, 1,  1, 1],
+                [1,  1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [1,  1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [1,  1, 1, 1,  1, 1,  1, 1, 1, 1, 1, 1],
+                [1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1,  1, 1,  1, 1, 1,  1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,    1, 1,  1,   1,  1, 1, 1, 1,  1, 1],
+                [  1,   1, 1, 1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1,  1,  1,  1, 1, 1, 1,  1],
+                [  1,   1, 1,  1,  1,  1, 1, 1, 1, 1, 1],
+                [  1,   1,  1,  1,  1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1,   1,   1, 1, 1, 1, 1, 1],
+                [  1,   1, 1,  1,   1,  1, 1, 1, 1, 1],
+                [  1,   1, 1, 1,   1, 1,  1, 1, 1, 1],
+                [  1,   1, 1, 1,   1,  1, 1, 1, 1, 1],
+                [   1,   1, 1,  1,     1,  1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1,  1,  1, 1, 1, 1, 1],
+                [   1,   1, 1, 1,  1,         1,       1,   1, 1, 1, 1],
+                [    1,    1, 1, 1,  1,  1,  1, 1, 1, 1],
+                [  1,   1, 1, 1,   1,      1,  1, 1, 1,   1, 1],
+                [   1,   1, 1, 1,   1,  1, 1, 1, 1],
+                [     1,    1, 1, 1,    1,    1,   1, 1],
+                [      1,   1, 1, 1,    1,   1, 1, 1],
+                [   1,    1,  1, 1, 1,    1,   1,  1, 1],
+                [       1,   1, 1, 1,   1,   1,  1, 1, 1],
+                [   1,    1, 1, 1,   1,     1,  1, 1],
+                [   1,   1, 1, 1,   1,   1, 1,  1, 1],
+                [    1,    1, 1, 1,  1,     1, 1, 1],
+                [       1,    1, 1, 1,   1,   1,  1],
+                [     1,    1,  1, 1,   1,  1,  1,  1],
+                [        1,    1, 1, 1,  1,  1, 1],
+                [   1,     1, 1, 1,    1,   1,   1,    1,  1],
+                [   1,    1, 1,  1,     1,   1,    1,  1],
+                [   1,    1, 1, 1,    1,   1,  1,  1],
+                [   1,        1, 1, 1,         1,    1,   1, 1, 1],
+                [      1,    1, 1,   1,   1,   1, 1, 1],
+                [   1,   1, 1,       1,   1,   1,  1,  1],
+                [    1,   1, 1, 1,   1,    1, 1,  1],
+                [      1,   1,  1,    1,  1,  1, 1, 1],
+                [   1,   1, 1,  1,   1, 1,  1],
+                [   1,    1, 1,  1,   1,  1, 1, 1],
+                [   1,    1, 1, 1,  1,    1, 1, 1],
+                [       1,    1,  1, 1,    1,    1,   1, 1, 1],
+                [        1,    1,   1, 1,    1,  1,  1],
+                [   1,    1, 1,  1,   1,   1,  1],
+                [      1,    1,  1, 1,  1,     1,  1, 1],
+                [    1,    1, 1, 1,     1,  1,  1, 1],
+                [     1,    1, 1, 1,    1,  1,  1],
+                [   1,    1, 1, 1,   1,  1, 1],
+                [      1,   1,  1,  1,  1,  1, 1, 1],
+                [    1,   1, 1, 1, 1,   1,   1, 1, 1],
+                [  1,    1, 1, 1,     1,   1, 1, 1],
+                [     1,   1, 1, 1, 1,  1, 1, 1],
+                [   1,     1, 1, 1,     1,    1, 1, 1],
+                [        1,    1, 1, 1,   1,  1, 1],
+                [    1,   1, 1, 1,    1,   1, 1],
+                [    1,   1, 1, 1,      1, 1, 1],
+                [   1,    1, 1, 1,  1,  1, 1],
+                [    1,    1, 1, 1, 1,  1, 1, 1],
+                [    1,   1, 1, 1, 1,  1, 1, 1],
+                [   1,     1, 1, 1,    1,  1, 1, 1],
+                [     1,   1, 1, 1, 1,   1, 1, 1],
+                [   1,   1, 1, 1,  1, 1,  1, 1, 1],
+                [   1,   1, 1, 1,  1,   1, 1, 1],
+                [   1,    1, 1, 1,  1, 1, 1, 1],
+                [    1,    1, 1, 1,  1,  1, 1, 1],
+                [      1,   1, 1, 1,   1, 1, 1, 1],
+                [       1,   1, 1, 1,  1,   1, 1, 1],
+                [     1,   1, 1, 1,   1,   1, 1, 1],
+                [   1,   1, 1, 1,  1,   1, 1, 1],
+                [   1,    1, 1, 1,   1,      1,  1, 1, 1],
+                [    1,    1, 1, 1,   1,  1, 1, 1],
+                [   1,   1, 1, 1,  1,   1, 1, 1],
+                [   1,    1, 1, 1, 1,  1, 1, 1],
+                [     1,   1, 1, 1, 1,   1, 1, 1],
+                [     1,    1, 1, 1, 1,    1, 1, 1],
+                [    1,    1, 1, 1, 1,     1, 1, 1],
+                [   1,   1, 1, 1, 1,   1, 1, 1],
+                [   1,    1, 1, 1, 1,     1,   1, 1, 1],
+                [    1,    1, 1, 1,  1,   1, 1, 1],
+                [   1,   1, 1, 1, 1,   1, 1, 1],
+                [   1,   1, 1, 1,      1,  1, 1, 1,    1, 1, 1],
+                [    1,   1, 1, 1, 1,  1, 1],
+                [   1,    1, 1, 1, 1,  1, 1, 1],
+                [    1,     1, 1, 1, 1,  1, 1, 1],
+                [   1,   1, 1, 1,     1,   1, 1, 1, 1],
+                [      1,   1, 1, 1,    1,   1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1,  1, 1, 1, 1],
+                [   1,   1, 1, 1, 1,  1, 1, 1],
+                [  1,   1, 1, 1, 1,  1, 1, 1, 1],
+                [   1,      1, 1, 1, 1,  1,  1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1,  1, 1, 1],
+                [     1,    1, 1, 1, 1,  1, 1, 1],
+                [      1,     1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1, 1, 1, 1],
+                [   1,     1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,     1, 1, 1, 1,  1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1,  1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [    1,     1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1],
+                [     1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [       1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [      1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [     1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [     1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1,  1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1],
+                [    1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,     1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,      1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [     1,    1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [     1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [      1,   1, 1, 1, 1, 1,  1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,    1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,      1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,  1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1], 
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [    1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [     1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,    1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [     1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,   1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1,  1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,    1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,    1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [     1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [   1,   [  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [   1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                 [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [   1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [ 1,  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                [  [  1,  1, 1, 1, 1, 1, 1, 1, 1, 1
