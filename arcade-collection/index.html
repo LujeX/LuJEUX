@@ -3,648 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎮 ARCADE ULTIMATE - Collection Premium</title>
+    <title>🎮 ARCADE ULTIMATE - LuJEUX</title>
     
-    <!-- FONTS -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        /* ============================================
-           STYLES CRITIQUES - Optimisés pour Cloudflare
-           ============================================ */
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --accent: #06b6d4;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --bg-dark: #0a0a0f;
-            --bg-darker: #050508;
-            --text-primary: #ffffff;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.4);
-            --transition-fast: 0.15s ease;
-            --transition-normal: 0.3s ease;
-        }
-        
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-darker); }
-        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
-        ::selection { background: var(--primary); color: white; }
-        
-        /* LOADING SCREEN */
-        #loadingScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: var(--bg-darker);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 99999;
-            z-index: 99999 !important;
-        }
-        
-        .loader-container {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-        
-        .loader-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 3px solid transparent;
-            border-radius: 50%;
-            animation: loaderSpin 1.5s linear infinite;
-        }
-        
-        .loader-ring:nth-child(1) { border-top-color: var(--primary); animation-duration: 1.2s; animation-direction: reverse; }
-        .loader-ring:nth-child(2) { width: 80%; height: 80%; border-bottom-color: var(--accent); animation-duration: 0.9s; }
-        
-        @keyframes loaderSpin { to { transform: rotate(360deg); } }
-        
-        .loader-text {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            color: var(--text-secondary);
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-        
-        .loading-bar-container {
-            width: 300px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .loading-bar {
-            width: 0%;
-            height: 100%;
-            background: var(--gradient-primary);
-            border-radius: 2px;
-            transition: width 0.3s ease;
-            box-shadow: 0 0 15px var(--primary);
-        }
-        
-        .loading-percent {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-top: 15px;
-            letter-spacing: 2px;
-        }
-        
-        /* MAIN MENU */
-        #mainMenu {
-            text-align: center;
-            padding: 20px;
-            min-height: 100vh;
-            display: none; /* Changé de hidden */
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        
-        #mainMenu.visible {
-            display: block !important;
-            opacity: 1 !important;
-        }
-        
-        .menu-header {
-            text-align: center;
-            padding: 30px 20px 10px;
-        }
-        
-        .main-title {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            background-clip: text;
-            letter-spacing: 8px;
-            margin-bottom: 10px;
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-        
-        .title-sub {
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            display: block;
-            letter-spacing: 15px;
-        }
-        
-        @keyframes glow {
-            from { text-shadow: 0 0 20px #e94560, 0 0 40px #e94560; }
-            to { text-shadow: 0 0 30px #e94560, 0 0 60px #e94560; }
-        }
-        
-        .subtitle {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-            min-height: 30px;
-        }
-        
-        .header-stats {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-        }
-        
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .stat-number {
-            font-family: 'Orbitron';
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-            letter-spacing: 3px;
-            color: var(--text-muted);
-        }
-        
-        .stat-divider {
-            width: 1px;
-            height: 40px;
-            background: var(--border-color);
-        }
-        
-        /* GAMES GRID */
-        .games-showcase {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-            padding: 10px;
-        }
-        
-        .game-card {
-            position: relative;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 25px 20px;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-        
-        .game-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at var(--mouse-x, var(--mouse-y), 
-                rgba(99, 102, 241, 0.15) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity var(--transition-normal);
-            pointer-events: none;
-        }
-        
-        .game-card:hover::before {
-            opacity: 1;
-        }
-        
-        .game-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: var(--border-glow);
-            box-shadow: var(--shadow-glow), var(--shadow-lg);
-        }
-        
-        .card-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 15px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .card-icon {
-            width: 90px;
-            height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            transition: all var(--transition-normal);
-        }
-        
-        .game-card:hover .card-icon {
-            transform: scale(1.1) rotate(5deg);
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
-        }
-        
-        .icon-svg {
-            width: 55px;
-            height: 55px;
-        }
-        
-        .card-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: 3px;
-            color: var(--text-primary);
-        }
-        
-        .card-desc {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-        
-        .card-stats {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .difficulty {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        
-        .difficulty.easy { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .difficulty.medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-        .difficulty.hard { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-        
-        .players {
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            padding: 4px 12px;
-            border-radius: 20px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-color);
-        }
-        
-        .play-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 28px;
-            background: var(--gradient-primary);
-            border: none;
-            border-radius: 30px;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-        }
-        
-        .play-btn svg { width: 18px; height: 18px; }
-        .play-btn:hover { transform: scale(1.05); box-shadow: var(--shadow-glow); }
-        .play-btn:active { transform: scale(0.95); }
-        
-        /* FOOTER */
-        .menu-footer {
-            text-align: center;
-            padding: 30px 20px;
-            border-top: 1px solid var(--border-color);
-            margin-top: 30px;
-        }
-        
-        .footer-text {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-        
-        /* GAME CONTAINER */
-        #gameContainer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: var(--bg-darker);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        #gameContainer.active {
-            display: flex !important;
-        }
-        
-        .game-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 25px;
-            background: rgba(10, 10, 15, 0.97);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-            width: 100%;
-            box-sizing: border-box;
-        }
-        
-        .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-secondary);
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .back-btn svg { width: 18px; height: 18px; }
-        .back-btn:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); }
-        
-        .game-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: 3px;
-            background: var(--gradient-accent);
-            -webkit-background-clip: text;
-            background-clip: text;
-        }
-        
-        .score-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 8px 20px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-        }
-        
-        .score-label { font-size: 0.65rem; letter-spacing: 2px; color: var(--text-muted); }
-        .score-value { font-family: 'Orbitron'; font-size: 1.5rem; font-weight: 700; color: var(--success); }
-        
-        canvas#gameCanvas {
-            border: 3px solid #e94560;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
-            max-width: calc(100vw - 40px);
-            max-height: calc(100vh - 180px);
-            object-fit: contain;
-            background: #000;
-        }
-        
-        .canvas-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(5, 5, 8, 0.92);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            visibility: hidden;
-        }
-        
-        .canvas-overlay.visible {
-            visibility: visible !important;
-        }
-        
-        .overlay-content {
-            text-align: center;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        
-        .overlay-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: 5px;
-            margin-bottom: 20px;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            background-clip: text;
-        }
-        
-        .overlay-message { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 30px; }
-        
-        .start-game-btn {
-            padding: 16px 48px;
-            background: var(--gradient-success);
-            border: none;
-            border-radius: 30px;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
-        }
-        
-        .start-game-btn:hover { transform: scale(1.05) translateY(-2px); }
-        
-        .game-controls-panel {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 25px;
-            background: rgba(10, 10, 15, 0.97);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-color);
-            width: 100%;
-            box-sizing: border-box;
-        }
-        
-        .control-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .ctrl-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            color: var(--text-secondary);
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .ctrl-btn:hover { background: rgba(99, 102, 241, 0.1); border-color: var(--primary); color: var(--primary-light); }
-        .restart-btn:hover { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
-        
-        /* MOBILE CONTROLS */
-        .mobile-controls {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            gap: 15px;
-            padding: 15px;
-            background: rgba(10, 10, 15, 0.95);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        
-        @media (max-width: 768px) {
-            .mobile-controls { display: flex !important; }
-            .game-controls-panel { display: none !important; }
-            .games-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-            .main-title { font-size: 2.5rem; letter-spacing: 4px; }
-            .title-sub { font-size: 1.2rem; letter-spacing: 10px; }
-        }
-        
-        /* MODAL */
-        #resultModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-        }
-        
-        #resultModal.show { display: flex !important; }
-        
-        .modal-content {
-            background: linear-gradient(145deg, rgba(20, 20, 35, 0.98), rgba(10, 10, 20, 0.98));
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 450px;
-            width: 90%;
-            text-align: center;
-            animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(99, 102, 241, 0.2);
-        }
-        
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: scale(0.85) translateY(30px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        
-        .modal-icon { font-size: 4rem; margin-bottom: 20px; animation: iconBounce 0.6s ease; }
-        @keyframes iconBounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-        
-        .modal-title { font-family: '   'Orbitron', sans-serif; font-size: 2.5rem; font-weight: 900; letter-spacing: 4px; margin-bottom: 20px; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; }
-        .modal-score-display { display: flex; flex-direction: column; gap: 8px; padding: 20px 30px; background: var(--bg-glass); border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px; }
-        .modal-score-label { font-size: 0.8rem; letter-spacing: 3px; color: var(--text-muted); }
-        .modal-score-value { font-family: 'Orbitron'; font-size: 3.5rem; font-weight: 900; color: var(--success); text-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
-        .modal-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .modal-btn { display: flex; align-items: center; gap: 8px; padding: 14px 28px; border: none; border-radius: 14px; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all var(--transition-normal); }
-        .modal-btn.primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); }
-        .modal-btn.primary:hover { transform: translateY(-2px); }
-        .modal-btn.secondary { background: var(--bg-glass); color: var(--text-secondary); border: 1px solid var(--border-color); }
-        .modal-btn.secondary:hover { background: rgba(255, 255, 255, 0.05); }
-        
-        /* UTILS CLASSES */
-        .hidden { display: none !important; }
-        .visible { display: flex !important; }
-        
-        /* Responsive */
-        @media (max-width: 480px) {
-            .modal-actions { flex-direction: column; }
-            .modal-btn { width: 100%; justify-content: center; }
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- PARTICLES BG -->
+
+    <!-- Particules de fond -->
     <canvas id="particlesBg"></canvas>
 
-    <!-- LOADING SCREEN -->
+    <!-- Écran de chargement -->
     <div id="loadingScreen">
         <div class="loader-container">
             <div class="loader-ring"></div>
@@ -658,11 +27,10 @@
         <p class="loading-percent" id="loadingPercent">0%</p>
     </div>
 
-    <!-- MENU PRINCIPAL -->
+    <!-- Menu Principal -->
     <main id="mainMenu">
         <header class="menu-header">
             <h1 class="main-title">A R C A D E<br><span class="title-sub">U L T I M A T E</span></h1>
-            
             <p class="subtitle"><span id="typingText"></span><span class="cursor">|</span></p>
             
             <div class="header-stats">
@@ -685,22 +53,48 @@
 
         <section class="games-showcase">
             <div class="games-grid">
-                
+
                 <!-- SNAKE -->
                 <article class="game-card" data-game="snake">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg"><path d="M20 50 Q20 30 40 30 L60 30 Q80 30 80 50 Q80 70 60 50 Q80 70 80 50 Q80 70 60 50 Q80 70 80 50 Q80 70 60 50 Q80 70 80 50 Q80 70 60 50 Q80 70 80 50 Q80 70 60 50 Q80 70 70 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 80 50 Q80 70 80 50 Q80 70 80 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 80 50 Q80 70 80 50 Q80 70 80 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 80  50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 80  50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 50 Q80 70 80 80  50 Q80 70 80 50 Q80 70 80 80  50 Q80 70 80 80  50 Q80 70 80 80   50 Q80 70 80 80  50 Q80 70 80 88   50 50  50  50  50  50  50  50  50  50  50  50  50  50  50  50   50  50  50  50  50  50  50  50   50    50     50   50   50   50   50   50       50             50                                                                                                                           .                                                                                   }                                                                                                                                                                }                                                         }                                         }                                                                                                                                    }                                                                                                                                                                                                  }     }  </article>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <path d="M20 50 Q20 35 35 35 L65 35 Q80 35 80 50 Q80 65 65 65 L35 65 Q20 65 20 50 Z" fill="#22c55e" stroke="#16a34a" stroke-width="3"/>
+                                <circle cx="72" cy="45" r="5" fill="white"/>
+                                <circle cx="74" cy="45" r="2" fill="#000"/>
+                                <path d="M78 42 Q82 38 86 42" stroke="#16a34a" stroke-width="3" fill="none"/>
+                                <rect x="15" y="48" width="12" height="4" rx="2" fill="#16a34a"/>
+                                <rect x="10" y="52" width="8" height="4" rx="2" fill="#15803d"/>
+                                <rect x="8" y="56" width="6" height="4" rx="2" fill="#166534"/>
+                            </svg>
+                        </div>
+                        <h3 class="card-title">SNAKE</h3>
+                        <p class="card-desc">Le serpent classique aux graphismes premium</p>
+                        <div class="card-stats">
+                            <span class="difficulty easy">FACILE</span>
+                            <span class="players">1 JOUEUR</span>
+                        </div>
+                        <button class="play-btn">
+                            <span>JOUER</span>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </button>
+                    </div>
+                </article>
 
                 <!-- SUBWAY RUNNER -->
-                <article class="game-card" data-game="subway">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
+                <article class="game-card" data-game="subwayRunner">
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><ellipse cx="50" cy="75" rx="25" fill="#f472b6" stroke="#ec4899" stroke-width="3"/><rect x="35" y="35" width="30" height="40" rx="5" fill="#fcd34d"/><circle cx="43" cy="28" r="12" fill="#fcd34d"/><circle cx="  " 6" cy="25" r=" 2" fill="#1f2937"/><path d="M40 32 Q43 35 46 32 M40  32 L42 37 M40  32 L38   27 M 40   32 L42  37 M 40   32 L38  27 M 40    32 L      }  }  </svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <ellipse cx="50" cy="70" rx="18" ry="8" fill="#94a3b8" opacity="0.5"/>
+                                <ellipse cx="50" cy="58" rx="20" ry="25" fill="#ec4899"/>
+                                <circle cx="50" cy="38" r="15" fill="#fce7f3"/>
+                                <circle cx="44" cy="35" r="3" fill="#1f2937"/>
+                                <circle cx="56" cy="35" r="3" fill="#1f2937"/>
+                                <path d="M43 45 Q50 50 57 45" stroke="#be185d" stroke-width="2" fill="none"/>
+                                <rect x="35" y="62" width="8" height="18" rx="4" fill="#db2777"/>
+                                <rect x="57" y="62" width="8" height="18" rx="4" fill="#db2777"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">SUBWAY RUNNER</h3>
                         <p class="card-desc">Course infinie à travers la ville</p>
@@ -710,19 +104,24 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- TETRIS -->
                 <article class="game-card" data-game="tetris">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><rect x="20" y="20" width="22" height="22" rx="3" fill="#00f5ff"/><rect x="44" y="20" width="22" height="22" rx="3" fill="#00f5ff"/><rect x="68" y="20" width="22" height="22"  rx="3" fill="#00f5ff"/><rect x="20" y="44" width="22" height="22" rx="3" fill="#a855f7"/><rect x="44" y="44" width="22" height="22"  rx="3" fill="#f97316"/></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <rect x="15" y="15" width="22" height="22" rx="4" fill="#06b6d4"/>
+                                <rect x="39" y="15" width="22" height="22" rx="4" fill="#06b6d4"/>
+                                <rect x="63" y="15" width="22" height="22" rx="4" fill="#06b6d4"/>
+                                <rect x="15" y="39" width="22" height="22" rx="4" fill="#a855f7"/>
+                                <rect x="39" y="39" width="22" height="22" rx="4" fill="#f97316"/>
+                                <rect x="63" y="39" width="22" height="22" rx="4" fill="#22c55e"/>
+                                <rect x="15" y="63" width="22" height="22" rx="4" fill="#eab308"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">TETRIS</h3>
                         <p class="card-desc">Le puzzle classique qui défie le temps</p>
@@ -732,19 +131,26 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- PAC-MAN -->
                 <article class="game-card" data-game="pacman">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><circle cx="50" cy="50" r="35" fill="#fbbf24"/><path d="M15 50 L85 30 A35 35 0 0 1  L85 70 A35 35 0 0 1 L15 70 A35 35 0 0 1 L15  30 Z" fill="#1e40af"/><circle cx="18" cy="25" r="8" fill="#ff0000"/><circle cx="82" cy="25" r="8" fill="#00ffff"/><circle cx="18" cy="75" r="8" fill="#ffb8ff"/><circle cx="82" cy="75" r=" 8" fill="#ffb852"/></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <circle cx="50" cy="50" r="32" fill="#fbbf24"/>
+                                <path d="M50 50 L90 25 A32 32 0 0 1 90 75 L50 50" fill="#0a0a0f"/>
+                                <circle cx="62" cy="36" r="5" fill="#0a0a0f"/>
+                                <circle cx="62" cy="64" r="5" fill="#0a0a0f"/>
+                                <circle cx="20" cy="25" r="10" fill="#ff0000"/>
+                                <circle cx="20" cy="50" r="10" fill="#00ffff"/>
+                                <circle cx="20" cy="75" r="10" fill="#ffb8ff"/>
+                                <circle cx="80" cy="25" r="10" fill="#ffb852"/>
+                                <circle cx="80" cy="75" r="10" fill="#00ff00"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">PAC-MAN</h3>
                         <p class="card-desc">Mange les fantômes dans le labyrinthe</p>
@@ -754,19 +160,27 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- PUISSANCE 4 -->
                 <article class="game-card" data-game="puissance4">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><rect x="20" y="20" width="60" height="60" rx="5" fill="#1e40af"/><circle cx="30" cy="30" r="12" fill="#ef4444"/><circle cx="50" cy="30" r="12" fill="#fbbf24"/><circle cx="70" cy="30" r="12" fill="#fbbf24"/></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <rect x="15" y="15" width="70" height="70" rx="8" fill="#1e40af"/>
+                                <circle cx="30" cy="32" r="10" fill="#ef4444"/>
+                                <circle cx="50" cy="32" r="10" fill="#fbbf24"/>
+                                <circle cx="70" cy="32" r="10" fill="#fbbf24"/>
+                                <circle cx="30" cy="50" r="10" fill="#fbbf24"/>
+                                <circle cx="50" cy="50" r="10" fill="#ef4444"/>
+                                <circle cx="70" cy="50" r="10" fill="#fbbf24"/>
+                                <circle cx="30" cy="68" r="10" fill="#fbbf24"/>
+                                <circle cx="50" cy="68" r="10" fill="#fbbf24"/>
+                                <circle cx="70" cy="68" r="10" fill="#ef4444"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">PUISSANCE 4</h3>
                         <p class="card-desc">Aligne 4 pions contre l'IA stratégique</p>
@@ -776,19 +190,20 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- MORPION -->
                 <article class="game-card" data-game="morpion">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><line x1="25" y1="25" x2="y2" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/><line x1="x2" y1="y2" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="50" r="25" fill="none" stroke="#3b82f6" stroke-width="8"/></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <line x1="25" y1="25" x2="75" y2="75" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
+                                <line x1="75" y1="25" x2="25" y2="75" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
+                                <circle cx="50" cy="50" r="22" fill="none" stroke="#3b82f6" stroke-width="8"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">MORPION</h3>
                         <p class="card-desc">Tic-Tac-Toe contre une IA imbattable</p>
@@ -798,41 +213,44 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- BLACKJACK -->
                 <article class="game-card" data-game="blackjack">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0    100" class="icon-svg"><rect x="20" y="10" width="60" height="80" rx="5" fill="#fff" stroke="#333" stroke-width="2"/><text x="  " y="  " font-size="24" font-weight="bold" fill="#dc2626">A</text><text x="  " y="  " font-size="28" fill="#dc2626">♠</text></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <rect x="20" y="10" width="60" height="80" rx="6" fill="#fff" stroke="#333" stroke-width="2"/>
+                                <text x="50" y="38" font-size="24" font-weight="bold" fill="#dc2626" text-anchor="middle">A</text>
+                                <text x="50" y="75" font-size="28" fill="#dc2626" text-anchor="middle">♠</text>
+                            </svg>
                         </div>
                         <h3 class="card-title">BLACKJACK</h3>
                         <p class="card-desc">21 points pour battre le croupier</p>
                         <div class="card-stats">
-                            <span class="difficulty classic">CLASSIQUE</span>
+                            <span class="difficulty medium">CLASSIQUE</span>
                             <span class="players">VS CROUPIER</span>
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- PONG -->
                 <article class="game-card" data-game="pong">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><rect x="10" y="35" width="  " height="30" rx="2" fill="#4ade80"/><rect x="82" y="35" width="  " height="30" rx="2" fill="#ef4444"/><circle cx="50" cy="50" r="10" fill="#fff"/></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <rect x="10" y="35" width="8" height="30" rx="2" fill="#4ade80"/>
+                                <rect x="82" y="35" width="8" height="30" rx="2" fill="#ef4444"/>
+                                <circle cx="50" cy="50" r="8" fill="#fff"/>
+                                <line x1="50" y1="10" x2="50" y2="90" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="5,5"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">PONG</h3>
                         <p class="card-desc">Le tennis de table originel vs IA</p>
@@ -842,19 +260,23 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
 
                 <!-- AIR HOCKEY -->
-                <article class="game-card" data-game="airhockey">
-                    <div class="card-glow"></div>
-                    <div class="card-border"></div>
+                <article class="game-card" data-game="airHockey">
                     <div class="card-content">
                         <div class="card-icon">
-                            <svg viewBox=" 0 0 100 100" class="icon-svg"><rect x="5" y="5" width="  " height="  " rx="10" fill="#1e40af" stroke="#fbbf24" stroke-width="4"/><circle cx="50" cy="50" r="20" fill="#1f2937"/><circle cx="25" cy="50" r="18" fill="#4ade80" stroke="#fff" stroke-width="2"/><circle cx="75" cy="50" r="18" fill="#ef4444" stroke="#fff" stroke-width="2"/><rect x="42" y="42" width="  " height="  " rx="8" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.5)"/><rect x="42" y="42" width="  " height="  " rx="8" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.5)"/></svg>
+                            <svg viewBox="0 0 100 100" class="icon-svg">
+                                <rect x="5" y="5" width="90" height="90" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="3"/>
+                                <circle cx="50" cy="50" r="10" fill="#fff"/>
+                                <circle cx="25" cy="50" r="15" fill="#22c55e" stroke="#fff" stroke-width="2"/>
+                                <circle cx="75" cy="50" r="15" fill="#ef4444" stroke="#fff" stroke-width="2"/>
+                                <rect x="42" y="5" width="16" height="15" rx="4" fill="rgba(255,255,255,0.1)"/>
+                                <rect x="42" y="80" width="16" height="15" rx="4" fill="rgba(255,255,255,0.1)"/>
+                            </svg>
                         </div>
                         <h3 class="card-title">AIR HOCKEY</h3>
                         <p class="card-desc">Palet ultra-rapide avec physique réaliste</p>
@@ -864,26 +286,26 @@
                         </div>
                         <button class="play-btn">
                             <span>JOUER</span>
-                            <svg viewBox=" 0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         </button>
                     </div>
-                    <div class="card-particles"></div>
                 </article>
+
             </div>
         </section>
 
         <footer class="menu-footer">
             <p class="footer-text">✨ Utilisez les flèches directionnelles ou WASD pour jouer ✨</p>
-            <p class="made-with">Créé avec ❤️ et ☕</p>
+            <p class="made-with">Créé avec ❤️ par LuJEUX</p>
         </footer>
     </main>
 
-    <!-- GAME CONTAINER -->
+    <!-- Conteneur de Jeu -->
     <div id="gameContainer">
         <header class="game-header">
-            <button class="back-btn" onclick="backToMenu()">
-                <svg viewBox=" 0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M19 12L12 19"/>
+            <button class="back-btn" id="backBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
                 <span>MENU</span>
             </button>
@@ -896,75 +318,65 @@
             </div>
         </header>
 
-        <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px;">
+        <div class="canvas-wrapper">
             <canvas id="gameCanvas"></canvas>
-        </div>
-
-        <div class="canvas-overlay" id="canvasOverlay">
-            <div class="overlay-content">
-                <h2 class="overlay-title" id="overlayTitle">PRÊT ?</h2>
-                <p class="overlay-message" id="overlayMessage">Appuyez pour commencer</p>
-                <button class="start-game-btn" onclick="hideOverlay()">COMMENCER</button>
+            <div class="canvas-overlay" id="canvasOverlay">
+                <div class="overlay-content">
+                    <h2 class="overlay-title" id="overlayTitle">PRÊT ?</h2>
+                    <p class="overlay-message" id="overlayMessage">Appuyez pour commencer</p>
+                    <button class="start-game-btn" id="startGameBtn">COMMENCER</button>
+                </div>
             </div>
         </div>
 
         <div class="game-controls-panel">
             <div class="controls-info" id="controlsInfo"></div>
             <div class="control-buttons">
-                <button class="ctrl-btn restart-btn" onclick="restartGame()">🔄 RESTART</button>
-                <button class="ctrl-btn pause-btn" onClick="togglePause()">⏸️ PAUSE</button>
+                <button class="ctrl-btn restart-btn" id="restartBtn">🔄 RESTART</button>
+                <button class="ctrl-btn pause-btn" id="pauseBtn">⏸️ PAUSE</button>
             </div>
         </div>
 
-        <!-- Mobile Controls -->
+        <!-- Contrôles Mobiles -->
         <div class="mobile-controls" id="mobileControls">
             <div class="dpad">
-                <button class="dpad-btn dpad-up" ontouchstart="handleMobileInput('up', 'down')" ontouchend="handleMobileInput('up', 'up')">▲</button>
-                <button class="dpad-btn dpad-left" ontouchstart="handleMobileInput('left', 'down')" ontouchend="handleMobileInput('left', 'up')">◀</button>
+                <button class="dpad-btn dpad-up" data-dir="up">▲</button>
+                <button class="dpad-btn dpad-left" data-dir="left">◀</button>
                 <button class="dpad-center"></button>
-                <button class="dpad-btn dpad-right" ontouchstart="handleMobileInput('right', 'down')" ontouchend="handleMobileInput('right', 'up')">▶</button>
-                <button class="dpad-btn dpad-down" ontouchstart="handleMobileInput('down', 'down')" ontouchend="handleMobileInput('down', 'up')">▼</button>
+                <button class="dpad-btn dpad-right" data-dir="right">▶</button>
+                <button class="dpad-btn dpad-down" data-dir="down">▼</button>
             </div>
         </div>
+    </div>
 
-    <!-- RESULT MODAL -->
-    <div id="resultModal" class="">
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.92);
-            backdrop-filter: blur(10px);
-        ">
-            <div style="
-                background: linear-gradient(145deg, rgba(20, 20, 35, 0.98), rgba(10, 10, 20, 0.98));
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 24px;
-                padding: 40px;
-                max-width: 450px;
-                width: 90%;
-                text-align: center;
-                animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            ">
-                <div style="font-size: 4rem; margin-bottom: 20px;">🎮</div>
-                <h2 id="modalTitle" style="
-                    font-family: 'Orbitron', sans-serif;
-                    font-size: 2.5rem;
-                    font-weight:  900;
-                    letter-spacing: 4px;
-                    margin-bottom: 20px;
-                ">VICTOIRE!</h2>
-                
-                <div style="
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                    padding: 20px 30px;
-                    background: rgba(15,                                 }                                                                                                                                                                                                                                                                                                                                                      }                                                                                                                                                                                      }                                                                                                                                                                                                                                                                                                                                              }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               }                                                                                                                                                                                                                                                                                                 }                                                                                            }                                                                                                                                                                                                                                            }         }      }                                                                              }                                                                                                                                                                                                                                                                                                                               }                                                                                                                                            }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    }                                                                                                                                                                                   }                                }        }  }"
-</script>
+    <!-- Modal Résultat -->
+    <div id="resultModal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon">🎮</div>
+            <h2 class="modal-title" id="modalTitle">VICTOIRE!</h2>
+            <div class="modal-score-display">
+                <span class="modal-score-label">SCORE FINAL</span>
+                <span class="modal-score-value" id="modalScore">0</span>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="modalRestart">🔄 REJOUER</button>
+                <button class="modal-btn secondary" id="modalMenu">🏠 MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts - ORDRE IMPORTANT -->
+    <script src="js/utils.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/games/snake.js"></script>
+    <script src="js/games/puissance4.js"></script>
+    <script src="js/games/morpion.js"></script>
+    <script src="js/games/pong.js"></script>
+    <script src="js/games/tetris.js"></script>
+    <script src="js/games/pacman.js"></script>
+    <script src="js/games/subwayRunner.js"></script>
+    <script src="js/games/blackjack.js"></script>
+    <script src="js/games/airHockey.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
