@@ -1,88 +1,117 @@
 /**
- * ============================================
- * ARCADE ULTIMATE - CORE ENGINE
- * Moteur de jeu principal
- * Gestion du Delta Time, Game Loop, Menu Manager
- * ============================================
+ * CORE ENGINE - Moteur de jeu principal
+ * Gère : GameLoop, Particules, Navigation, Input
  */
 
-// ============================================
-// CONFIGURATION GLOBALE
-// ============================================
-const CONFIG = {
-    TARGET_FPS: 60,
-    DELTA_TIME_CAP: 0.1, // Cap à 100ms pour éviter les sauts
-    PARTICLE_COUNT: 80,
-    LOADING_DURATION: 2000,
-    ANIMATION_SPEED: 1,
-    DEBUG_MODE: false
-};
+class ParticleSystem {
+    constructor(maxParticles = 200) {
+        this.particles = [];
+        this.max = maxParticles;
+    }
 
-// ============================================
-// CLASSE PRINCIPALE - GAME ENGINE
-// ============================================
+    emit(x, y, options = {}) {
+        const count = options.count || 10;
+        for (let i = 0; i < count && this.particles.length < this.max; i++) {
+            const angle = options.spread === Math.PI * 2 
+                ? Math.random() * Math.PI * 2 
+                : (options.spread || Math.random() * Math.PI * 2);
+            const speed = (options.speed || 3) * (0.5 + Math.random() * 0.5);
+            const colors = options.colors || ['#ffffff'];
+            
+            this.particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: (options.size || 4) * (0.5 + Math.random()),
+                color: colors[Math.floor(Math.random() * colors.length)],
+                life: options.life || 1,
+                maxLife: options.life || 1,
+                gravity: options.gravity || 0,
+                decay: 0.98
+            });
+        }
+    }
+
+    update(dt) {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity * dt;
+            p.vx *= p.decay;
+            p.vy *= p.decay;
+            p.life -= dt;
+            if (p.life <= 0) this.particles.splice(i, 1);
+        }
+    }
+
+    render(ctx) {
+        for (const p of this.particles) {
+            ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+}
+
+class BaseGame {
+    constructor(canvas, ctx) {
+        this.canvas = canvas;
+        this.ctx = ctx;
+        this.width = canvas.width;
+        this.height = canvas.height;
+        this.score = 0;
+        this.gameOver = false;
+        this.gameState = GAME_STATES.IDLE;
+        this.engine = null;
+    }
+
+    init() {}
+    update(dt) {}
+    render() {}
+    handleKey(key, code) {}
+    handleKeyUp(key, code) {}
+    handleClick(x, y) {}
+    handleMouseMove(x, y) {}
+    handleMobileInput(dir, state) {}
+    handleMobileAction(action, state) {}
+    onStart() {}
+    destroy() {}
+
+    endGame(won, title, icon) {
+        if (this.engine) {
+            this.engine.showModal(icon || '🎮', title, this.score);
+        }
+    }
+}
+
 class GameEngine {
     constructor() {
-        // État du moteur
         this.isRunning = false;
-        this.isPaused = false;
+        this.isPaused = true;
         this.lastTime = 0;
         this.deltaTime = 0;
-        this.fps = 0;
-        this.frameCount = 0;
-        this.fpsUpdateTime = 0;
-        
-        // Références DOM
-        this.canvas = null;
-        this.ctx = null;
-        
-        // Jeu actuel
         this.currentGame = null;
         this.currentGameName = '';
-        
-        // Score global
         this.score = 0;
+        this.animationFrameId = null;
         
-        // Éléments UI
         this.elements = {};
-        
-        // Système de particules
-        this.particles = [];
-        
-        // Audio context (pour sons futurs)
-        this.audioContext = null;
-        
-        // Initialiser
         this.init();
     }
-    
-    // ============================================
-    // INITIALISATION
-    // ============================================
+
     init() {
-        console.log('🎮 [GameEngine] Initialisation...');
-        
-        // Récupérer les éléments DOM
         this.cacheElements();
-        
-        // Initialiser les événements
         this.bindEvents();
-        
-        // Initialiser les particules de fond
         this.initParticles();
-        
-        // Démarrer l'animation des particules
         this.animateParticles();
-        
-        // Animation de typing
         this.startTypingAnimation();
-        
-        // Effet de suivi souris sur les cartes
         this.initCardHoverEffect();
-        
-        console.log('✅ [GameEngine] Prêt !');
     }
-    
+
     cacheElements() {
         this.elements = {
             loadingScreen: document.getElementById('loadingScreen'),
@@ -106,783 +135,395 @@ class GameEngine {
             modalIcon: document.getElementById('modalIcon'),
             modalTitle: document.getElementById('modalTitle'),
             modalScore: document.getElementById('modalScore'),
-            modalStats: document.getElementById('modalStats'),
             modalRestart: document.getElementById('modalRestart'),
             modalMenu: document.getElementById('modalMenu')
         };
-        
-        this.canvas = this.elements.canvas;
-        if (this.canvas) {
-            this.ctx = this.canvas.getContext('2d');
-        }
     }
-    
+
     bindEvents() {
-        // Boutons de navigation
-        if (this.elements.backBtn) {
+        // Boutons navigation
+        if (this.elements.backBtn) 
             this.elements.backBtn.addEventListener('click', () => this.returnToMenu());
-        }
-        
-        if (this.elements.restartBtn) {
+        if (this.elements.restartBtn) 
             this.elements.restartBtn.addEventListener('click', () => this.restartGame());
-        }
-        
-        if (this.elements.pauseBtn) {
+        if (this.elements.pauseBtn) 
             this.elements.pauseBtn.addEventListener('click', () => this.togglePause());
-        }
-        
-        if (this.elements.startGameBtn) {
+        if (this.elements.startGameBtn) 
             this.elements.startGameBtn.addEventListener('click', () => this.hideOverlay());
-        }
         
         // Modal
-        if (this.elements.modalRestart) {
-            this.elements.modalRestart.addEventListener('click', () => {
-                this.hideModal();
-                this.restartGame();
-            });
-        }
-        
-        if (this.elements.modalMenu) {
-            this.elements.modalMenu.addEventListener('click', () => {
-                this.hideModal();
-                this.returnToMenu();
-            });
-        }
-        
+        if (this.elements.modalRestart)
+            this.elements.modalRestart.addEventListener('click', () => { this.hideModal(); this.restartGame(); });
+        if (this.elements.modalMenu)
+            this.elements.modalMenu.addEventListener('click', () => { this.hideModal(); this.returnToMenu(); });
+
         // Cartes de jeux
-        const gameCards = document.querySelectorAll('.game-card');
-        gameCards.forEach(card => {
+        document.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('click', () => {
-                const gameName = card.dataset.game;
-                if (gameName) {
-                    this.launchGame(gameName);
-                }
+                const name = card.dataset.game;
+                if (name) this.launchGame(name);
             });
         });
-        
+
         // Contrôles mobiles
-        const dpadButtons = document.querySelectorAll('.dpad-btn[data-dir]');
-        dpadButtons.forEach(btn => {
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.handleMobileInput(btn.dataset.dir, 'down');
-            });
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleMobileInput(btn.dataset.dir, 'up');
-            });
+        document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
+            btn.addEventListener('touchstart', e => { e.preventDefault(); this.handleMobileInput(btn.dataset.dir, 'down'); });
+            btn.addEventListener('touchend', e => { e.preventDefault(); this.handleMobileInput(btn.dataset.dir, 'up'); });
             btn.addEventListener('mousedown', () => this.handleMobileInput(btn.dataset.dir, 'down'));
             btn.addEventListener('mouseup', () => this.handleMobileInput(btn.dataset.dir, 'up'));
         });
-        
-        const actionButtons = document.querySelectorAll('.action-btn');
-        actionButtons.forEach(btn => {
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.handleMobileAction(btn.dataset.action, 'down');
-            });
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.handleMobileAction(btn.dataset.action, 'up');
-            });
-        });
-        
+
         // Clavier global
-        document.addEventListener('keydown', (e) => this.handleKeyDown(e));
-        document.addEventListener('keyup', (e) => this.handleKeyUp(e));
-        
+        document.addEventListener('keydown', e => this.handleKeyDown(e));
+        document.addEventListener('keyup', e => this.handleKeyUp(e));
+
         // Souris sur canvas
-        if (this.canvas) {
-            this.canvas.addEventListener('click', (e) => this.handleClick(e));
-            this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-            this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        if (this.elements.canvas) {
+            this.elements.canvas.addEventListener('click', e => this.handleClick(e));
+            this.elements.canvas.addEventListener('mousemove', e => this.handleMouseMove(e));
         }
-        
-        // Redimensionnement fenêtre
+
+        // Resize
         window.addEventListener('resize', () => this.handleResize());
     }
-    
-    // ============================================
-    // SYSTÈME DE CHARGEMENT
-    // ============================================
+
     simulateLoading() {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             let progress = 0;
             const interval = setInterval(() => {
                 progress += Math.random() * 15 + 5;
                 if (progress >= 100) {
                     progress = 100;
                     clearInterval(interval);
-                    
-                    if (this.elements.loadingBar) {
-                        this.elements.loadingBar.style.width = '100%';
-                    }
-                    if (this.elements.loadingPercent) {
-                        this.elements.loadingPercent.textContent = '100%';
-                    }
-                    
+                    if (this.elements.loadingBar) this.elements.loadingBar.style.width = '100%';
+                    if (this.elements.loadingPercent) this.elements.loadingPercent.textContent = '100%';
                     setTimeout(() => {
-                        if (this.elements.loadingScreen) {
-                            this.elements.loadingScreen.classList.add('hidden');
-                        }
-                        if (this.elements.mainMenu) {
-                            this.elements.mainMenu.classList.remove('hidden');
-                        }
+                        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.add('hidden');
+                        if (this.elements.mainMenu) this.elements.mainMenu.classList.add('visible');
                         resolve();
                     }, 500);
                 } else {
-                    if (this.elements.loadingBar) {
-                        this.elements.loadingBar.style.width = `${progress}%`;
-                    }
-                    if (this.elements.loadingPercent) {
-                        this.elements.loadingPercent.textContent = `${Math.floor(progress)}%`;
-                    }
+                    if (this.elements.loadingBar) this.elements.loadingBar.style.width = `${progress}%`;
+                    if (this.elements.loadingPercent) this.elements.loadingPercent.textContent = `${Math.floor(progress)}%`;
                 }
             }, 100);
         });
     }
-    
-    // ============================================
-    // PARTICULES DE FOND
-    // ============================================
+
     initParticles() {
-        const particleCanvas = document.getElementById('particlesBg');
-        if (!particleCanvas) return;
-        
-        particleCanvas.width = window.innerWidth;
-        particleCanvas.height = window.innerHeight;
-        
-        const ctx = particleCanvas.getContext('2d');
-        this.particles = [];
-        
-        for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-            this.particles.push({
-                x: Math.random() * particleCanvas.width,
-                y: Math.random() * particleCanvas.height,
-                size: Math.random() * 3 + 1,
-                speedX: (Math.random() - 0.5) * 0.5,
-                speedY: (Math.random() - 0.5) * 0.5,
-                opacity: Math.random() * 0.5 + 0.2,
-                color: `hsla(${220 + Math.random() * 60}, 70%, 60%, `
+        const canvas = document.getElementById('particlesBg');
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        this.particleCanvas = canvas;
+        this.particleCtx = canvas.getContext('2d');
+        this.bgParticles = [];
+        for (let i = 0; i < 60; i++) {
+            this.bgParticles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                speedX: (Math.random() - 0.5) * 0.4,
+                speedY: (Math.random() - 0.5) * 0.4,
+                opacity: Math.random() * 0.5 + 0.2
             });
         }
-        
-        this.particleCanvas = particleCanvas;
-        this.particleCtx = ctx;
     }
-    
+
     animateParticles() {
         if (!this.particleCtx || !this.particleCanvas) return;
-        
         const ctx = this.particleCtx;
-        const canvas = this.particleCanvas;
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        for (let p of this.particles) {
+        const c = this.particleCanvas;
+        ctx.clearRect(0, 0, c.width, c.height);
+
+        for (const p of this.bgParticles) {
             p.x += p.speedX;
             p.y += p.speedY;
-            
-            // Rebondir sur les bords
-            if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
-            if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
-            
-            // Dessiner la particule
+            if (p.x < 0 || p.x > c.width) p.speedX *= -1;
+            if (p.y < 0 || p.y > c.height) p.speedY *= -1;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fillStyle = p.color + p.opacity + ')';
-            ctx.fill();
-            
-            // Ajouter un glow
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
-            ctx.fillStyle = p.color + (p.opacity * 0.3) + ')';
+            ctx.fillStyle = `rgba(99, 102, 241, ${p.opacity})`;
             ctx.fill();
         }
-        
+
         // Lignes entre particules proches
-        for (let i = 0; i < this.particles.length; i++) {
-            for (let j = i + 1; j < this.particles.length; j++) {
-                const dx = this.particles[i].x - this.particles[j].x;
-                const dy = this.particles[i].y - this.particles[j].y;
+        for (let i = 0; i < this.bgParticles.length; i++) {
+            for (let j = i + 1; j < this.bgParticles.length; j++) {
+                const dx = this.bgParticles[i].x - this.bgParticles[j].x;
+                const dy = this.bgParticles[i].y - this.bgParticles[j].y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                
                 if (dist < 120) {
                     ctx.beginPath();
-                    ctx.moveTo(this.particles[i].x, this.particles[i].y);
-                    ctx.lineTo(this.particles[j].x, this.particles[j].y);
-                    ctx.strokeStyle = `rgba(99, 102, 241, ${0.15 * (1 - dist / 120)})`;
+                    ctx.moveTo(this.bgParticles[i].x, this.bgParticles[i].y);
+                    ctx.lineTo(this.bgParticles[j].x, this.bgParticles[j].y);
+                    ctx.strokeStyle = `rgba(99, 102, 241, ${0.12 * (1 - dist / 120)})`;
                     ctx.lineWidth = 0.5;
                     ctx.stroke();
                 }
             }
         }
-        
         requestAnimationFrame(() => this.animateParticles());
     }
-    
-    updateParticleCanvasSize() {
-        if (this.particleCanvas) {
-            this.particleCanvas.width = window.innerWidth;
-            this.particleCanvas.height = window.innerHeight;
-        }
-    }
-    
-    // ============================================
-    // ANIMATION TYPING
-    // ============================================
+
     startTypingAnimation() {
-        const typingElement = document.querySelector('.typing-text');
-        if (!typingElement) return;
-        
-        const texts = [
-            '9 Jeux Classiques',
-            'IA Intelligente',
-            '60 FPS Fluides',
-            'Design Premium',
-            '100% Gratuit'
-        ];
-        
-        let textIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        
+        const el = document.getElementById('typingText');
+        if (!el) return;
+        const texts = ['9 Jeux Classiques', 'IA Intelligente', '60 FPS Fluides', 'Design Premium', '100% Gratuit'];
+        let ti = 0, ci = 0, del = false;
         const type = () => {
-            const currentText = texts[textIndex];
-            
-            if (isDeleting) {
-                typingElement.textContent = currentText.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                typingElement.textContent = currentText.substring(0, charIndex + 1);
-                charIndex++;
-            }
-            
-            let typeSpeed = isDeleting ? 50 : 100;
-            
-            if (!isDeleting && charIndex === currentText.length) {
-                typeSpeed = 2000;
-                isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                textIndex = (textIndex + 1) % texts.length;
-                typeSpeed = 500;
-            }
-            
-            setTimeout(type, typeSpeed);
+            const t = texts[ti];
+            el.textContent = del ? t.substring(0, ci - 1) : t.substring(0, ci + 1);
+            ci += del ? -1 : 1;
+            let sp = del ? 50 : 100;
+            if (!del && ci === t.length) { sp = 2000; del = true; }
+            else if (del && ci === 0) { del = false; ti = (ti + 1) % texts.length; sp = 500; }
+            setTimeout(type, sp);
         };
-        
         type();
     }
-    
-    // ============================================
-    // EFFET HOVER SUR CARTES
-    // ============================================
+
     initCardHoverEffect() {
-        const cards = document.querySelectorAll('.game-card');
-        
-        cards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
                 const rect = card.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                
-                card.style.setProperty('--mouse-x', `${x}%`);
-                card.style.setProperty('--mouse-y', `${y}%`);
+                card.style.setProperty('--mouse-x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
+                card.style.setProperty('--mouse-y', `${((e.clientY - rect.top) / rect.height) * 100}%`);
             });
         });
     }
-    
-    // ============================================
-    // LANCEMENT DE JEU
-    // ============================================
-    launchGame(gameName) {
-        console.log(`🚀 [GameEngine] Lancement: ${gameName}`);
+
+    launchGame(name) {
+        console.log(`🚀 Lancement: ${name}`);
         
-        // Masquer le menu
-        if (this.elements.mainMenu) {
-            this.elements.mainMenu.classList.add('hidden');
-        }
-        
-        // Afficher le conteneur de jeu
+        // Masquer menu
+        if (this.elements.mainMenu) this.elements.mainMenu.classList.remove('visible');
+        setTimeout(() => { 
+            if (this.elements.mainMenu) this.elements.mainMenu.style.display = 'none'; 
+        }, 500);
+
+        // Afficher conteneur jeu
         if (this.elements.gameContainer) {
-            this.elements.gameContainer.classList.remove('hidden');
+            this.elements.gameContainer.classList.add('active');
+            this.elements.gameContainer.style.display = 'flex';
         }
-        
-        // Stocker le nom du jeu
-        this.currentGameName = gameName;
-        
-        // Configurer selon le jeu
-        this.setupGame(gameName);
-        
-        // Afficher l'overlay
+
+        this.currentGameName = name;
+        this.setupGame(name);
         this.showOverlay();
-        
-        // Reset score
         this.score = 0;
         this.updateScoreDisplay();
-        
-        // Démarrer le game loop
+
         this.lastTime = performance.now();
         this.isRunning = true;
-        this.isPaused = true; // En pause jusqu'au clic sur "Commencer"
-        
-        if (!this.animationFrameId) {
-            this.gameLoop();
-        }
+        this.isPaused = true;
+
+        if (!this.animationFrameId) this.gameLoop();
     }
-    
-    setupGame(gameName) {
-        // Configuration spécifique à chaque jeu
-        const gameConfigs = {
-            snake: {
-                title: '🐍 SNAKE',
-                width: 600,
-                height: 600,
-                controls: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Déplacer',
-                showMobile: true,
-                overlayTitle: 'PRÊT ?',
-                overlayMessage: 'Mangez les pommes pour grandir'
-            },
-            subway: {
-                title: '🏃 SUBWAY RUNNER',
-                width: 450,
-                height: 700,
-                controls: '<kbd>←</kbd><kbd>→</kbd> Changer voie | <kbd>Espace</kbd> Sauter',
-                showMobile: true,
-                overlayTitle: 'COURREZ !',
-                overlayMessage: 'Évitez les obstacles et collectez les pièces'
-            },
-            tetris: {
-                title: '🧱 TETRIS',
-                width: 420,
-                height: 720,
-                controls: '<kbd>←</kbd><kbd>→</kbd> Déplacer | <kbd>↑</kbd> Rotation | <kbd>↓</kbd> Drop',
-                showMobile: false,
-                overlayTitle: 'TETRIS',
-                overlayMessage: 'Complétez les lignes pour gagner'
-            },
-            pacman: {
-                title: '👻 PAC-MAN',
-                width: 560,
-                height: 620,
-                controls: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Déplacer',
-                showMobile: true,
-                overlayTitle: 'PAC-MAN',
-                overlayMessage: 'Mangez toutes les pac-gommes !'
-            },
-            puissance4: {
-                title: '🔴 PUISSANCE 4',
-                width: 560,
-                height: 520,
-                controls: '<kbd>Clic</kbd> sur une colonne pour jouer',
-                showMobile: false,
-                overlayTitle: 'PUISSANCE 4',
-                overlayMessage: 'Alignez 4 pions avant l\'IA !'
-            },
-            morpion: {
-                title: '⭕ MORPION',
-                width: 400,
-                height: 480,
-                controls: '<kbd>Clic</kbd> sur une case pour jouer',
-                showMobile: false,
-                overlayTitle: 'MORPION',
-                overlayMessage: 'Tic-Tac-Toe contre IA imbattable'
-            },
-            blackjack: {
-                title: '🃏 BLACKJACK',
-                width: 750,
-                height: 550,
-                controls: '<kbd>H</kbd> Hit | <kbd>S</kbd> Stand | <kbd>D</kbd> Double',
-                showMobile: false,
-                overlayTitle: 'BLACKJACK',
-                overlayMessage: 'Faites 21 points sans les dépasser'
-            },
-            pong: {
-                title: '🏓 PONG',
-                width: 850,
-                height: 520,
-                controls: '<kbd>↑</kbd><kbd>↓</kbd> Déplacer raquette',
-                showMobile: true,
-                overlayTitle: 'PONG',
-                overlayMessage: 'Le classique du tennis de table'
-            },
-            airhockey: {
-                title: '🥅 AIR HOCKEY',
-                width: 850,
-                height: 520,
-                controls: '<kbd>Souris</kbd> Contrôler le maillet',
-                showMobile: false,
-                overlayTitle: 'AIR HOCKEY',
-                overlayMessage: 'Marquez dans le but adverse !'
-            }
+
+    setupGame(name) {
+        const configs = {
+            snake: { title: '🐍 SNAKE', w: 600, h: 600, ctrl: '<kbd>↑↓←→</kbd> ou <kbd>WASD</kbd>', mobile: true, oTitle: 'PRÊT ?', oMsg: 'Mangez les pommes' },
+            subwayRunner: { title: '🏃 SUBWAY RUNNER', w: 450, h: 650, ctrl: '<kbd>←→</kbd> Voie | <kbd>Espace</kbd> Saut', mobile: true, oTitle: 'COURREZ !', oMsg: 'Évitez les obstacles' },
+            tetris: { title: '🧱 TETRIS', w: 400, h: 650, ctrl: '<kbd>←→</kbd> Déplacer | <kbd>↑</kbd> Rotation', mobile: false, oTitle: 'TETRIS', oMsg: 'Complétez les lignes' },
+            pacman: { title: '👻 PAC-MAN', w: 560, h: 620, ctrl: '<kbd>↑↓←→</kbd> Déplacer', mobile: true, oTitle: 'PAC-MAN', oMsg: 'Mangez les pac-gommes' },
+            puissance4: { title: '🔴 PUISSANCE 4', w: 560, h: 520, ctrl: '<kbd>Clic</kbd> colonne', mobile: false, oTitle: 'PUISSANCE 4', oMsg: 'Alignez 4 pions !' },
+            morpion: { title: '⭕ MORPION', w: 380, h: 420, ctrl: '<kbd>Clic</kbd> case', mobile: false, oTitle: 'MORPION', oMsg: 'Tic-Tac-Toe vs IA' },
+            blackjack: { title: '🃏 BLACKJACK', w: 700, h: 500, ctrl: '<kbd>H</kbd> Hit | <kbd>S</kbd> Stand', mobile: false, oTitle: 'BLACKJACK', oMsg: 'Faites 21 points' },
+            pong: { title: '🏓 PONG', w: 800, h: 500, ctrl: '<kbd>↑↓</kbd> Raquette', mobile: true, oTitle: 'PONG', oMsg: 'Tennis de table !' },
+            airHockey: { title: '🥅 AIR HOCKEY', w: 800, h: 500, ctrl: '<kbd>Souris</kbd> Maillet', mobile: false, oTitle: 'AIR HOCKEY', oMsg: 'Marquez un but !' }
         };
-        
-        const config = gameConfigs[gameName] || gameConfigs.snake;
-        
-        // Appliquer la configuration
-        if (this.canvas) {
-            this.canvas.width = config.width;
-            this.canvas.height = config.height;
-        }
-        
-        if (this.elements.gameTitle) {
-            this.elements.gameTitle.textContent = config.title;
-        }
-        
-        if (this.elements.controlsInfo) {
-            this.elements.controlsInfo.innerHTML = config.controls;
-        }
-        
-        if (this.elements.overlayTitle) {
-            this.elements.overlayTitle.textContent = config.overlayTitle;
-        }
-        
-        if (this.elements.overlayMessage) {
-            this.elements.overlayMessage.textContent = config.overlayMessage;
-        }
-        
-        // Afficher/masquer contrôles mobiles
-        if (this.elements.mobileControls) {
-            this.elements.mobileControls.style.display = config.showMobile ? 'flex' : 'none';
-        }
-        
-        // Créer l'instance du jeu
-        this.createGameInstance(gameName);
+
+        const cfg = configs[name] || configs.snake;
+        const cvs = this.elements.canvas;
+        if (cvs) { cvs.width = cfg.w; cvs.height = cfg.h; }
+        if (this.elements.gameTitle) this.elements.gameTitle.textContent = cfg.title;
+        if (this.elements.controlsInfo) this.elements.controlsInfo.innerHTML = cfg.ctrl;
+        if (this.elements.overlayTitle) this.elements.overlayTitle.textContent = cfg.oTitle;
+        if (this.elements.overlayMessage) this.elements.overlayMessage.textContent = cfg.oMsg;
+        if (this.elements.mobileControls) this.elements.mobileControls.style.display = cfg.mobile ? 'flex' : 'none';
+
+        this.createGameInstance(name);
     }
-    
-    createGameInstance(gameName) {
-        switch(gameName) {
-            case 'snake':
-                this.currentGame = new SnakeGame(this.canvas, this.ctx);
-                break;
-            case 'subway':
-                this.currentGame = new SubwayRunnerGame(this.canvas, this.ctx);
-                break;
-            case 'tetris':
-                this.currentGame = new TetrisGame(this.canvas, this.ctx);
-                break;
-            case 'pacman':
-                this.currentGame = new PacManGame(this.canvas, this.ctx);
-                break;
-            case 'puissance4':
-                this.currentGame = new Puissance4Game(this.canvas, this.ctx);
-                break;
-            case 'morpion':
-                this.currentGame = new MorpionGame(this.canvas, this.ctx);
-                break;
-            case 'blackjack':
-                this.currentGame = new BlackjackGame(this.canvas, this.ctx);
-                break;
-            case 'pong':
-                this.currentGame = new PongGame(this.canvas, this.ctx);
-                break;
-            case 'airhockey':
-                this.currentGame = new AirHockeyGame(this.canvas, this.ctx);
-                break;
-            default:
-                console.error(`[GameEngine] Jeu inconnu: ${gameName}`);
-                return;
-        }
+
+    createGameInstance(name) {
+        const ctx = this.elements.canvas?.getContext('2d');
         
-        // Passer les références au jeu
-        if (this.currentGame) {
-            this.currentGame.engine = this;
+        // Mapping des classes de jeux
+        const gameClasses = {
+            snake: typeof SnakeGame !== 'undefined' ? SnakeGame : null,
+            puissance4: typeof Puissance4Game !== 'undefined' ? Puissance4Game : null,
+            morpion: typeof MorpionGame !== 'undefined' ? MorpionGame : null,
+            pong: typeof PongGame !== 'undefined' ? PongGame : null,
+            tetris: typeof TetrisGame !== 'undefined' ? TetrisGame : null,
+            pacman: typeof PacManGame !== 'undefined' ? PacManGame : null,
+            subwayRunner: typeof SubwayRunnerGame !== 'undefined' ? SubwayRunnerGame : null,
+            blackjack: typeof BlackjackGame !== 'undefined' ? BlackjackGame : null,
+            airHockey: typeof AirHockeyGame !== 'undefined' ? AirHockeyGame : null
+        };
+
+        const GameClass = gameClasses[name];
+        
+        if (GameClass) {
+            this.currentGame = new GameClass(this.elements.canvas, ctx);
+        } else {
+            // Placeholder si le jeu n'est pas encore implémenté
+            this.currentGame = new BaseGame(this.elements.canvas, ctx);
+            this.currentGame.render = function() {
+                this.ctx.fillStyle = '#0a0a12';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                this.ctx.fillStyle = '#6366f1';
+                this.ctx.font = 'bold 28px Orbitron';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('🚧 En construction...', this.width / 2, this.height / 2 - 20);
+                this.ctx.font = '18px Rajdhani';
+                this.ctx.fillStyle = '#94a3b8';
+                this.ctx.fillText(`Jeu: ${name}`, this.width / 2, this.height / 2 + 20);
+            };
+            console.warn(`[GameEngine] Jeu "${name}" pas encore implémenté, affichage placeholder`);
         }
+
+        if (this.currentGame) this.currentGame.engine = this;
     }
-    
-    // ============================================
-    // GAME LOOP PRINCIPAL
-    // ============================================
+
     gameLoop() {
         if (!this.isRunning) return;
-        
-        // Calculer Delta Time
+
         const now = performance.now();
-        this.deltaTime = (now - this.lastTime) / 1000; // Convertir en secondes
-        this.deltaTime = Math.min(this.deltaTime, CONFIG.DELTA_TIME_CAP); // Cap
+        this.deltaTime = Math.min((now - this.lastTime) / 1000, 0.1);
         this.lastTime = now;
-        
-        // Calculer FPS
-        this.frameCount++;
-        if (now - this.fpsUpdateTime >= 1000) {
-            this.fps = this.frameCount;
-            this.frameCount = 0;
-            this.fpsUpdateTime = now;
-            
-            if (CONFIG.DEBUG_MODE) {
-                console.log(`[FPS] ${this.fps}`);
-            }
-        }
-        
-        // Mettre à jour et rendre si pas en pause
+
         if (!this.isPaused && this.currentGame && !this.currentGame.gameOver) {
-            this.currentGame.update(this.deltaTime);
-            this.currentGame.render();
-            
-            // Mettre à jour le score depuis le jeu
-            if (typeof this.currentGame.score !== 'undefined') {
-                this.score = this.currentGame.score;
-                this.updateScoreDisplay();
+            try {
+                this.currentGame.update(this.deltaTime);
+                this.currentGame.render();
+                
+                if (typeof this.currentGame.score !== 'undefined') {
+                    this.score = this.currentGame.score;
+                    this.updateScoreDisplay();
+                }
+            } catch (e) {
+                console.error('[GameLoop] Erreur:', e);
             }
         } else if (this.currentGame) {
-            // Continuer de render même en pause (pour animations)
-            this.currentGame.render();
+            try { this.currentGame.render(); } catch (e) {}
         }
-        
-        // Prochaine frame
+
         this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
     }
-    
-    // ============================================
-    // GESTION DES ÉTATS
-    // ============================================
+
     hideOverlay() {
-        if (this.elements.canvasOverlay) {
-            this.elements.canvasOverlay.classList.add('hidden');
-        }
+        if (this.elements.canvasOverlay) this.elements.canvasOverlay.classList.add('hidden');
         this.isPaused = false;
-        
-        if (this.currentGame && typeof this.currentGame.onStart === 'function') {
+        if (this.currentGame && typeof this.currentGame.onStart === 'function') 
             this.currentGame.onStart();
-        }
     }
-    
+
     showOverlay() {
-        if (this.elements.canvasOverlay) {
-            this.elements.canvasOverlay.classList.remove('hidden');
-        }
+        if (this.elements.canvasOverlay) this.elements.canvasOverlay.classList.remove('hidden');
         this.isPaused = true;
     }
-    
+
     togglePause() {
-        if (this.currentGame && this.currentGame.gameOver) return;
-        
+        if (this.currentGame?.gameOver) return;
         this.isPaused = !this.isPaused;
-        
-        if (this.elements.pauseBtn) {
-            const icon = this.elements.pauseBtn.querySelector('svg');
-            if (icon) {
-                icon.innerHTML = this.isPaused 
-                    ? '<polygon points="5,3 19,12 5,21"/>'
-                    : '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-            }
-        }
-        
-        if (this.isPaused && !this.elements.canvasOverlay?.classList.contains('hidden')) {
-            // Ne rien faire, overlay déjà visible
-        }
+        if (this.isPaused) this.showOverlay(); else this.hideOverlay();
     }
-    
-    showModal(icon, title, finalScore, stats = '') {
+
+    showModal(icon, title, score) {
         if (this.elements.modalIcon) this.elements.modalIcon.textContent = icon;
         if (this.elements.modalTitle) this.elements.modalTitle.textContent = title;
-        if (this.elements.modalScore) this.elements.modalScore.textContent = finalScore.toLocaleString();
-        if (this.elements.modalStats) this.elements.modalStats.innerHTML = stats;
-        if (this.elements.resultModal) this.elements.resultModal.classList.remove('hidden');
-        
+        if (this.elements.modalScore) this.elements.modalScore.textContent = score.toLocaleString();
+        if (this.elements.resultModal) this.elements.resultModal.classList.add('show');
         this.isPaused = true;
     }
-    
+
     hideModal() {
-        if (this.elements.resultModal) {
-            this.elements.resultModal.classList.add('hidden');
+        if (this.elements.resultModal) this.elements.resultModal.classList.remove('show');
+    }
+
+    updateScoreDisplay() {
+        if (this.elements.scoreValue) {
+            this.elements.scoreValue.textContent = this.score.toLocaleString();
         }
     }
-    
-    // ============================================
-    // NAVIGATION
-    // ============================================
+
     returnToMenu() {
-        console.log('🏠 [GameEngine] Retour au menu');
-        
-        // Arrêter le game loop
+        console.log('🏠 Retour au menu');
         this.isRunning = false;
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
-        
-        // Nettoyer le jeu
-        if (this.currentGame && typeof this.currentGame.destroy === 'function') {
-            this.currentGame.destroy();
-        }
+        if (this.currentGame?.destroy) this.currentGame.destroy();
         this.currentGame = null;
-        
-        // Masquer le conteneur de jeu
+
         if (this.elements.gameContainer) {
-            this.elements.gameContainer.classList.add('hidden');
+            this.elements.gameContainer.classList.remove('active');
+            this.elements.gameContainer.style.display = 'none';
         }
-        
-        // Afficher le menu
         if (this.elements.mainMenu) {
-            this.elements.mainMenu.classList.remove('hidden');
+            this.elements.mainMenu.style.display = 'block';
+            this.elements.mainMenu.classList.add('visible');
         }
-        
-        // Cacher modal
         this.hideModal();
-        
-        // Mettre à jour les particules
-        this.updateParticleCanvasSize();
     }
-    
+
     restartGame() {
-        console.log('🔄 [GameEngine] Redémarrage');
-        
-        // Recréer le jeu
+        console.log('🔄 Redémarrage');
         this.createGameInstance(this.currentGameName);
-        
-        // Reset
         this.score = 0;
         this.updateScoreDisplay();
-        
-        // Montrer overlay
         this.showOverlay();
         this.isPaused = true;
     }
-    
-    // ============================================
-    // AFFICHAGE DU SCORE
-    // ============================================
-    updateScoreDisplay() {
-        if (this.elements.scoreValue) {
-            this.elements.scoreValue.textContent = this.score.toLocaleString();
-            
-            // Animation de pulse
-            this.elements.scoreValue.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-                this.elements.scoreValue.style.transform = 'scale(1)';
-            }, 150);
-        }
-    }
-    
-    // ============================================
-    // GESTION DES INPUTS
-    // ============================================
+
     handleKeyDown(e) {
-        // Ignorer si on est dans le menu
         if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        
-        // Empêcher le scroll avec les flèches
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) 
             e.preventDefault();
-        }
-        
-        // Passer au jeu
-        if (this.currentGame && typeof this.currentGame.handleKey === 'function') {
+        if (this.currentGame.handleKey) 
             this.currentGame.handleKey(e.key, e.code);
-        }
-        
-        // Raccourcis globaux
-        if (e.code === 'Escape') {
-            this.togglePause();
-        }
-        if (e.code === 'KeyR' && e.ctrlKey) {
-            e.preventDefault();
-            this.restartGame();
-        }
+        if (e.code === 'Escape') this.togglePause();
     }
-    
+
     handleKeyUp(e) {
         if (!this.currentGame || this.isPaused) return;
-        
-        if (this.currentGame && typeof this.currentGame.handleKeyUp === 'function') {
+        if (this.currentGame.handleKeyUp) 
             this.currentGame.handleKeyUp(e.key, e.code);
-        }
     }
-    
+
     handleClick(e) {
         if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
-        
-        if (this.currentGame && typeof this.currentGame.handleClick === 'function') {
+        const rect = this.elements.canvas.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * this.elements.canvas.width;
+        const y = ((e.clientY - rect.top) / rect.height) * this.elements.canvas.height;
+        if (this.currentGame.handleClick) 
             this.currentGame.handleClick(x, y);
-        }
     }
-    
+
     handleMouseMove(e) {
         if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
-        
-        if (this.currentGame && typeof this.currentGame.handleMouseMove === 'function') {
+        const rect = this.elements.canvas.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * this.elements.canvas.width;
+        const y = ((e.clientY - rect.top) / rect.height) * this.elements.canvas.height;
+        if (this.currentGame.handleMouseMove) 
             this.currentGame.handleMouseMove(x, y);
-        }
     }
-    
-    handleMobileInput(direction, state) {
+
+    handleMobileInput(dir, state) {
         if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        
-        if (this.currentGame && typeof this.currentGame.handleMobileInput === 'function') {
-            this.currentGame.handleMobileInput(direction, state);
-        }
+        if (this.currentGame.handleMobileInput) 
+            this.currentGame.handleMobileInput(dir, state);
     }
-    
-    handleMobileAction(action, state) {
-        if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        
-        if (this.currentGame && typeof this.currentGame.handleMobileAction === 'function') {
-            this.currentGame.handleMobileAction(action, state);
-        }
-    }
-    
+
     handleResize() {
-        this.updateParticleCanvasSize();
-        
-        if (this.currentGame && typeof this.currentGame.handleResize === 'function') {
-            this.currentGame.handleResize();
+        if (this.particleCanvas) {
+            this.particleCanvas.width = window.innerWidth;
+            this.particleCanvas.height = window.innerHeight;
         }
-    }
-    
-    // ============================================
-    // UTILITAIRES AUDIO (préparés pour futur)
-    // ============================================
-    initAudio() {
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.warn('[GameEngine] Web Audio API non supportée');
-        }
-    }
-    
-    playSound(frequency, duration, type = 'sine') {
-        if (!this.audioContext) return;
-        
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        oscillator.frequency.value = frequency;
-        oscillator.type = type;
-        
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-        
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + duration);
     }
 }
 
-// ============================================
-// INSTANCE GLOBALE DU MOTEUR
-// ============================================
+// Instance globale du moteur
 const engine = new GameEngine();
-
-// ============================================
-// DÉMARRAGE AU CHARGEMENT
-// ============================================
-window.addEventListener('DOMContentLoaded', async () => {
-    await engine.simulateLoading();
-});
