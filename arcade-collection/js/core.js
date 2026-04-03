@@ -1,529 +1,591 @@
+// arcade-collection/js/core.js
+
 /**
- * CORE ENGINE - Moteur de jeu principal
- * Gère : GameLoop, Particules, Navigation, Input
+ * ============================================
+ * ARCADE COLLECTION - MOTEUR DE JEU PRINCIPAL
+ * Gestion du cycle de vie des jeux, rendu, et état
+ * ============================================
  */
 
-class ParticleSystem {
-    constructor(maxParticles = 200) {
-        this.particles = [];
-        this.max = maxParticles;
-    }
+'use strict';
 
-    emit(x, y, options = {}) {
-        const count = options.count || 10;
-        for (let i = 0; i < count && this.particles.length < this.max; i++) {
-            const angle = options.spread === Math.PI * 2 
-                ? Math.random() * Math.PI * 2 
-                : (options.spread || Math.random() * Math.PI * 2);
-            const speed = (options.speed || 3) * (0.5 + Math.random() * 0.5);
-            const colors = options.colors || ['#ffffff'];
-            
-            this.particles.push({
-                x, y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                size: (options.size || 4) * (0.5 + Math.random()),
-                color: colors[Math.floor(Math.random() * colors.length)],
-                life: options.life || 1,
-                maxLife: options.life || 1,
-                gravity: options.gravity || 0,
-                decay: 0.98
-            });
-        }
-    }
-
-    update(dt) {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += p.gravity * dt;
-            p.vx *= p.decay;
-            p.vy *= p.decay;
-            p.life -= dt;
-            if (p.life <= 0) this.particles.splice(i, 1);
-        }
-    }
-
-    render(ctx) {
-        for (const p of this.particles) {
-            ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-            ctx.fillStyle = p.color;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-    }
-}
-
-class BaseGame {
-    constructor(canvas, ctx) {
-        this.canvas = canvas;
-        this.ctx = ctx;
-        this.width = canvas.width;
-        this.height = canvas.height;
-        this.score = 0;
-        this.gameOver = false;
-        this.gameState = GAME_STATES.IDLE;
-        this.engine = null;
-    }
-
-    init() {}
-    update(dt) {}
-    render() {}
-    handleKey(key, code) {}
-    handleKeyUp(key, code) {}
-    handleClick(x, y) {}
-    handleMouseMove(x, y) {}
-    handleMobileInput(dir, state) {}
-    handleMobileAction(action, state) {}
-    onStart() {}
-    destroy() {}
-
-    endGame(won, title, icon) {
-        if (this.engine) {
-            this.engine.showModal(icon || '🎮', title, this.score);
-        }
-    }
-}
-
+/**
+ * Classe GameEngine - Moteur de jeu principal
+ * Gère le cycle de vie, le rendu, l'état et les interactions
+ */
 class GameEngine {
     constructor() {
-        this.isRunning = false;
-        this.isPaused = true;
-        this.lastTime = 0;
-        this.deltaTime = 0;
+        // État du moteur
         this.currentGame = null;
-        this.currentGameName = '';
-        this.score = 0;
-        this.animationFrameId = null;
+        this.isRunning = false;
+        this.isPaused = false;
+        this.animationId = null;
         
-        this.elements = {};
-        this.init();
-    }
-
-    init() {
-        this.cacheElements();
-        this.bindEvents();
-        this.initParticles();
-        this.animateParticles();
-        this.startTypingAnimation();
-        this.initCardHoverEffect();
-    }
-
-    cacheElements() {
-        this.elements = {
-            loadingScreen: document.getElementById('loadingScreen'),
-            loadingBar: document.getElementById('loadingBar'),
-            loadingPercent: document.getElementById('loadingPercent'),
-            mainMenu: document.getElementById('mainMenu'),
-            gameContainer: document.getElementById('gameContainer'),
-            canvas: document.getElementById('gameCanvas'),
-            gameTitle: document.getElementById('gameTitle'),
-            scoreValue: document.getElementById('scoreValue'),
-            controlsInfo: document.getElementById('controlsInfo'),
-            canvasOverlay: document.getElementById('canvasOverlay'),
-            overlayTitle: document.getElementById('overlayTitle'),
-            overlayMessage: document.getElementById('overlayMessage'),
-            startGameBtn: document.getElementById('startGameBtn'),
-            backBtn: document.getElementById('backBtn'),
-            restartBtn: document.getElementById('restartBtn'),
-            pauseBtn: document.getElementById('pauseBtn'),
-            mobileControls: document.getElementById('mobileControls'),
-            resultModal: document.getElementById('resultModal'),
-            modalIcon: document.getElementById('modalIcon'),
-            modalTitle: document.getElementById('modalTitle'),
-            modalScore: document.getElementById('modalScore'),
-            modalRestart: document.getElementById('modalRestart'),
-            modalMenu: document.getElementById('modalMenu')
+        // Canvas et contexte
+        this.canvas = null;
+        this.ctx = null;
+        
+        // Configuration
+        this.config = {
+            targetFPS: 60,
+            width: 800,
+            height: 600
         };
-    }
-
-    bindEvents() {
-        // Boutons navigation
-        if (this.elements.backBtn) 
-            this.elements.backBtn.addEventListener('click', () => this.returnToMenu());
-        if (this.elements.restartBtn) 
-            this.elements.restartBtn.addEventListener('click', () => this.restartGame());
-        if (this.elements.pauseBtn) 
-            this.elements.pauseBtn.addEventListener('click', () => this.togglePause());
-        if (this.elements.startGameBtn) 
-            this.elements.startGameBtn.addEventListener('click', () => this.hideOverlay());
         
-        // Modal
-        if (this.elements.modalRestart)
-            this.elements.modalRestart.addEventListener('click', () => { this.hideModal(); this.restartGame(); });
-        if (this.elements.modalMenu)
-            this.elements.modalMenu.addEventListener('click', () => { this.hideModal(); this.returnToMenu(); });
-
-        // Cartes de jeux
-        document.querySelectorAll('.game-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const name = card.dataset.game;
-                if (name) this.launchGame(name);
-            });
-        });
-
-        // Contrôles mobiles
-        document.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
-            btn.addEventListener('touchstart', e => { e.preventDefault(); this.handleMobileInput(btn.dataset.dir, 'down'); });
-            btn.addEventListener('touchend', e => { e.preventDefault(); this.handleMobileInput(btn.dataset.dir, 'up'); });
-            btn.addEventListener('mousedown', () => this.handleMobileInput(btn.dataset.dir, 'down'));
-            btn.addEventListener('mouseup', () => this.handleMobileInput(btn.dataset.dir, 'up'));
-        });
-
-        // Clavier global
-        document.addEventListener('keydown', e => this.handleKeyDown(e));
-        document.addEventListener('keyup', e => this.handleKeyUp(e));
-
-        // Souris sur canvas
-        if (this.elements.canvas) {
-            this.elements.canvas.addEventListener('click', e => this.handleClick(e));
-            this.elements.canvas.addEventListener('mousemove', e => this.handleMouseMove(e));
-        }
-
-        // Resize
-        window.addEventListener('resize', () => this.handleResize());
-    }
-
-    simulateLoading() {
-        return new Promise(resolve => {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 15 + 5;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    if (this.elements.loadingBar) this.elements.loadingBar.style.width = '100%';
-                    if (this.elements.loadingPercent) this.elements.loadingPercent.textContent = '100%';
-                    setTimeout(() => {
-                        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.add('hidden');
-                        if (this.elements.mainMenu) this.elements.mainMenu.classList.add('visible');
-                        resolve();
-                    }, 500);
-                } else {
-                    if (this.elements.loadingBar) this.elements.loadingBar.style.width = `${progress}%`;
-                    if (this.elements.loadingPercent) this.elements.loadingPercent.textContent = `${Math.floor(progress)}%`;
-                }
-            }, 100);
-        });
-    }
-
-    initParticles() {
-        const canvas = document.getElementById('particlesBg');
-        if (!canvas) return;
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        this.particleCanvas = canvas;
-        this.particleCtx = canvas.getContext('2d');
-        this.bgParticles = [];
-        for (let i = 0; i < 60; i++) {
-            this.bgParticles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 2 + 0.5,
-                speedX: (Math.random() - 0.5) * 0.4,
-                speedY: (Math.random() - 0.5) * 0.4,
-                opacity: Math.random() * 0.5 + 0.2
-            });
-        }
-    }
-
-    animateParticles() {
-        if (!this.particleCtx || !this.particleCanvas) return;
-        const ctx = this.particleCtx;
-        const c = this.particleCanvas;
-        ctx.clearRect(0, 0, c.width, c.height);
-
-        for (const p of this.bgParticles) {
-            p.x += p.speedX;
-            p.y += p.speedY;
-            if (p.x < 0 || p.x > c.width) p.speedX *= -1;
-            if (p.y < 0 || p.y > c.height) p.speedY *= -1;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(99, 102, 241, ${p.opacity})`;
-            ctx.fill();
-        }
-
-        // Lignes entre particules proches
-        for (let i = 0; i < this.bgParticles.length; i++) {
-            for (let j = i + 1; j < this.bgParticles.length; j++) {
-                const dx = this.bgParticles[i].x - this.bgParticles[j].x;
-                const dy = this.bgParticles[i].y - this.bgParticles[j].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 120) {
-                    ctx.beginPath();
-                    ctx.moveTo(this.bgParticles[i].x, this.bgParticles[i].y);
-                    ctx.lineTo(this.bgParticles[j].x, this.bgParticles[j].y);
-                    ctx.strokeStyle = `rgba(99, 102, 241, ${0.12 * (1 - dist / 120)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(() => this.animateParticles());
-    }
-
-    startTypingAnimation() {
-        const el = document.getElementById('typingText');
-        if (!el) return;
-        const texts = ['9 Jeux Classiques', 'IA Intelligente', '60 FPS Fluides', 'Design Premium', '100% Gratuit'];
-        let ti = 0, ci = 0, del = false;
-        const type = () => {
-            const t = texts[ti];
-            el.textContent = del ? t.substring(0, ci - 1) : t.substring(0, ci + 1);
-            ci += del ? -1 : 1;
-            let sp = del ? 50 : 100;
-            if (!del && ci === t.length) { sp = 2000; del = true; }
-            else if (del && ci === 0) { del = false; ti = (ti + 1) % texts.length; sp = 500; }
-            setTimeout(type, sp);
-        };
-        type();
-    }
-
-    initCardHoverEffect() {
-        document.querySelectorAll('.game-card').forEach(card => {
-            card.addEventListener('mousemove', e => {
-                const rect = card.getBoundingClientRect();
-                card.style.setProperty('--mouse-x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
-                card.style.setProperty('--mouse-y', `${((e.clientY - rect.top) / rect.height) * 100}%`);
-            });
-        });
-    }
-
-    launchGame(name) {
-        console.log(`🚀 Lancement: ${name}`);
-        
-        // Masquer menu
-        if (this.elements.mainMenu) this.elements.mainMenu.classList.remove('visible');
-        setTimeout(() => { 
-            if (this.elements.mainMenu) this.elements.mainMenu.style.display = 'none'; 
-        }, 500);
-
-        // Afficher conteneur jeu
-        if (this.elements.gameContainer) {
-            this.elements.gameContainer.classList.add('active');
-            this.elements.gameContainer.style.display = 'flex';
-        }
-
-        this.currentGameName = name;
-        this.setupGame(name);
-        this.showOverlay();
+        // Score actuel
         this.score = 0;
-        this.updateScoreDisplay();
+        
+        // Callbacks
+        this.callbacks = {
+            onScoreUpdate: null,
+            onGameOver: null,
+            onPause: null,
+            onResume: null
+        };
+        
+        // Instance du jeu en cours
+        this.gameInstance = null;
+    }
 
-        this.lastTime = performance.now();
+    /**
+     * Initialiser le moteur
+     * @param {HTMLCanvasElement} canvas - Élément canvas à utiliser
+     */
+    init(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        
+        // Configurer la taille du canvas
+        this.resizeCanvas();
+        
+        // Écouter le redimensionnement
+        window.addEventListener('resize', Utils.debounce(() => this.resizeCanvas(), 250));
+        
+        console.log('[GameEngine] Initialisé');
+    }
+
+    /**
+     * Redimensionner le canvas pour s'adapter au conteneur
+     */
+    resizeCanvas() {
+        if (!this.canvas || !this.canvas.parentElement) return;
+        
+        const container = this.canvas.parentElement;
+        const maxWidth = container.clientWidth - 40;
+        const maxHeight = container.clientHeight - 40;
+        
+        // Maintenir le ratio d'aspect
+        const aspectRatio = this.config.width / this.config.height;
+        let width = Math.min(maxWidth, this.config.width);
+        let height = width / aspectRatio;
+        
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height * aspectRatio;
+        }
+        
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.canvas.style.width = `${width}px`;
+        this.canvas.style.height = `${height}px`;
+        
+        // Mettre à jour le contexte
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Notifier le jeu si nécessaire
+        if (this.gameInstance && typeof this.gameInstance.onResize === 'function') {
+            this.gameInstance.onResize(width, height);
+        }
+    }
+
+    /**
+     * Charger un jeu
+     * @param {string} gameName - Nom du jeu à charger
+     * @returns {boolean} Succès du chargement
+     */
+    loadGame(gameName) {
+        // Vérifier que le jeu existe
+        if (!Games[gameName]) {
+            console.error(`[GameEngine] Jeu "${gameName}" non trouvé`);
+            return false;
+        }
+        
+        this.currentGame = gameName;
+        const GameClass = Games[gameName];
+        
+        // Créer une instance du jeu
+        this.gameInstance = new GameClass(this.ctx, this.canvas.width, this.canvas.height);
+        
+        console.log(`[GameEngine] Jeu "${gameName}" chargé`);
+        return true;
+    }
+
+    /**
+     * Démarrer le jeu
+     */
+    start() {
+        if (!this.gameInstance) {
+            console.error('[GameEngine] Aucun jeu chargé');
+            return false;
+        }
+        
         this.isRunning = true;
-        this.isPaused = true;
-
-        if (!this.animationFrameId) this.gameLoop();
-    }
-
-    setupGame(name) {
-        const configs = {
-            snake: { title: '🐍 SNAKE', w: 600, h: 600, ctrl: '<kbd>↑↓←→</kbd> ou <kbd>WASD</kbd>', mobile: true, oTitle: 'PRÊT ?', oMsg: 'Mangez les pommes' },
-            subwayRunner: { title: '🏃 SUBWAY RUNNER', w: 450, h: 650, ctrl: '<kbd>←→</kbd> Voie | <kbd>Espace</kbd> Saut', mobile: true, oTitle: 'COURREZ !', oMsg: 'Évitez les obstacles' },
-            tetris: { title: '🧱 TETRIS', w: 400, h: 650, ctrl: '<kbd>←→</kbd> Déplacer | <kbd>↑</kbd> Rotation', mobile: false, oTitle: 'TETRIS', oMsg: 'Complétez les lignes' },
-            pacman: { title: '👻 PAC-MAN', w: 560, h: 620, ctrl: '<kbd>↑↓←→</kbd> Déplacer', mobile: true, oTitle: 'PAC-MAN', oMsg: 'Mangez les pac-gommes' },
-            puissance4: { title: '🔴 PUISSANCE 4', w: 560, h: 520, ctrl: '<kbd>Clic</kbd> colonne', mobile: false, oTitle: 'PUISSANCE 4', oMsg: 'Alignez 4 pions !' },
-            morpion: { title: '⭕ MORPION', w: 380, h: 420, ctrl: '<kbd>Clic</kbd> case', mobile: false, oTitle: 'MORPION', oMsg: 'Tic-Tac-Toe vs IA' },
-            blackjack: { title: '🃏 BLACKJACK', w: 700, h: 500, ctrl: '<kbd>H</kbd> Hit | <kbd>S</kbd> Stand', mobile: false, oTitle: 'BLACKJACK', oMsg: 'Faites 21 points' },
-            pong: { title: '🏓 PONG', w: 800, h: 500, ctrl: '<kbd>↑↓</kbd> Raquette', mobile: true, oTitle: 'PONG', oMsg: 'Tennis de table !' },
-            airHockey: { title: '🥅 AIR HOCKEY', w: 800, h: 500, ctrl: '<kbd>Souris</kbd> Maillet', mobile: false, oTitle: 'AIR HOCKEY', oMsg: 'Marquez un but !' }
-        };
-
-        const cfg = configs[name] || configs.snake;
-        const cvs = this.elements.canvas;
-        if (cvs) { cvs.width = cfg.w; cvs.height = cfg.h; }
-        if (this.elements.gameTitle) this.elements.gameTitle.textContent = cfg.title;
-        if (this.elements.controlsInfo) this.elements.controlsInfo.innerHTML = cfg.ctrl;
-        if (this.elements.overlayTitle) this.elements.overlayTitle.textContent = cfg.oTitle;
-        if (this.elements.overlayMessage) this.elements.overlayMessage.textContent = cfg.oMsg;
-        if (this.elements.mobileControls) this.elements.mobileControls.style.display = cfg.mobile ? 'flex' : 'none';
-
-        this.createGameInstance(name);
-    }
-
-    createGameInstance(name) {
-        const ctx = this.elements.canvas?.getContext('2d');
+        this.isPaused = false;
+        this.score = 0;
         
-        // Mapping des classes de jeux
-        const gameClasses = {
-            snake: typeof SnakeGame !== 'undefined' ? SnakeGame : null,
-            puissance4: typeof Puissance4Game !== 'undefined' ? Puissance4Game : null,
-            morpion: typeof MorpionGame !== 'undefined' ? MorpionGame : null,
-            pong: typeof PongGame !== 'undefined' ? PongGame : null,
-            tetris: typeof TetrisGame !== 'undefined' ? TetrisGame : null,
-            pacman: typeof PacManGame !== 'undefined' ? PacManGame : null,
-            subwayRunner: typeof SubwayRunnerGame !== 'undefined' ? SubwayRunnerGame : null,
-            blackjack: typeof BlackjackGame !== 'undefined' ? BlackjackGame : null,
-            airHockey: typeof AirHockeyGame !== 'undefined' ? AirHockeyGame : null
-        };
-
-        const GameClass = gameClasses[name];
+        // Réinitialiser l'audio
+        Utils.audio.init();
+        Utils.audio.resume();
         
-        if (GameClass) {
-            this.currentGame = new GameClass(this.elements.canvas, ctx);
-        } else {
-            // Placeholder si le jeu n'est pas encore implémenté
-            this.currentGame = new BaseGame(this.elements.canvas, ctx);
-            this.currentGame.render = function() {
-                this.ctx.fillStyle = '#0a0a12';
-                this.ctx.fillRect(0, 0, this.width, this.height);
-                this.ctx.fillStyle = '#6366f1';
-                this.ctx.font = 'bold 28px Orbitron';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText('🚧 En construction...', this.width / 2, this.height / 2 - 20);
-                this.ctx.font = '18px Rajdhani';
-                this.ctx.fillStyle = '#94a3b8';
-                this.ctx.fillText(`Jeu: ${name}`, this.width / 2, this.height / 2 + 20);
-            };
-            console.warn(`[GameEngine] Jeu "${name}" pas encore implémenté, affichage placeholder`);
+        // Démarrer le jeu
+        if (typeof this.gameInstance.init === 'function') {
+            this.gameInstance.init();
         }
-
-        if (this.currentGame) this.currentGame.engine = this;
+        
+        // Démarrer la boucle de jeu
+        this.lastTime = performance.now();
+        this.gameLoop();
+        
+        console.log(`[GameEngine] Jeu démarré: ${this.currentGame}`);
+        return true;
     }
 
+    /**
+     * Boucle de jeu principale
+     */
     gameLoop() {
         if (!this.isRunning) return;
-
-        const now = performance.now();
-        this.deltaTime = Math.min((now - this.lastTime) / 1000, 0.1);
-        this.lastTime = now;
-
-        if (!this.isPaused && this.currentGame && !this.currentGame.gameOver) {
-            try {
-                this.currentGame.update(this.deltaTime);
-                this.currentGame.render();
-                
-                if (typeof this.currentGame.score !== 'undefined') {
-                    this.score = this.currentGame.score;
-                    this.updateScoreDisplay();
-                }
-            } catch (e) {
-                console.error('[GameLoop] Erreur:', e);
+        
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - this.lastTime) / 1000; // En secondes
+        this.lastTime = currentTime;
+        
+        if (!this.isPaused) {
+            // Mettre à jour le jeu
+            if (typeof this.gameInstance.update === 'function') {
+                this.gameInstance.update(deltaTime);
             }
-        } else if (this.currentGame) {
-            try { this.currentGame.render(); } catch (e) {}
+            
+            // Rendre le jeu
+            if (typeof this.gameInstance.render === 'function') {
+                this.gameInstance.render(this.ctx);
+            }
+            
+            // Mettre à jour le score affiché
+            if (typeof this.gameInstance.getScore === 'function') {
+                const newScore = this.gameInstance.getScore();
+                if (newScore !== this.score) {
+                    this.score = newScore;
+                    this.triggerCallback('onScoreUpdate', this.score);
+                }
+            }
+            
+            // Vérifier game over
+            if (typeof this.gameInstance.isGameOver === 'function' && this.gameInstance.isGameOver()) {
+                this.handleGameOver();
+                return;
+            }
+        } else {
+            // Rendre même en pause (pour montrer l'état figé)
+            if (typeof this.gameInstance.render === 'function') {
+                this.gameInstance.render(this.ctx);
+            }
+            
+            // Dessiner l'overlay de pause
+            this.drawPauseOverlay();
         }
-
-        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
+        
+        this.animationId = requestAnimationFrame(() => this.gameLoop());
     }
 
-    hideOverlay() {
-        if (this.elements.canvasOverlay) this.elements.canvasOverlay.classList.add('hidden');
+    /**
+     * Dessiner l'overlay de pause
+     */
+    drawPauseOverlay() {
+        const ctx = this.ctx;
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        
+        // Fond semi-transparent
+        ctx.fillStyle = 'rgba(10, 10, 15, 0.7)';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Texte PAUSE
+        Utils.canvas.drawGlowText(ctx, 'PAUSE', width / 2, height / 2, {
+            font: 'bold 48px Orbitron',
+            color: '#ffffff',
+            glowColor: '#64b5f6',
+            glowSize: 20
+        });
+        
+        // Sous-texte
+        ctx.font = '18px Rajdhani';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.textAlign = 'center';
+        ctx.fillText('Appuyez sur ESC ou Espace pour reprendre', width / 2, height / 2 + 50);
+    }
+
+    /**
+     * Mettre en pause
+     */
+    pause() {
+        if (!this.isRunning || this.isPaused) return;
+        
+        this.isPaused = true;
+        this.triggerCallback('onPause');
+        console.log('[GameEngine] Jeu en pause');
+    }
+
+    /**
+     * Reprendre après pause
+     */
+    resume() {
+        if (!this.isRunning || !this.isPaused) return;
+        
         this.isPaused = false;
-        if (this.currentGame && typeof this.currentGame.onStart === 'function') 
-            this.currentGame.onStart();
+        this.lastTime = performance.now(); // Éviter un saut de temps
+        this.triggerCallback('onResume');
+        console.log('[GameEngine] Jeu repris');
     }
 
-    showOverlay() {
-        if (this.elements.canvasOverlay) this.elements.canvasOverlay.classList.remove('hidden');
-        this.isPaused = true;
-    }
-
+    /**
+     * Toggle pause/reprise
+     */
     togglePause() {
-        if (this.currentGame?.gameOver) return;
-        this.isPaused = !this.isPaused;
-        if (this.isPaused) this.showOverlay(); else this.hideOverlay();
-    }
-
-    showModal(icon, title, score) {
-        if (this.elements.modalIcon) this.elements.modalIcon.textContent = icon;
-        if (this.elements.modalTitle) this.elements.modalTitle.textContent = title;
-        if (this.elements.modalScore) this.elements.modalScore.textContent = score.toLocaleString();
-        if (this.elements.resultModal) this.elements.resultModal.classList.add('show');
-        this.isPaused = true;
-    }
-
-    hideModal() {
-        if (this.elements.resultModal) this.elements.resultModal.classList.remove('show');
-    }
-
-    updateScoreDisplay() {
-        if (this.elements.scoreValue) {
-            this.elements.scoreValue.textContent = this.score.toLocaleString();
+        if (this.isPaused) {
+            this.resume();
+        } else {
+            this.pause();
         }
     }
 
-    returnToMenu() {
-        console.log('🏠 Retour au menu');
+    /**
+     * Gérer le game over
+     */
+    handleGameOver() {
         this.isRunning = false;
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
+        
+        // Jouer le son de game over
+        Utils.audio.playGameOver();
+        
+        // Sauvegarder le score
+        if (this.currentGame && this.score > 0) {
+            Utils.storage.saveScore(this.currentGame, this.score);
         }
-        if (this.currentGame?.destroy) this.currentGame.destroy();
-        this.currentGame = null;
-
-        if (this.elements.gameContainer) {
-            this.elements.gameContainer.classList.remove('active');
-            this.elements.gameContainer.style.display = 'none';
-        }
-        if (this.elements.mainMenu) {
-            this.elements.mainMenu.style.display = 'block';
-            this.elements.mainMenu.classList.add('visible');
-        }
-        this.hideModal();
+        
+        // Déclencher le callback
+        this.triggerCallback('onGameOver', {
+            score: this.score,
+            game: this.currentGame
+        });
+        
+        console.log(`[GameEngine] Game Over! Score: ${this.score}`);
     }
 
-    restartGame() {
-        console.log('🔄 Redémarrage');
-        this.createGameInstance(this.currentGameName);
+    /**
+     * Redémarrer le jeu actuel
+     */
+    restart() {
+        this.stop();
+        this.loadGame(this.currentGame);
+        this.start();
+    }
+
+    /**
+     * Arrêter le jeu
+     */
+    stop() {
+        this.isRunning = false;
+        this.isPaused = false;
+        
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+        
+        // Nettoyer le jeu
+        if (this.gameInstance && typeof this.gameInstance.destroy === 'function') {
+            this.gameInstance.destroy();
+        }
+        
         this.score = 0;
-        this.updateScoreDisplay();
-        this.showOverlay();
-        this.isPaused = true;
+        console.log('[GameEngine] Jeu arrêté');
     }
 
+    /**
+     * Obtenir les instructions du jeu actuel
+     * @returns {string} Instructions formatées
+     */
+    getInstructions() {
+        if (this.gameInstance && typeof this.gameInstance.getInstructions === 'function') {
+            return this.gameInstance.getInstructions();
+        }
+        return '';
+    }
+
+    /**
+     * Enregistrer un callback
+     * @param {string} event - Nom de l'événement
+     * @param {Function} callback - Fonction callback
+     */
+    on(event, callback) {
+        if (this.callbacks.hasOwnProperty(event)) {
+            this.callbacks[event] = callback;
+        }
+    }
+
+    /**
+     * Déclencher un callback
+     * @param {string} event - Nom de l'événement
+     * @param {*} data - Données à passer
+     */
+    triggerCallback(event, data) {
+        if (typeof this.callbacks[event] === 'function') {
+            this.callbacks[event](data);
+        }
+    }
+
+    /**
+     * Gérer les entrées clavier
+     * @param {KeyboardEvent} e - Événement clavier
+     */
     handleKeyDown(e) {
-        if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) 
-            e.preventDefault();
-        if (this.currentGame.handleKey) 
-            this.currentGame.handleKey(e.key, e.code);
-        if (e.code === 'Escape') this.togglePause();
+        // Contrôles globaux
+        if (e.key === 'Escape' || e.code === 'Escape') {
+            if (this.isRunning) {
+                this.togglePause();
+            }
+            return;
+        }
+        
+        if (e.key === ' ' || e.code === 'Space') {
+            if (this.isRunning) {
+                e.preventDefault(); // Empêcher le scroll
+                this.togglePause();
+            }
+            return;
+        }
+        
+        // Passer au jeu si pas en pause
+        if (this.isRunning && !this.isPaused && this.gameInstance) {
+            if (typeof this.gameInstance.handleKeyDown === 'function') {
+                this.gameInstance.handleKeyDown(e);
+            }
+        }
     }
 
-    handleKeyUp(e) {
-        if (!this.currentGame || this.isPaused) return;
-        if (this.currentGame.handleKeyUp) 
-            this.currentGame.handleKeyUp(e.key, e.code);
+    /**
+     * Gérer les entrées souris
+     * @param {MouseEvent} e - Événement souris
+     */
+    handleMouseDown(e) {
+        if (this.isRunning && !this.isPaused && this.gameInstance) {
+            if (typeof this.gameInstance.handleMouseDown === 'function') {
+                // Calculer la position relative au canvas
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                
+                this.gameInstance.handleMouseDown({ x, y, button: e.button });
+            }
+        }
     }
 
-    handleClick(e) {
-        if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        const rect = this.elements.canvas.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * this.elements.canvas.width;
-        const y = ((e.clientY - rect.top) / rect.height) * this.elements.canvas.height;
-        if (this.currentGame.handleClick) 
-            this.currentGame.handleClick(x, y);
-    }
-
+    /**
+     * Gérer le mouvement de souris
+     * @param {MouseEvent} e - Événement souris
+     */
     handleMouseMove(e) {
-        if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        const rect = this.elements.canvas.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * this.elements.canvas.width;
-        const y = ((e.clientY - rect.top) / rect.height) * this.elements.canvas.height;
-        if (this.currentGame.handleMouseMove) 
-            this.currentGame.handleMouseMove(x, y);
-    }
-
-    handleMobileInput(dir, state) {
-        if (!this.currentGame || this.isPaused || this.currentGame.gameOver) return;
-        if (this.currentGame.handleMobileInput) 
-            this.currentGame.handleMobileInput(dir, state);
-    }
-
-    handleResize() {
-        if (this.particleCanvas) {
-            this.particleCanvas.width = window.innerWidth;
-            this.particleCanvas.height = window.innerHeight;
+        if (this.isRunning && !this.isPaused && this.gameInstance) {
+            if (typeof this.gameInstance.handleMouseMove === 'function') {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                
+                this.gameInstance.handleMouseMove({ x, y });
+            }
         }
     }
 }
 
-// Instance globale du moteur
-const engine = new GameEngine();
+/**
+ * Classe BaseGame - Classe de base pour tous les jeux
+ * Fournit une structure commune et des méthodes utilitaires
+ */
+class BaseGame {
+    constructor(ctx, width, height) {
+        this.ctx = ctx;
+        this.width = width;
+        this.height = height;
+        this.score = 0;
+        this.gameOver = false;
+        this.initialized = false;
+        
+        // Couleurs par défaut (peuvent être surchargées)
+        this.colors = {
+            background: '#0a0a0f',
+            primary: '#64b5f6',
+            secondary: '#81c784',
+            accent: '#f48fb1',
+            text: '#ffffff',
+            textMuted: 'rgba(255, 255, 255, 0.6)'
+        };
+    }
+
+    /**
+     * Initialiser le jeu (à surcharger)
+     */
+    init() {
+        this.initialized = true;
+        this.gameOver = false;
+        this.score = 0;
+    }
+
+    /**
+     * Mettre à jour le jeu (à surcharger)
+     * @param {number} deltaTime - Temps écoulé depuis la dernière frame
+     */
+    update(deltaTime) {
+        // À implémenter dans les sous-classes
+    }
+
+    /**
+     * Rendre le jeu (à surcharger)
+     * @param {CanvasRenderingContext2D} ctx - Contexte de rendu
+     */
+    render(ctx) {
+        // Effacer le canvas
+        Utils.canvas.clear(ctx, this.width, this.height, this.colors.background);
+    }
+
+    /**
+     * Gérer les touches pressées (à surcharger)
+     * @param {KeyboardEvent} e - Événement clavier
+     */
+    handleKeyDown(e) {
+        // À implémenter dans les sous-classes
+    }
+
+    /**
+     * Gérer les clics souris (à surcharger)
+     * @param {Object} pos - Position {x, y, button}
+     */
+    handleMouseDown(pos) {
+        // À implémenter dans les sous-classes
+    }
+
+    /**
+     * Gérer le mouvement de souris (à surcharger)
+     * @param {Object} pos - Position {x, y}
+     */
+    handleMouseMove(pos) {
+        // À implémenter dans les sous-classes
+    }
+
+    /**
+     * Redimensionnement du canvas
+     * @param {number} width - Nouvelle largeur
+     * @param {number} height - Nouvelle hauteur
+     */
+    onResize(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    /**
+     * Obtenir le score actuel
+     * @returns {number} Score
+     */
+    getScore() {
+        return this.score;
+    }
+
+    /**
+     * Vérifier si le jeu est terminé
+     * @returns {boolean} Game over
+     */
+    isGameOver() {
+        return this.gameOver;
+    }
+
+    /**
+     * Obtenir les instructions du jeu
+     * @returns {string} Instructions HTML
+     */
+    getInstructions() {
+        return '<p>Utilisez le clavier ou la souris pour jouer</p>';
+    }
+
+    /**
+     * Nettoyage lors de la destruction
+     */
+    destroy() {
+        // À implémenter si nécessaire
+    }
+
+    /**
+     * Ajouter des points au score
+     * @param {number} points - Points à ajouter
+     */
+    addScore(points) {
+        this.score += points;
+    }
+
+    /**
+     * Terminer le jeu
+     */
+    endGame() {
+        this.gameOver = true;
+    }
+
+    /**
+     * Dessiner le score sur le canvas
+     */
+    drawScore() {
+        Utils.canvas.drawGlowText(this.ctx, `Score: ${Utils.formatScore(this.score)}`, 50, 30, {
+            font: 'bold 20px Orbitron',
+            color: this.colors.text,
+            glowColor: this.colors.primary,
+            glowSize: 10,
+            align: 'left'
+        });
+    }
+
+    /**
+     * Dessiner l'écran de game over
+     */
+    drawGameOver() {
+        const ctx = this.ctx;
+        
+        // Fond semi-transparent
+        ctx.fillStyle = 'rgba(10, 10, 15, 0.85)';
+        ctx.fillRect(0, 0, this.width, this.height);
+        
+        // Texte GAME OVER
+        Utils.canvas.drawGlowText(ctx, 'GAME OVER', this.width / 2, this.height / 2 - 30, {
+            font: 'bold 48px Orbitron',
+            color: '#f48fb1',
+            glowColor: '#f48fb1',
+            glowSize: 25
+        });
+        
+        // Score final
+        Utils.canvas.drawGlowText(ctx, `Score: ${Utils.formatScore(this.score)}`, this.width / 2, this.height / 2 + 30, {
+            font: 'bold 28px Orbitron',
+            color: '#fff176',
+            glowColor: '#fff176',
+            glowSize: 15
+        });
+        
+        // Instruction
+        ctx.font = '16px Rajdhani';
+        ctx.fillStyle = this.colors.textMuted;
+        ctx.textAlign = 'center';
+        ctx.fillText('Appuyez sur R pour recommencer ou ESC pour quitter', this.width / 2, this.height / 2 + 80);
+    }
+}
+
+// Registre global des jeux
+window.Games = {};
+window.BaseGame = BaseGame;
+window.GameEngine = GameEngine;
