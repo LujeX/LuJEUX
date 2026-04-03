@@ -1,291 +1,547 @@
+// arcade-collection/js/games/snake.js
+
 /**
- * SNAKE GAME - Le serpent classique
+ * ============================================
+ * ARCADE COLLECTION - SNAKE
+ * Classique jeu du serpent
+ * Contrôles: Flèches directionnelles ou ZQSD
+ * ============================================
  */
 
 class SnakeGame extends BaseGame {
-    constructor(canvas, ctx) {
-        super(canvas, ctx);
-        this.gridSize = 20;
-        this.tileCount = Math.floor(canvas.width / this.gridSize);
-        this.particles = new ParticleSystem(150);
-        this.init();
-    }
-
-    init() {
-        const cx = Math.floor(this.tileCount / 2);
-        this.snake = [
-            { x: cx, y: cx },
-            { x: cx - 1, y: cx },
-            { x: cx - 2, y: cx }
-        ];
-        this.direction = { ...DIRECTIONS.RIGHT };
-        this.nextDirection = { ...DIRECTIONS.RIGHT };
-        this.apple = this.spawnApple();
-        this.applePulse = 0;
-        this.score = 0;
-        this.baseSpeed = 8;
-        this.currentSpeed = this.baseSpeed;
-        this.moveTimer = 0;
-        this.moveInterval = 1 / this.currentSpeed;
-        this.screenShake = 0;
-        this.comboCount = 0;
-        this.comboTimer = 0;
-        this.applesEaten = 0;
-        this.gameOver = false;
-        this.gameState = GAME_STATES.IDLE;
-    }
-
-    spawnApple() {
-        let pos, attempts = 0;
-        do {
-            pos = {
-                x: MathUtils.randomInt(0, this.tileCount - 1),
-                y: MathUtils.randomInt(0, this.tileCount - 1)
-            };
-            attempts++;
-        } while (this.snake.some(s => s.x === pos.x && s.y === pos.y) && attempts < 1000);
-        return pos;
-    }
-
-    update(dt) {
-        if (this.gameOver) return;
-        this.particles.update(dt);
-        this.applePulse += dt * 5;
+    constructor(ctx, width, height) {
+        super(ctx, width, height);
         
-        if (this.comboTimer > 0) {
-            this.comboTimer -= dt;
-            if (this.comboTimer <= 0) this.comboCount = 0;
-        }
-        if (this.screenShake > 0) this.screenShake *= 0.9;
+        // Configuration
+        this.config = {
+            gridSize: 20,
+            initialLength: 3,
+            baseSpeed: 8,
+            maxSpeed: 15,
+            speedIncrement: 0.2
+        };
+        
+        // Calculer les dimensions de la grille
+        this.gridWidth = Math.floor(this.width / this.config.gridSize);
+        this.gridHeight = Math.floor(this.height / this.config.gridSize);
+        
+        // État du jeu (initialisé dans init())
+        this.snake = [];
+        this.direction = { x: 1, y: 0 };
+        this.nextDirection = { x: 1, y: 0 };
+        this.food = null;
+        this.speed = this.config.baseSpeed;
+        this.moveTimer = 0;
+        this.specialFood = null;
+        this.specialFoodTimer = 0;
+        
+        // Couleurs
+        this.colors = {
+            ...this.colors,
+            background: '#0a0a12',
+            grid: 'rgba(255, 255, 255, 0.03)',
+            snakeHead: '#64b5f6',
+            snakeBody: '#4fc3f7',
+            snakeTail: '#29b6f6',
+            food: '#81c784',
+            specialFood: '#f48fb1'
+        };
+    }
 
-        this.moveTimer += dt;
-        if (this.moveTimer >= this.moveInterval) {
-            this.moveTimer = 0;
+    /**
+     * Initialiser le jeu
+     */
+    init() {
+        super.init();
+        
+        // Recalculer la grille si redimensionné
+        this.gridWidth = Math.floor(this.width / this.config.gridSize);
+        this.gridHeight = Math.floor(this.height / this.config.gridSize);
+        
+        // Créer le serpent initial au centre
+        const startX = Math.floor(this.gridWidth / 2);
+        const startY = Math.floor(this.gridHeight / 2);
+        
+        this.snake = [];
+        for (let i = 0; i < this.config.initialLength; i++) {
+            this.snake.push({ x: startX - i, y: startY });
+        }
+        
+        // Direction initiale
+        this.direction = { x: 1, y: 0 };
+        this.nextDirection = { x: 1, y: 0 };
+        
+        // Réinitialiser la vitesse et le score
+        this.speed = this.config.baseSpeed;
+        this.score = 0;
+        this.moveTimer = 0;
+        
+        // Générer la première nourriture
+        this.spawnFood();
+        this.specialFood = null;
+        this.specialFoodTimer = 0;
+        
+        console.log('[Snake] Jeu initialisé');
+    }
+
+    /**
+     * Mettre à jour le jeu
+     */
+    update(deltaTime) {
+        if (this.gameOver) return;
+        
+        // Mettre à jour le timer de mouvement
+        this.moveTimer += deltaTime * this.speed;
+        
+        // Vérifier s'il faut bouger
+        if (this.moveTimer >= 1) {
             this.moveSnake();
+            this.moveTimer = 0;
+        }
+        
+        // Gérer la nourriture spéciale
+        if (this.specialFood) {
+            this.specialFoodTimer -= deltaTime;
+            if (this.specialFoodTimer <= 0) {
+                this.specialFood = null;
+            }
+        } else {
+            // Chance de faire apparaître une nourriture spéciale
+            if (Math.random() < 0.002 && !this.specialFood) {
+                this.spawnSpecialFood();
+            }
         }
     }
 
+    /**
+     * Déplacer le serpent
+     */
     moveSnake() {
+        // Appliquer la prochaine direction
         this.direction = { ...this.nextDirection };
+        
+        // Calculer la nouvelle tête
         const head = this.snake[0];
         const newHead = {
             x: head.x + this.direction.x,
             y: head.y + this.direction.y
         };
-
-        // Collision murs ou soi-même
-        if (newHead.x < 0 || newHead.x >= this.tileCount ||
-            newHead.y < 0 || newHead.y >= this.tileCount ||
-            this.snake.some(s => s.x === newHead.x && s.y === newHead.y)) {
-            this.die();
+        
+        // Vérifier les collisions
+        if (this.checkCollision(newHead)) {
+            this.endGame();
             return;
         }
-
+        
+        // Ajouter la nouvelle tête
         this.snake.unshift(newHead);
-
-        if (newHead.x === this.apple.x && newHead.y === this.apple.y) {
-            this.eatApple(newHead);
-        } else {
+        
+        // Vérifier si on mange
+        let ate = false;
+        
+        // Nourriture normale
+        if (this.food && newHead.x === this.food.x && newHead.y === this.food.y) {
+            this.eatFood(false);
+            ate = true;
+        }
+        
+        // Nourriture spéciale
+        if (this.specialFood && newHead.x === this.specialFood.x && newHead.y === this.specialFood.y) {
+            this.eatFood(true);
+            ate = true;
+        }
+        
+        // Si on n'a pas mangé, retirer la queue
+        if (!ate) {
             this.snake.pop();
         }
     }
 
-    eatApple(pos) {
-        this.comboCount++;
-        this.comboTimer = 2;
-        const pts = 10 * Math.min(this.comboCount, 10);
-        this.score += pts;
-        this.applesEaten++;
-        this.screenShake = 5 + this.comboCount;
-
-        const ax = this.apple.x * this.gridSize + this.gridSize / 2;
-        const ay = this.apple.y * this.gridSize + this.gridSize / 2;
-        this.particles.emit(ax, ay, {
-            count: 15 + this.comboCount * 3,
-            speed: 4, size: 4,
-            colors: ['#ef4444', '#fbbf24', '#ffffff'],
-            life: 0.6, gravity: 100,
-            spread: Math.PI * 2
-        });
-
-        this.apple = this.spawnApple();
-        this.currentSpeed = Math.min(this.baseSpeed + Math.floor(this.applesEaten / 3) * 0.5, 20);
-        this.moveInterval = 1 / this.currentSpeed;
-        if (this.engine) this.engine.score = this.score;
-    }
-
-    die() {
-        this.gameOver = true;
-        this.gameState = GAME_STATES.GAME_OVER;
-        this.screenShake = 20;
-
-        for (const s of this.snake) {
-            this.particles.emit(
-                s.x * this.gridSize + this.gridSize / 2,
-                s.y * this.gridSize + this.gridSize / 2,
-                { count: 8, speed: 6, size: 5, colors: ['#4ade80', '#22c55e'], life: 1, gravity: 200, spread: Math.PI * 2 }
-            );
+    /**
+     * Vérifier les collisions
+     */
+    checkCollision(pos) {
+        // Murs
+        if (pos.x < 0 || pos.x >= this.gridWidth || pos.y < 0 || pos.y >= this.gridHeight) {
+            return true;
         }
-        setTimeout(() => this.endGame(false, '💀 GAME OVER', '💀'), 500);
-    }
-
-    render() {
-        const ctx = this.ctx;
-        ctx.save();
-
-        if (this.screenShake > 0.5) {
-            ctx.translate(
-                (Math.random() - 0.5) * this.screenShake * 2,
-                (Math.random() - 0.5) * this.screenShake * 2
-            );
-        }
-
-        // Background
-        const bgGrad = ctx.createRadialGradient(
-            this.width / 2, this.height / 2, 0,
-            this.width / 2, this.height / 2, this.width / 1.5
-        );
-        bgGrad.addColorStop(0, '#1a1a2e');
-        bgGrad.addColorStop(1, '#0a0a12');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, this.width, this.height);
-
-        // Grid
-        ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i <= this.tileCount; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * this.gridSize, 0);
-            ctx.lineTo(i * this.gridSize, this.height);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(0, i * this.gridSize);
-            ctx.lineTo(this.width, i * this.gridSize);
-            ctx.stroke();
-        }
-
-        // Apple
-        const ax = this.apple.x * this.gridSize + this.gridSize / 2;
-        const ay = this.apple.y * this.gridSize + this.gridSize / 2;
-        const ar = this.gridSize / 2 - 3 + Math.sin(this.applePulse) * 2;
-
-        const glow = ctx.createRadialGradient(ax, ay, 0, ax, ay, ar * 2);
-        glow.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
-        glow.addColorStop(1, 'transparent');
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(ax, ay, ar * 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        const appleG = ctx.createRadialGradient(ax - 3, ay - 3, 0, ax, ay, ar);
-        appleG.addColorStop(0, '#fca5a5');
-        appleG.addColorStop(0.7, '#ef4444');
-        appleG.addColorStop(1, '#dc2626');
-        ctx.fillStyle = appleG;
-        ctx.beginPath();
-        ctx.arc(ax, ay, ar, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Snake
-        const len = this.snake.length;
-        for (let i = len - 1; i >= 0; i--) {
-            const s = this.snake[i];
-            const x = s.x * this.gridSize + 1;
-            const y = s.y * this.gridSize + 1;
-            const sz = this.gridSize - 2;
-            const isH = i === 0;
-            
-            let fc, sc;
-            if (isH) {
-                const g = ctx.createLinearGradient(x, y, x + sz, y + sz);
-                g.addColorStop(0, '#86efac');
-                g.addColorStop(1, '#4ade80');
-                fc = g;
-                sc = '#22c55e';
-            } else {
-                const b = 1 - (i / len) * 0.6;
-                fc = `rgb(${Math.floor(74 * b)}, ${Math.floor(222 * b)}, ${Math.floor(128 * b)})`;
-                sc = `rgb(${Math.floor(34 * b)}, ${Math.floor(197 * b)}, ${Math.floor(94 * b)})`;
+        
+        // Soi-même (sauf la queue qui va disparaître)
+        for (let i = 0; i < this.snake.length - 1; i++) {
+            if (this.snake[i].x === pos.x && this.snake[i].y === pos.y) {
+                return true;
             }
-
-            ctx.fillStyle = fc;
-            ctx.strokeStyle = sc;
-            ctx.lineWidth = 2;
-            RenderUtils.roundRect(ctx, x, y, sz, sz, isH ? 8 : 5);
-            ctx.fill();
-            ctx.stroke();
-
-            if (isH) this.renderEyes(ctx, x, y, sz);
         }
-
-        this.particles.render(ctx);
-
-        // Combo display
-        if (this.comboCount > 1 && this.comboTimer > 0) {
-            ctx.font = 'bold 24px Orbitron';
-            ctx.textAlign = 'center';
-            ctx.shadowColor = '#fbbf24';
-            ctx.shadowBlur = 20;
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillText(`${this.comboCount}x COMBO!`, this.width / 2, 50);
-            ctx.shadowBlur = 0;
-        }
-
-        // UI stats
-        ctx.font = '14px Rajdhani';
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
-        ctx.textAlign = 'left';
-        ctx.fillText(`🍎 ${this.applesEaten}`, 15, this.height - 35);
-        ctx.fillText(`⚡ ${this.currentSpeed.toFixed(1)}x`, 15, this.height - 18);
-
-        ctx.restore();
+        
+        return false;
     }
 
-    renderEyes(ctx, x, y, sz) {
-        let e1x, e1y, e2x, e2y;
-        const off = sz * 0.2;
-
-        if (this.direction.x === 1) {
-            e1x = x + sz - off; e1y = y + off;
-            e2x = x + sz - off; e2y = y + sz - off;
-        } else if (this.direction.x === -1) {
-            e1x = x + off; e1y = y + off;
-            e2x = x + off; e2y = y + sz - off;
-        } else if (this.direction.y === -1) {
-            e1x = x + off; e1y = y + off;
-            e2x = x + sz - off; e2y = y + off;
+    /**
+     * Manger de la nourriture
+     */
+    eatFood(isSpecial) {
+        const points = isSpecial ? 50 : 10;
+        this.addScore(points);
+        
+        if (isSpecial) {
+            Utils.audio.playSuccess();
+            this.specialFood = null;
         } else {
-            e1x = x + off; e1y = y + sz - off;
-            e2x = x + sz - off; e2y = y + sz - off;
-        }
-
-        ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.arc(e1x, e1y, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(e2x, e2y, 4, 0, Math.PI * 2); ctx.fill();
-
-        ctx.fillStyle = '#000';
-        ctx.beginPath(); ctx.arc(e1x + this.direction.x, e1y + this.direction.y, 2, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(e2x + this.direction.x, e2y + this.direction.y, 2, 0, Math.PI * 2); ctx.fill();
-    }
-
-    handleKey(key, code) {
-        if (code === 'ArrowUp' || code === 'KeyW') {
-            if (this.direction.y !== 1) this.nextDirection = { ...DIRECTIONS.UP };
-        } else if (code === 'ArrowDown' || code === 'KeyS') {
-            if (this.direction.y !== -1) this.nextDirection = { ...DIRECTIONS.DOWN };
-        } else if (code === 'ArrowLeft' || code === 'KeyA') {
-            if (this.direction.x !== 1) this.nextDirection = { ...DIRECTIONS.LEFT };
-        } else if (code === 'ArrowRight' || code === 'KeyD') {
-            if (this.direction.x !== -1) this.nextDirection = { ...DIRECTIONS.RIGHT };
+            Utils.audio.playClick();
+            this.spawnFood();
+            
+            // Augmenter la vitesse progressivement
+            this.speed = Math.min(this.speed + this.config.speedIncrement, this.config.maxSpeed);
         }
     }
 
-    handleMobileInput(dir, state) {
-        if (state === 'down') {
-            if (dir === 'up' && this.direction.y !== 1) this.nextDirection = { ...DIRECTIONS.UP };
-            else if (dir === 'down' && this.direction.y !== -1) this.nextDirection = { ...DIRECTIONS.DOWN };
-            else if (dir === 'left' && this.direction.x !== 1) this.nextDirection = { ...DIRECTIONS.LEFT };
-            else if (dir === 'right' && this.direction.x !== -1) this.nextDirection = { ...DIRECTIONS.RIGHT };
+    /**
+     * Générer de la nourriture
+     */
+    spawnFood() {
+        let pos;
+        do {
+            pos = {
+                x: Utils.randomInt(0, this.gridWidth - 1),
+                y: Utils.randomInt(0, this.gridHeight - 1)
+            };
+        } while (this.isOccupied(pos));
+        
+        this.food = pos;
+    }
+
+    /**
+     * Générer de la nourriture spéciale
+     */
+    spawnSpecialFood() {
+        let pos;
+        do {
+            pos = {
+                x: Utils.randomInt(0, this.gridWidth - 1),
+                y: Utils.randomInt(0, this.gridHeight - 1)
+            };
+        } while (this.isOccupied(pos));
+        
+        this.specialFood = pos;
+        this.specialFoodTimer = 5; // Disparait après 5 secondes
+    }
+
+    /**
+     * Vérifier si une position est occupée
+     */
+    isOccupied(pos) {
+        // Serpent
+        for (const segment of this.snake) {
+            if (segment.x === pos.x && segment.y === pos.y) {
+                return true;
+            }
         }
+        
+        // Nourriture existante
+        if (this.food && this.food.x === pos.x && this.food.y === pos.y) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Rendre le jeu
+     */
+    render(ctx) {
+        // Fond
+        Utils.canvas.clear(ctx, this.width, this.height, this.colors.background);
+        
+        // Grille subtile
+        this.drawGrid(ctx);
+        
+        // Nourriture spéciale (en dessous pour l'effet de glow)
+        if (this.specialFood) {
+            this.drawSpecialFood(ctx);
+        }
+        
+        // Nourriture normale
+        if (this.food) {
+            this.drawFood(ctx);
+        }
+        
+        // Serpent
+        this.drawSnake(ctx);
+        
+        // UI
+        this.drawUI(ctx);
+    }
+
+    /**
+     * Dessiner la grille
+     */
+    drawGrid(ctx) {
+        ctx.strokeStyle = this.colors.grid;
+        ctx.lineWidth = 1;
+        
+        for (let x = 0; x <= this.gridWidth; x++) {
+            ctx.beginPath();
+            ctx.moveTo(x * this.config.gridSize, 0);
+            ctx.lineTo(x * this.config.gridSize, this.height);
+            ctx.stroke();
+        }
+        
+        for (let y = 0; y <= this.gridHeight; y++) {
+            ctx.beginPath();
+            ctx.moveTo(0, y * this.config.gridSize);
+            ctx.lineTo(this.width, y * this.config.gridSize);
+            ctx.stroke();
+        }
+    }
+
+    /**
+     * Dessiner le serpent
+     */
+    drawSnake(ctx) {
+        const size = this.config.gridSize - 2;
+        const offset = 1;
+        
+        this.snake.forEach((segment, index) => {
+            const x = segment.x * this.config.gridSize + offset;
+            const y = segment.y * this.config.gridSize + offset;
+            
+            // Calculer la couleur en fonction de la position
+            const progress = index / this.snake.length;
+            
+            if (index === 0) {
+                // Tête avec glow
+                ctx.shadowColor = this.colors.snakeHead;
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = this.colors.snakeHead;
+                
+                // Forme arrondie pour la tête
+                Utils.canvas.roundRect(ctx, x, y, size, size, 5, this.colors.snakeHead);
+                ctx.shadowBlur = 0;
+                
+                // Yeux
+                this.drawEyes(ctx, segment, x, y, size);
+            } else {
+                // Corps avec dégradé de couleur
+                const r = Math.floor(79 + (100 - 79) * progress);
+                const g = Math.floor(195 + (195 - 195) * progress);
+                const b = Math.floor(247 + (246 - 247) * progress);
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                
+                // Légèrement plus petit vers la queue
+                const shrink = progress * 2;
+                Utils.canvas.roundRect(
+                    ctx,
+                    x + shrink,
+                    y + shrink,
+                    size - shrink * 2,
+                    size - shrink * 2,
+                    3,
+                    ctx.fillStyle
+                );
+            }
+        });
+    }
+
+    /**
+     * Dessiner les yeux du serpent
+     */
+    drawEyes(ctx, segment, x, y, size) {
+        ctx.fillStyle = '#ffffff';
+        
+        const eyeSize = size / 4;
+        const eyeOffset = size / 4;
+        
+        let eye1X, eye1Y, eye2X, eye2Y;
+        
+        switch (`${this.direction.x},${this.direction.y}`) {
+            case '1,0': // Droite
+                eye1X = x + size - eyeOffset;
+                eye1Y = y + eyeOffset;
+                eye2X = x + size - eyeOffset;
+                eye2Y = y + size - eyeOffset;
+                break;
+            case '-1,0': // Gauche
+                eye1X = x + eyeOffset;
+                eye1Y = y + eyeOffset;
+                eye2X = x + eyeOffset;
+                eye2Y = y + size - eyeOffset;
+                break;
+            case '0,1': // Bas
+                eye1X = x + eyeOffset;
+                eye1Y = y + size - eyeOffset;
+                eye2X = x + size - eyeOffset;
+                eye2Y = y + size - eyeOffset;
+                break;
+            case '0,-1': // Haut
+                eye1X = x + eyeOffset;
+                eye1Y = y + eyeOffset;
+                eye2X = x + size - eyeOffset;
+                eye2Y = y + eyeOffset;
+                break;
+            default:
+                eye1X = x + eyeOffset;
+                eye1Y = y + eyeOffset;
+                eye2X = x + size - eyeOffset;
+                eye2Y = y + size - eyeOffset;
+        }
+        
+        ctx.beginPath();
+        ctx.arc(eye1X, eye1Y, eyeSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(eye2X, eye2Y, eyeSize, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    /**
+     * Dessiner la nourriture
+     */
+    drawFood(ctx) {
+        const x = this.food.x * this.config.gridSize + this.config.gridSize / 2;
+        const y = this.food.y * this.config.gridSize + this.config.gridSize / 2;
+        const radius = this.config.gridSize / 2 - 2;
+        
+        // Glow
+        ctx.shadowColor = this.colors.food;
+        ctx.shadowBlur = 15;
+        
+        // Pomme stylisée
+        ctx.fillStyle = this.colors.food;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Petit reflet
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(x - radius / 3, y - radius / 3, radius / 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+    }
+
+    /**
+     * Dessiner la nourriture spéciale
+     */
+    drawSpecialFood(ctx) {
+        const x = this.specialFood.x * this.config.gridSize + this.config.gridSize / 2;
+        const y = this.specialFood.y * this.config.gridSize + this.config.gridSize / 2;
+        const radius = this.config.gridSize / 2 - 1;
+        
+        // Pulsation basée sur le temps restant
+        const pulse = 1 + Math.sin(Date.now() / 100) * 0.2;
+        
+        // Glow intense
+        ctx.shadowColor = this.colors.specialFood;
+        ctx.shadowBlur = 25 * pulse;
+        
+        // Étoile/pomme dorée
+        ctx.fillStyle = this.colors.specialFood;
+        ctx.beginPath();
+        
+        // Forme d'étoile
+        for (let i = 0; i < 5; i++) {
+            const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+            const px = x + Math.cos(angle) * radius * pulse;
+            const py = y + Math.sin(angle) * radius * pulse;
+            
+            if (i === 0) {
+                ctx.moveTo(px, py);
+            } else {
+                ctx.lineTo(px, py);
+            }
+        }
+        ctx.closePath();
+        ctx.fill();
+        
+        // Timer visuel
+        ctx.font = '10px Orbitron';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.textAlign = 'center';
+        ctx.fillText(Math.ceil(this.specialFoodTimer).toString(), x, y + radius + 12);
+        
+        ctx.shadowBlur = 0;
+    }
+
+    /**
+     * Dessiner l'interface utilisateur
+     */
+    drawUI(ctx) {
+        // Score
+        Utils.canvas.drawGlowText(ctx, `Score: ${Utils.formatScore(this.score)}`, 60, 25, {
+            font: 'bold 18px Orbitron',
+            color: this.colors.text,
+            glowColor: this.colors.primary,
+            glowSize: 10,
+            align: 'left'
+        });
+        
+        // Longueur du serpent
+        Utils.canvas.drawGlowText(ctx, `Longueur: ${this.snake.length}`, this.width - 60, 25, {
+            font: 'bold 16px Orbitron',
+            color: this.colors.textMuted,
+            glowColor: this.colors.secondary,
+            glowSize: 8,
+            align: 'right'
+        });
+    }
+
+    /**
+     * Gérer les touches pressées
+     */
+    handleKeyDown(e) {
+        const key = e.key.toLowerCase();
+        
+        // Empêcher de faire demi-tour
+        switch (key) {
+            case 'arrowup':
+            case 'z':
+            case 'w':
+                if (this.direction.y !== 1) {
+                    this.nextDirection = { x: 0, y: -1 };
+                }
+                break;
+            case 'arrowdown':
+            case 's':
+                if (this.direction.y !== -1) {
+                    this.nextDirection = { x: 0, y: 1 };
+                }
+                break;
+            case 'arrowleft':
+            case 'q':
+            case 'a':
+                if (this.direction.x !== 1) {
+                    this.nextDirection = { x: -1, y: 0 };
+                }
+                break;
+            case 'arrowright':
+            case 'd':
+                if (this.direction.x !== -1) {
+                    this.nextDirection = { x: 1, y: 0 };
+                }
+                break;
+            case 'r':
+                if (this.gameOver) {
+                    this.init();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Obtenir les instructions
+     */
+    getInstructions() {
+        return `
+            <strong>🐍 Snake</strong> - Le classique jeu du serpent!<br>
+            <span style="color: var(--neon-green)">⬆️⬇️⬅️➡️ Flèches</span> ou 
+            <span style="color: var(--neon-blue)">ZQSD</span> pour diriger | 
+            Mangez les <span style="color: var(--neon-green)">🟢 pommes</span> (+10pts) et 
+            <span style="color: var(--neon-pink)">⭐ étoiles</span> (+50pts)!
+        `;
     }
 }
+
+// Enregistrer le jeu
+window.Games.snake = SnakeGame;
