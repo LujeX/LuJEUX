@@ -1,382 +1,198 @@
 <!DOCTYPE html>
+<!-- arcade-collection/index.html -->
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎮 ARCADE ULTIMATE - LuJEUX</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Collection</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Particules d'arrière-plan -->
+    <canvas id="particles-canvas"></canvas>
 
-    <!-- Particules de fond -->
-    <canvas id="particlesBg"></canvas>
-
-    <!-- Écran de chargement -->
-    <div id="loadingScreen">
-        <div class="loader-container">
-            <div class="loader-ring"></div>
-            <div class="loader-ring"></div>
-            <div class="loader-ring"></div>
-            <span class="loader-text">CHARGEMENT</span>
-        </div>
-        <div class="loading-bar-container">
-            <div class="loading-bar" id="loadingBar"></div>
-        </div>
-        <p class="loading-percent" id="loadingPercent">0%</p>
-    </div>
-
-    <!-- Menu Principal -->
-    <main id="mainMenu">
-        <header class="menu-header">
-            <h1 class="main-title">A R C A D E<br><span class="title-sub">U L T I M A T E</span></h1>
-            <p class="subtitle"><span id="typingText"></span><span class="cursor">|</span></p>
-            
-            <div class="header-stats">
-                <div class="stat-item">
-                    <span class="stat-number">9</span>
-                    <span class="stat-label">JEUX</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-number">∞</span>
-                    <span class="stat-label">FUN</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-number">60</span>
-                    <span class="stat-label">FPS</span>
-                </div>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🎮</span>
+                <span class="logo-text">Arcade Collection</span>
             </div>
-        </header>
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active" data-section="home">Accueil</a></li>
+                <li><a href="#" class="nav-link" data-section="games">Jeux</a></li>
+                <li><a href="#" class="nav-link" data-section="scores">Scores</a></li>
+                <li><a href="#" class="nav-link" data-section="about">À propos</a></li>
+            </ul>
+            <button class="fullscreen-btn" id="global-fullscreen" title="Plein écran">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+            </button>
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
 
-        <section class="games-showcase">
-            <div class="games-grid">
-
-                <!-- SNAKE -->
-                <article class="game-card" data-game="snake">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <path d="M20 50 Q20 35 35 35 L65 35 Q80 35 80 50 Q80 65 65 65 L35 65 Q20 65 20 50 Z" fill="#22c55e" stroke="#16a34a" stroke-width="3"/>
-                                <circle cx="72" cy="45" r="5" fill="white"/>
-                                <circle cx="74" cy="45" r="2" fill="#000"/>
-                                <path d="M78 42 Q82 38 86 42" stroke="#16a34a" stroke-width="3" fill="none"/>
-                                <rect x="15" y="48" width="12" height="4" rx="2" fill="#16a34a"/>
-                                <rect x="10" y="52" width="8" height="4" rx="2" fill="#15803d"/>
-                                <rect x="8" y="56" width="6" height="4" rx="2" fill="#166534"/>
-                            </svg>
+    <!-- Contenu Principal -->
+    <main class="main-content">
+        <!-- Section Hero / Accueil -->
+        <section id="home" class="section active">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="title-line">Bienvenue dans</span>
+                        <span class="title-main glow-text">Arcade Collection</span>
+                    </h1>
+                    <p class="hero-subtitle">Découvrez notre collection de jeux rétro modernes</p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">9</span>
+                            <span class="stat-label">Jeux</span>
                         </div>
-                        <h3 class="card-title">SNAKE</h3>
-                        <p class="card-desc">Le serpent classique aux graphismes premium</p>
-                        <div class="card-stats">
-                            <span class="difficulty easy">FACILE</span>
-                            <span class="players">1 JOUEUR</span>
+                        <div class="stat-item">
+                            <span class="stat-number">∞</span>
+                            <span class="stat-label">Fun</span>
                         </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
+                        <div class="stat-item">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Gratuit</span>
+                        </div>
                     </div>
-                </article>
-
-                <!-- SUBWAY RUNNER -->
-                <article class="game-card" data-game="subwayRunner">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <ellipse cx="50" cy="70" rx="18" ry="8" fill="#94a3b8" opacity="0.5"/>
-                                <ellipse cx="50" cy="58" rx="20" ry="25" fill="#ec4899"/>
-                                <circle cx="50" cy="38" r="15" fill="#fce7f3"/>
-                                <circle cx="44" cy="35" r="3" fill="#1f2937"/>
-                                <circle cx="56" cy="35" r="3" fill="#1f2937"/>
-                                <path d="M43 45 Q50 50 57 45" stroke="#be185d" stroke-width="2" fill="none"/>
-                                <rect x="35" y="62" width="8" height="18" rx="4" fill="#db2777"/>
-                                <rect x="57" y="62" width="8" height="18" rx="4" fill="#db2777"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">SUBWAY RUNNER</h3>
-                        <p class="card-desc">Course infinie à travers la ville</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">MOYEN</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
+                    <button class="cta-button" id="explore-games">
+                        <span>Explorer les Jeux</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="hero-visual">
+                    <div classfloating-shapes>
+                        <div class="shape shape-1"></div>
+                        <div class="shape shape-2"></div>
+                        <div class="shape shape-3"></div>
                     </div>
-                </article>
-
-                <!-- TETRIS -->
-                <article class="game-card" data-game="tetris">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="15" y="15" width="22" height="22" rx="4" fill="#06b6d4"/>
-                                <rect x="39" y="15" width="22" height="22" rx="4" fill="#06b6d4"/>
-                                <rect x="63" y="15" width="22" height="22" rx="4" fill="#06b6d4"/>
-                                <rect x="15" y="39" width="22" height="22" rx="4" fill="#a855f7"/>
-                                <rect x="39" y="39" width="22" height="22" rx="4" fill="#f97316"/>
-                                <rect x="63" y="39" width="22" height="22" rx="4" fill="#22c55e"/>
-                                <rect x="15" y="63" width="22" height="22" rx="4" fill="#eab308"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">TETRIS</h3>
-                        <p class="card-desc">Le puzzle classique qui défie le temps</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">MOYEN</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- PAC-MAN -->
-                <article class="game-card" data-game="pacman">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <circle cx="50" cy="50" r="32" fill="#fbbf24"/>
-                                <path d="M50 50 L90 25 A32 32 0 0 1 90 75 L50 50" fill="#0a0a0f"/>
-                                <circle cx="62" cy="36" r="5" fill="#0a0a0f"/>
-                                <circle cx="62" cy="64" r="5" fill="#0a0a0f"/>
-                                <circle cx="20" cy="25" r="10" fill="#ff0000"/>
-                                <circle cx="20" cy="50" r="10" fill="#00ffff"/>
-                                <circle cx="20" cy="75" r="10" fill="#ffb8ff"/>
-                                <circle cx="80" cy="25" r="10" fill="#ffb852"/>
-                                <circle cx="80" cy="75" r="10" fill="#00ff00"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">PAC-MAN</h3>
-                        <p class="card-desc">Mange les fantômes dans le labyrinthe</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">MOYEN</span>
-                            <span class="players">1 JOUEUR</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- PUISSANCE 4 -->
-                <article class="game-card" data-game="puissance4">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="15" y="15" width="70" height="70" rx="8" fill="#1e40af"/>
-                                <circle cx="30" cy="32" r="10" fill="#ef4444"/>
-                                <circle cx="50" cy="32" r="10" fill="#fbbf24"/>
-                                <circle cx="70" cy="32" r="10" fill="#fbbf24"/>
-                                <circle cx="30" cy="50" r="10" fill="#fbbf24"/>
-                                <circle cx="50" cy="50" r="10" fill="#ef4444"/>
-                                <circle cx="70" cy="50" r="10" fill="#fbbf24"/>
-                                <circle cx="30" cy="68" r="10" fill="#fbbf24"/>
-                                <circle cx="50" cy="68" r="10" fill="#fbbf24"/>
-                                <circle cx="70" cy="68" r="10" fill="#ef4444"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">PUISSANCE 4</h3>
-                        <p class="card-desc">Aligne 4 pions contre l'IA stratégique</p>
-                        <div class="card-stats">
-                            <span class="difficulty hard">DIFFICILE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- MORPION -->
-                <article class="game-card" data-game="morpion">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <line x1="25" y1="25" x2="75" y2="75" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
-                                <line x1="75" y1="25" x2="25" y2="75" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
-                                <circle cx="50" cy="50" r="22" fill="none" stroke="#3b82f6" stroke-width="8"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">MORPION</h3>
-                        <p class="card-desc">Tic-Tac-Toe contre une IA imbattable</p>
-                        <div class="card-stats">
-                            <span class="difficulty hard">IMBATTABLE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- BLACKJACK -->
-                <article class="game-card" data-game="blackjack">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="20" y="10" width="60" height="80" rx="6" fill="#fff" stroke="#333" stroke-width="2"/>
-                                <text x="50" y="38" font-size="24" font-weight="bold" fill="#dc2626" text-anchor="middle">A</text>
-                                <text x="50" y="75" font-size="28" fill="#dc2626" text-anchor="middle">♠</text>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">BLACKJACK</h3>
-                        <p class="card-desc">21 points pour battre le croupier</p>
-                        <div class="card-stats">
-                            <span class="difficulty medium">CLASSIQUE</span>
-                            <span class="players">VS CROUPIER</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- PONG -->
-                <article class="game-card" data-game="pong">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="10" y="35" width="8" height="30" rx="2" fill="#4ade80"/>
-                                <rect x="82" y="35" width="8" height="30" rx="2" fill="#ef4444"/>
-                                <circle cx="50" cy="50" r="8" fill="#fff"/>
-                                <line x1="50" y1="10" x2="50" y2="90" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="5,5"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">PONG</h3>
-                        <p class="card-desc">Le tennis de table originel vs IA</p>
-                        <div class="card-stats">
-                            <span class="difficulty easy">FACILE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
-                <!-- AIR HOCKEY -->
-                <article class="game-card" data-game="airHockey">
-                    <div class="card-content">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 100 100" class="icon-svg">
-                                <rect x="5" y="5" width="90" height="90" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="3"/>
-                                <circle cx="50" cy="50" r="10" fill="#fff"/>
-                                <circle cx="25" cy="50" r="15" fill="#22c55e" stroke="#fff" stroke-width="2"/>
-                                <circle cx="75" cy="50" r="15" fill="#ef4444" stroke="#fff" stroke-width="2"/>
-                                <rect x="42" y="5" width="16" height="15" rx="4" fill="rgba(255,255,255,0.1)"/>
-                                <rect x="42" y="80" width="16" height="15" rx="4" fill="rgba(255,255,255,0.1)"/>
-                            </svg>
-                        </div>
-                        <h3 class="card-title">AIR HOCKEY</h3>
-                        <p class="card-desc">Palet ultra-rapide avec physique réaliste</p>
-                        <div class="card-stats">
-                            <span class="difficulty hard">INTENSE</span>
-                            <span class="players">VS IA</span>
-                        </div>
-                        <button class="play-btn">
-                            <span>JOUER</span>
-                            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        </button>
-                    </div>
-                </article>
-
+                </div>
             </div>
         </section>
 
-        <footer class="menu-footer">
-            <p class="footer-text">✨ Utilisez les flèches directionnelles ou WASD pour jouer ✨</p>
-            <p class="made-with">Créé avec ❤️ par LuJEUX</p>
-        </footer>
-    </main>
-
-    <!-- Conteneur de Jeu -->
-    <div id="gameContainer">
-        <header class="game-header">
-            <button class="back-btn" id="backBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-                <span>MENU</span>
-            </button>
-            
-            <h2 class="game-title" id="gameTitle">NOM DU JEU</h2>
-            
-            <div class="score-box">
-                <span class="score-label">SCORE</span>
-                <span class="score-value" id="scoreValue">0</span>
+        <!-- Grille de Jeux -->
+        <section id="games" class="section">
+            <div class="section-header">
+                <h2 class="section-title">Nos Jeux</h2>
+                <p class="section-subtitle">Choisissez votre aventure</p>
             </div>
-        </header>
+            <div class="games-grid" id="games-grid">
+                <!-- Les cartes de jeux seront générées dynamiquement -->
+            </div>
+        </section>
 
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas"></canvas>
-            <div class="canvas-overlay" id="canvasOverlay">
-                <div class="overlay-content">
-                    <h2 class="overlay-title" id="overlayTitle">PRÊT ?</h2>
-                    <p class="overlay-message" id="overlayMessage">Appuyez pour commencer</p>
-                    <button class="start-game-btn" id="startGameBtn">COMMENCER</button>
+        <!-- Tableau des Scores -->
+        <section id="scores" class="section">
+            <div class="section-header">
+                <h2 class="section-title">Tableau des Scores</h2>
+                <p class="section-subtitle">Vos meilleures performances</p>
+            </div>
+            <div class="scores-container" id="scores-container">
+                <div class="no-scores">
+                    <span class="no-scores-icon">🏆</span>
+                    <p>Jouez pour établir vos premiers records !</p>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="game-controls-panel">
-            <div class="controls-info" id="controlsInfo"></div>
-            <div class="control-buttons">
-                <button class="ctrl-btn restart-btn" id="restartBtn">🔄 RESTART</button>
-                <button class="ctrl-btn pause-btn" id="pauseBtn">⏸️ PAUSE</button>
+        <!-- À Propos -->
+        <section id="about" class="section">
+            <div class="about-content">
+                <h2 class="section-title">À Propos</h2>
+                <div class="about-text">
+                    <p><strong>Arcade Collection</strong> est une collection de jeux rétro modernes développés avec passion.</p>
+                    <p>Tous les jeux sont construits avec HTML5 Canvas, JavaScript vanilla et CSS3 avancé pour une expérience fluide et immersive.</p>
+                    <div class="tech-stack">
+                        <span class="tech-tag">HTML5 Canvas</span>
+                        <span class="tech-tag">JavaScript ES6+</span>
+                        <span class="tech-tag">CSS3 Animations</span>
+                        <span class="tech-tag">Web Audio API</span>
+                        <span class="tech-tag">LocalStorage</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Jeu Plein Écran -->
+    <div class="game-modal" id="game-modal">
+        <div class="game-modal-header">
+            <div class="game-info">
+                <h3 class="game-modal-title" id="modal-game-title">Jeu</h3>
+                <div class="game-score-display">
+                    <span class="score-label">Score:</span>
+                    <span class="score-value" id="modal-score">0</span>
+                </div>
+            </div>
+            <div class="game-controls">
+                <button class="control-btn sound-toggle" id="sound-toggle" title="Son">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                </button>
+                <button class="control-btn pause-btn" id="pause-btn" title="Pause">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                </button>
+                <button class="control-btn close-btn" id="close-game" title="Quitter">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
             </div>
         </div>
+        <div class="game-canvas-container" id="game-canvas-container">
+            <canvas id="game-canvas"></canvas>
+        </div>
+        <div class="game-instructions" id="game-instructions"></div>
+    </div>
 
-        <!-- Contrôles Mobiles -->
-        <div class="mobile-controls" id="mobileControls">
-            <div class="dpad">
-                <button class="dpad-btn dpad-up" data-dir="up">▲</button>
-                <button class="dpad-btn dpad-left" data-dir="left">◀</button>
-                <button class="dpad-center"></button>
-                <button class="dpad-btn dpad-right" data-dir="right">▶</button>
-                <button class="dpad-btn dpad-down" data-dir="down">▼</button>
+    <!-- Overlay de Pause/Game Over -->
+    <div class="game-overlay" id="game-overlay">
+        <div class="overlay-content">
+            <h2 class="overlay-title" id="overlay-title">Pause</h2>
+            <p class="overlay-message" id="overlay-message"></p>
+            <div class="overlay-stats" id="overlay-stats"></div>
+            <div class="overlay-buttons">
+                <button class="overlay-btn primary" id="resume-btn">Reprendre</button>
+                <button class="overlay-btn secondary" id="restart-btn">Recommencer</button>
+                <button class="overlay-btn tertiary" id="quit-btn">Quitter</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Résultat -->
-    <div id="resultModal">
-        <div class="modal-content">
-            <div class="modal-icon" id="modalIcon">🎮</div>
-            <h2 class="modal-title" id="modalTitle">VICTOIRE!</h2>
-            <div class="modal-score-display">
-                <span class="modal-score-label">SCORE FINAL</span>
-                <span class="modal-score-value" id="modalScore">0</span>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn primary" id="modalRestart">🔄 REJOUER</button>
-                <button class="modal-btn secondary" id="modalMenu">🏠 MENU</button>
-            </div>
-        </div>
-    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 Arcade Collection. Tous droits réservés.</p>
+        <p>Fait avec ❤️ et beaucoup de ☕</p>
+    </footer>
 
-    <!-- Scripts - ORDRE IMPORTANT -->
+    <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/core.js"></script>
-    <script src="js/games/snake.js"></script>
-    <script src="js/games/puissance4.js"></script>
-    <script src="js/games/morpion.js"></script>
     <script src="js/games/pong.js"></script>
+    <script src="js/games/snake.js"></script>
     <script src="js/games/tetris.js"></script>
     <script src="js/games/pacman.js"></script>
-    <script src="js/games/subwayRunner.js"></script>
+    <script src="js/games/morpion.js"></script>
+    <script src="js/games/puissance4.js"></script>
     <script src="js/games/blackjack.js"></script>
     <script src="js/games/airHockey.js"></script>
+    <script src="js/games/subwayRunner.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
