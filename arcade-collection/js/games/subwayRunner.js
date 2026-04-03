@@ -1,1041 +1,716 @@
+// arcade-collection/js/games/subwayRunner.js
+
 /**
  * ============================================
- * ARCADE ULTIMATE - SUBWAY RUNNER GAME
- * Course infinie style Subway Surfers
+ * ARCADE COLLECTION - SUBWAY RUNNER
+ * Jeu de course infini style endless runner
+ * Contrôles: Flèches gauche/droite pour changer de voie, haut pour sauter, bas pour glisser
  * ============================================
  */
 
 class SubwayRunnerGame extends BaseGame {
-    constructor(canvas, ctx) {
-        super(canvas, ctx);
+    constructor(ctx, width, height) {
+        super(ctx, width, height);
         
-        // Configuration des voies
-        this.laneCount = 3;
-        this.laneWidth = 120;
-        this.lanes = [];
+        // Configuration
+        this.config = {
+            lanes: 3,
+            laneWidth: 0,
+            playerSize: 40,
+            obstacleTypes: ['train', 'barrier', 'coin'],
+            baseSpeed: 8,
+            maxSpeed: 18,
+            speedIncrement: 0.001,
+            spawnRate: 1.5,
+            jumpHeight: 120,
+            jumpDuration: 0.5,
+            slideDuration: 0.6,
+            gravity: 2000,
+            coinValue: 10
+        };
         
-        // Système de particules
-        this.particles = new ParticleSystem(150);
-        this.trailParticles = [];
+        // Calculer la largeur des voies
+        this.calculateLaneWidth();
         
-        // Initialiser
-        this.init();
-    }
-    
-    init() {
-        // Calculer les positions des voies
-        const totalWidth = this.laneCount * this.laneWidth;
-        const startX = (this.width - totalWidth) / 2 + this.laneWidth / 2;
+        // État du jeu (initialisé dans init())
+        this.player = null;
+        this.obstacles = [];
+        this.coins = [];
+        this.laneObjects = [];
         
-        for (let i = 0; i < this.laneCount; i++) {
-            this.lanes.push(startX + i * this.laneWidth);
-        }
-        
-        // Joueur
-        this.currentLane = 1; // Commence au centre
+        // Position et mouvement
+        this.currentLane = 1; // 0, 1, 2 (gauche, centre, droite)
         this.targetLane = 1;
-        this.playerX = this.lanes[1];
-        this.playerY = this.height - 150;
-        this.groundY = this.height - 150;
+        this.speed = this.config.baseSpeed;
+        this.distance = 0;
         
-        // Physique du saut
+        // Saut et glissade
         this.isJumping = false;
         this.isSliding = false;
         this.jumpVelocity = 0;
-        this.gravity = 2800;
-        this.jumpForce = -750;
+        this.jumpTimer = 0;
         this.slideTimer = 0;
-        this.slideDuration = 0.5;
+        this.playerY = 0; // Y offset pour le saut/glissade
         
-        // Animation du joueur
-        this.runAnimation = 0;
-        this.tiltAngle = 0;
+        // Animation
+        this.roadOffset = 0;
+        this.buildings = [];
         
-        // Vitesse et distance
-        this.baseSpeed = 350;
-        this.speed = this.baseSpeed;
-        this.distance = 0;
-        this.maxDistance = 0;
-        
-        // Obstacles
-        this.obstacles = [];
-        this.spawnTimer = 0;
-        this.spawnInterval = 1.2;
-        this.obstacleTypes = ['train', 'barrier', 'cone', 'truck'];
-        
-        // Pièces
-        this.coins = [];
-        this.coinSpawnTimer = 0;
-        this.coinSpawnInterval = 0.6;
-        this.coinValue = 50;
-        this.totalCoins = 0;
-        
-        // Score
-        this.score = 0;
-        this.multiplier = 1;
-        this.multiplierTimer = 0;
-        
-        // Effets visuels
-        this.speedLines = [];
-        this.screenOffset = 0; // Pour l'effet de parallaxe
-        this.flashEffect = { active: false, alpha: 0, color: '#fff' };
-        
-        // Ground scrolling
-        this.groundLines = [];
-        for (let i = 0; i < 20; i++) {
-            this.groundLines.push({
-                y: i * 60,
-                speed: 1
-            });
-        }
-        
-        // Stats
-        this.obstaclesDodged = 0;
-        this.jumpsMade = 0;
-        
-        // État
-        this.gameOver = false;
-        this.gameState = GAME_STATES.IDLE;
+        // Couleurs
+        this.colors = {
+            ...this.colors,
+            background: '#1a1a2e',
+            road: '#16213e',
+            roadLine: '#f39c12',
+            building: '#0f3460',
+            buildingWindow: 'rgba(255, 255, 150, 0.5)',
+            player: '#64b5f6',
+            train: '#e74c3c',
+            barrier: '#f39c12',
+            coin: '#f1c40f',
+            ground: '#2c3e50'
+        };
     }
-    
-    spawnObstacle() {
-        const lane = MathUtils.randomInt(0, this.laneCount - 1);
-        const type = this.obstacleTypes[MathUtils.randomInt(0, this.obstacleTypes.length - 1)];
+
+    /**
+     * Calculer la largeur des voies
+     */
+    calculateLaneWidth() {
+        this.config.laneWidth = Math.min(150, (this.width - 100) / this.config.lanes);
+    }
+
+    /**
+     * Obtenir la position X d'une voie
+     */
+    getLaneX(lane) {
+        const totalWidth = this.config.laneWidth * this.config.lanes;
+        const startX = (this.width - totalWidth) / 2;
+        return startX + lane * this.config.laneWidth + this.config.laneWidth / 2;
+    }
+
+    /**
+     * Initialiser le jeu
+     */
+    init() {
+        super.init();
         
-        let obstacle = {
-            x: this.lanes[lane],
-            y: -200,
-            type: type,
-            lane: lane,
-            passed: false
+        // Recalculer les dimensions
+        this.calculateLaneWidth();
+        
+        // Position du sol (bas de l'écran)
+        const groundY = this.height - 80;
+        
+        // Initialiser le joueur
+        this.player = {
+            x: this.getLaneX(1),
+            y: groundY,
+            width: this.config.playerSize,
+            height: this.config.playerSize * 1.5,
+            baseY: groundY
         };
         
-        switch (type) {
-            case 'train':
-                obstacle.width = 90;
-                obstacle.height = 180;
-                obstacle.color = '#ef4444';
-                obstacle.points = 100;
-                break;
-            case 'barrier':
-                obstacle.width = 80;
-                obstacle.height = 70;
-                obstacle.color = '#f59e0b';
-                obstacle.points = 25;
-                break;
-            case 'cone':
-                obstacle.width = 40;
-                obstacle.height = 55;
-                obstacle.color = '#f97316';
-                obstacle.points = 15;
-                break;
-            case 'truck':
-                obstacle.width = 100;
-                obstacle.height = 140;
-                obstacle.color = '#6366f1';
-                obstacle.points = 75;
-                break;
-        }
+        // Réinitialiser l'état
+        this.currentLane = 1;
+        this.targetLane = 1;
+        this.speed = this.config.baseSpeed;
+        this.distance = 0;
+        this.obstacles = [];
+        this.coins = [];
+        this.isJumping = false;
+        this.isSliding = false;
+        this.jumpVelocity = 0;
+        this.jumpTimer = 0;
+        this.slideTimer = 0;
+        this.playerY = 0;
+        this.roadOffset = 0;
+        this.score = 0;
         
-        this.obstacles.push(obstacle);
+        // Générer les bâtiments en arrière-plan
+        this.generateBuildings();
+        
+        console.log('[SubwayRunner] Jeu initialisé');
     }
-    
-    spawnCoin() {
-        const lane = MathUtils.randomInt(0, this.laneCount - 1);
-        const isHigh = Math.random() > 0.4; // Pièce en hauteur pour le saut
-        
-        this.coins.push({
-            x: this.lanes[lane],
-            y: -30,
-            radius: 18,
-            collected: false,
-            isHigh: isHigh,
-            targetY: isHigh ? this.groundY - 120 : this.groundY - 40,
-            rotation: 0,
-            bobPhase: Math.random() * Math.PI * 2
-        });
+
+    /**
+     * Générer les bâtiments en arrière-plan
+     */
+    generateBuildings() {
+        this.buildings = [];
+        for (let i = 0; i < 10; i++) {
+            this.buildings.push({
+                x: Math.random() * this.width,
+                width: 50 + Math.random() * 100,
+                height: 100 + Math.random() * 200,
+                windows: Math.floor(Math.random() * 4) + 2
+            });
+        }
     }
-    
-    update(dt) {
-        super.update(dt);
+
+    /**
+     * Mettre à jour le jeu
+     */
+    update(deltaTime) {
+        if (this.gameOver) return;
         
-        if (this.gameOver || this.gameState !== GAME_STATES.PLAYING) return;
+        // Augmenter progressivement la vitesse
+        this.speed = Math.min(this.speed + this.config.speedIncrement, this.config.maxSpeed);
+        this.distance += this.speed * deltaTime * 10;
         
-        // Mettre à jour la distance
-        this.distance += this.speed * dt;
-        if (this.distance > this.maxDistance) {
-            this.maxDistance = this.distance;
+        // Mettre à jour l'offset de route (effet de défilement)
+        this.roadOffset += this.speed * deltaTime * 50;
+        if (this.roadOffset > 50) {
+            this.roadOffset -= 50;
         }
         
-        // Score basé sur la distance
-        this.score = Math.floor(this.distance / 5) + this.totalCoins * this.coinValue;
+        // Mouvement latéral du joueur (changement de voie)
+        const targetX = this.getLaneX(this.targetLane);
+        this.player.x += (targetX - this.player.x) * 0.15;
+        this.currentLane = this.targetLane;
         
-        // Augmenter la difficulté progressivement
-        const difficultyMultiplier = 1 + Math.floor(this.distance / 1000) * 0.15;
-        this.speed = this.baseSpeed * difficultyMultiplier;
-        this.speed = Math.min(this.speed, 700); // Vitesse max
-        
-        // Ajuster le spawn rate
-        this.spawnInterval = Math.max(0.5, 1.2 - difficultyMultiplier * 0.1);
-        
-        // Mettre à jour le multiplicateur
-        if (this.multiplierTimer > 0) {
-            this.multiplierTimer -= dt;
-            if (this.multiplierTimer <= 0) {
-                this.multiplier = 1;
-            }
-        }
-        
-        // Mouvement du joueur entre les voies (smooth)
-        const targetX = this.lanes[this.currentLane];
-        this.playerX += (targetX - this.playerX) * 12 * dt;
-        
-        // Inclinaison lors du changement de voie
-        const laneDiff = this.currentLane - this.targetLane;
-        this.tiltAngle = laneDiff * 0.15;
-        if (Math.abs(this.playerX - targetX) < 1) {
-            this.targetLane = this.currentLane;
-        }
-        
-        // Physique du saut
+        // Gérer le saut
         if (this.isJumping) {
-            this.jumpVelocity += this.gravity * dt;
-            this.playerY += this.jumpVelocity * dt;
+            this.jumpTimer -= deltaTime;
             
-            if (this.playerY >= this.groundY) {
-                this.playerY = this.groundY;
-                this.isJumping = false;
-                this.jumpVelocity = 0;
+            if (this.jumpTimer > 0) {
+                // Phase ascendante ou descendante
+                const progress = 1 - (this.jumpTimer / this.config.jumpDuration);
+                // Parabole pour le saut
+                this.playerY = -Math.sin(progress * Math.PI) * this.config.jumpHeight;
                 
-                // Landing particles
-                this.particles.emit(this.playerX, this.playerY + 20, {
-                    count: 8,
-                    speed: 3,
-                    size: 3,
-                    colors: ['#94a3b8', '#64748b'],
-                    life: 0.4,
-                    gravity: 150,
-                    spread: Math.PI
-                });
+                if (progress > 0.5 && this.jumpVelocity <= 0) {
+                    // Descente
+                    this.playerY = -Math.sin(progress * Math.PI) * this.config.jumpHeight;
+                }
+            } else {
+                // Atterrissage
+                this.isJumping = false;
+                this.playerY = 0;
             }
         }
         
-        // Slide timer
+        // Gérer la glissade
         if (this.isSliding) {
-            this.slideTimer -= dt;
+            this.slideTimer -= deltaTime;
             if (this.slideTimer <= 0) {
                 this.isSliding = false;
             }
         }
         
-        // Animation de course
-        this.runAnimation += dt * (this.isJumping ? 10 : 18);
+        // Générer des obstacles
+        this.spawnObstacles(deltaTime);
         
-        // Spawn obstacles
-        this.spawnTimer += dt;
-        if (this.spawnTimer >= this.spawnInterval) {
-            this.spawnTimer = 0;
+        // Mettre à jour les obstacles
+        this.updateObstacles(deltaTime);
+        
+        // Mettre à jour les pièces
+        this.updateCoins(deltaTime);
+        
+        // Vérifier les collisions
+        this.checkCollisions();
+    }
+
+    /**
+     * Générer des obstacles
+     */
+    spawnObstacles(deltaTime) {
+        // Simple spawn basé sur le temps et la distance
+        if (Math.random() < this.config.spawnRate * deltaTime * 0.5) {
+            const lane = Utils.randomInt(0, 2);
+            const type = Math.random() > 0.7 ? 'barrier' : 'train';
             
-            // Parfois spawner plusieurs obstacles
-            const count = Math.random() > 0.7 ? 2 : 1;
-            for (let i = 0; i < count; i++) {
-                this.spawnObstacle();
+            // Vérifier qu'il n'y a pas déjà un obstacle trop proche
+            const tooClose = this.obstacles.some(obs => 
+                obs.lane === lane && obs.y < 200
+            );
+            
+            if (!tooClose) {
+                this.obstacles.push({
+                    type: type,
+                    lane: lane,
+                    x: this.getLaneX(lane),
+                    y: -100,
+                    width: type === 'train' ? this.config.laneWidth - 20 : this.config.laneWidth - 30,
+                    height: type === 'train' ? 80 : 40,
+                    passed: false
+                });
             }
         }
         
-        // Spawn coins
-        this.coinSpawnTimer += dt;
-        if (this.coinSpawnTimer >= this.coinSpawnInterval) {
-            this.coinSpawnTimer = 0;
-            this.spawnCoin();
-        }
-        
-        // Update obstacles
-        this.updateObstacles(dt);
-        
-        // Update coins
-        this.updateCoins(dt);
-        
-        // Update ground lines (parallaxe)
-        this.updateGround(dt);
-        
-        // Speed lines effect
-        this.updateSpeedLines(dt);
-        
-        // Particules
-        this.particles.update(dt);
-        
-        // Flash effect
-        if (this.flashEffect.active) {
-            this.flashEffect.alpha -= dt * 4;
-            if (this.flashEffect.alpha <= 0) {
-                this.flashEffect.active = false;
-            }
-        }
-        
-        // Trail particles when moving fast
-        if (this.speed > 450 && Math.random() > 0.7) {
-            this.trailParticles.push({
-                x: this.playerX + (Math.random() - 0.5) * 20,
-                y: this.playerY - 20,
-                size: MathUtils.random(2, 5),
-                life: 0.5,
-                color: `hsla(${MathUtils.random(180, 220)}, 70%, 60%, `
+        // Générer des pièces
+        if (Math.random() < 0.03) {
+            const lane = Utils.randomInt(0, 2);
+            const height = Math.random() > 0.5 ? 0 : -60; // Au sol ou en l'air
+            
+            this.coins.push({
+                lane: lane,
+                x: this.getLaneX(lane),
+                y: -50,
+                radius: 15,
+                collected: false,
+                yOffset: height
             });
         }
-        
-        // Update trail particles
-        for (let i = this.trailParticles.length - 1; i >= 0; i--) {
-            const p = this.trailParticles[i];
-            p.life -= dt * 2;
-            p.y += dt * 100;
-            if (p.life <= 0) {
-                this.trailParticles.splice(i, 1);
-            }
-        }
-        
-        // Mettre à jour le score affiché
-        if (this.engine) {
-            this.engine.score = this.score;
-            this.engine.updateScoreDisplay();
-        }
     }
-    
-    updateObstacles(dt) {
+
+    /**
+     * Mettre à jour les obstacles
+     */
+    updateObstacles(deltaTime) {
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
-            obs.y += this.speed * dt;
+            obs.y += this.speed * deltaTime * 60;
             
-            // Supprimer si hors écran
-            if (obs.y > this.height + 300) {
+            // Supprimer les obstacles sortis de l'écran
+            if (obs.y > this.height + 100) {
                 this.obstacles.splice(i, 1);
                 continue;
             }
             
             // Marquer comme passé (pour le score)
-            if (!obs.passed && obs.y > this.playerY + 50) {
+            if (!obs.passed && obs.y > this.player.y) {
                 obs.passed = true;
-                this.obstaclesDodged++;
-                
-                // Petit bonus d'évitement
-                this.score += obs.points;
+                this.addScore(10);
+            }
+        }
+    }
+
+    /**
+     * Mettre à jour les pièces
+     */
+    updateCoins(deltaTime) {
+        for (let i = this.coins.length - 1; i >= 0; i--) {
+            const coin = this.coins[i];
+            coin.y += this.speed * deltaTime * 60;
+            
+            // Supprimer les pièces sorties de l'écran
+            if (coin.y > this.height + 50) {
+                this.coins.splice(i, 1);
+            }
+        }
+    }
+
+    /**
+     * Vérifier les collisions
+     */
+    checkCollisions() {
+        const playerBox = this.getPlayerHitbox();
+        
+        // Collision avec les obstacles
+        for (const obs of this.obstacles) {
+            const obsBox = {
+                x: obs.x - obs.width / 2,
+                y: obs.y - obs.height / 2,
+                width: obs.width,
+                height: obs.height
+            };
+            
+            // Ajustement pour le saut et la glissade
+            let playerHitbox = { ...playerBox };
+            
+            if (this.isJumping && playerHitbox.y < obsBox.y + obsBox.height) {
+                // En l'air, peut passer au-dessus des barrières basses
+                if (obs.type === 'barrier') continue;
             }
             
-            // Collision detection
-            if (this.checkCollision(obs)) {
-                this.crash(obs);
+            if (this.isSliding && obs.type === 'train') {
+                // En glissant, réduit la hauteur du joueur
+                playerHitbox.height *= 0.4;
+                playerHitbox.y += playerBox.height * 0.6;
+            }
+            
+            if (Utils.checkAABBCollision(playerHitbox, obsBox)) {
+                this.endGame();
+                Utils.audio.playError();
                 return;
             }
         }
-    }
-    
-    updateCoins(dt) {
-        for (let i = this.coins.length - 1; i >= 0; i--) {
-            const coin = this.coins[i];
-            coin.y += this.speed * dt;
-            coin.rotation += dt * 5;
-            coin.bobPhase += dt * 4;
+        
+        // Collecte des pièces
+        for (const coin of this.coins) {
+            if (coin.collected) continue;
             
-            // Supprimer si hors écran
-            if (coin.y > this.height + 50) {
-                this.coins.splice(i, 1);
-                continue;
-            }
+            const coinPos = {
+                x: coin.x,
+                y: coin.y + coin.yOffset,
+                radius: coin.radius
+            };
             
-            // Collection
-            if (!coin.collected) {
-                const coinDisplayY = Math.min(coin.y, coin.targetY);
-                const dist = Math.hypot(
-                    this.playerX - coin.x,
-                    (this.playerY - 35) - coinDisplayY
-                );
-                
-                if (dist < 45) {
-                    coin.collected = true;
-                    this.collectCoin(coin);
-                }
+            const playerCenter = {
+                x: this.player.x,
+                y: this.player.y + this.playerY + this.player.height / 2,
+                radius: this.player.width / 2
+            };
+            
+            if (Utils.checkCircleCollision(playerCenter, coinPos)) {
+                coin.collected = true;
+                this.addScore(this.config.coinValue);
+                Utils.audio.playClick();
             }
         }
     }
-    
-    collectCoin(coin) {
-        this.totalCoins++;
-        
-        // Augmenter le multiplicateur
-        this.multiplier = Math.min(this.multiplier + 0.5, 5);
-        this.multiplierTimer = 2;
-        
-        // Particules
-        this.particles.emit(coin.x, Math.min(coin.y, coin.targetY), {
-            count: 12,
-            speed: 5,
-            size: 4,
-            colors: ['#fbbf24', '#fcd34d', '#ffffff'],
-            life: 0.6,
-            gravity: 80,
-            spread: Math.PI * 2
-        });
-        
-        // Son
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playCoin();
-        }
-        
-        // Flash
-        this.triggerFlash('#fbbf24', 0.15);
-    }
-    
-    checkCollision(obs) {
-        const playerBox = this.getPlayerHitbox();
-        const obsBox = {
-            x: obs.x - obs.width / 2,
-            y: obs.y - obs.height / 2,
-            width: obs.width,
-            height: obs.height
-        };
-        
-        // AABB collision
-        return playerBox.x < obsBox.x + obsBox.width &&
-               playerBox.x + playerBox.width > obsBox.x &&
-               playerBox.y < obsBox.y + obsBox.height &&
-               playerBox.y + playerBox.height > obsBox.y;
-    }
-    
+
+    /**
+     * Obtenir la hitbox du joueur
+     */
     getPlayerHitbox() {
-        const width = 40;
-        let height = 70;
-        let yOffset = 0;
-        
-        if (this.isJumping) {
-            height = 65;
-            yOffset = 0;
-        } else if (this.isSliding) {
-            height = 35;
-            yOffset = 35;
-        }
-        
         return {
-            x: this.playerX - width / 2,
-            y: this.playerY - height - yOffset,
-            width: width,
-            height: height
+            x: this.player.x - this.player.width / 2,
+            y: this.player.y + this.playerY - (this.isSliding ? this.player.height * 0.4 : this.player.height),
+            width: this.player.width,
+            height: this.isSliding ? this.player.height * 0.4 : this.player.height
         };
     }
-    
-    crash(obs) {
-        this.gameOver = true;
-        this.gameState = GAME_STATES.GAME_OVER;
-        
-        // Explosion de particules
-        this.particles.emit(this.playerX, this.playerY - 30, {
-            count: 40,
-            speed: 8,
-            size: 6,
-            colors: ['#f472b6', '#ec4899', '#ffffff', '#fbbf24'],
-            life: 1.2,
-            gravity: 300,
-            spread: Math.PI * 2
-        });
-        
-        // Screen shake (via flash)
-        this.triggerFlash('#ef4444', 0.5);
-        
-        // Son
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playGameOver();
-        }
-        
-        setTimeout(() => {
-            this.endGame(false, '💥 CRASH!', '💥');
-        }, 800);
-    }
-    
-    updateGround(dt) {
-        for (const line of this.groundLines) {
-            line.y += this.speed * dt;
-            if (line.y > this.height) {
-                line.y = -60;
-            }
-        }
-    }
-    
-    updateSpeedLines(dt) {
-        // Ajouter de nouvelles lignes de vitesse quand on va vite
-        if (this.speed > 400 && Math.random() > 0.85) {
-            this.speedLines.push({
-                x: MathUtils.random(0, this.width),
-                length: MathUtils.random(50, 150),
-                speed: this.speed * 0.8,
-                alpha: MathUtils.random(0.1, 0.3),
-                width: MathUtils.random(1, 3)
-            });
-        }
-        
-        // Mettre à jour les lignes existantes
-        for (let i = this.speedLines.length - 1; i >= 0; i--) {
-            const line = this.speedLines[i];
-            line.y = line.y !== undefined ? line.y + line.speed * dt : 0;
-            line.y = (line.y || 0) + line.speed * dt;
-            
-            if ((line.y || 0) > this.height) {
-                this.speedLines.splice(i, 1);
-            }
-        }
-    }
-    
-    triggerFlash(color, alpha) {
-        this.flashEffect.active = true;
-        this.flashEffect.alpha = alpha;
-        this.flashEffect.color = color;
-    }
-    
+
+    /**
+     * Faire sauter le joueur
+     */
     jump() {
         if (!this.isJumping && !this.isSliding) {
             this.isJumping = true;
-            this.jumpVelocity = this.jumpForce;
-            this.jumpsMade++;
-            
-            // Jump particles
-            this.particles.emit(this.playerX, this.playerY + 10, {
-                count: 10,
-                speed: 4,
-                size: 3,
-                colors: ['#94a3b8', '#cbd5e1'],
-                life: 0.4,
-                gravity: 200,
-                spread: Math.PI * 0.8,
-                direction: -Math.PI / 2
-            });
-            
-            if (this.engine?.soundManager) {
-                this.engine.soundManager.playJump();
-            }
+            this.jumpTimer = this.config.jumpDuration;
+            this.jumpVelocity = -this.config.gravity * this.config.jumpDuration / 2;
+            Utils.audio.playBounce();
         }
     }
-    
+
+    /**
+     * Faire glisser le joueur
+     */
     slide() {
         if (!this.isJumping && !this.isSliding) {
             this.isSliding = true;
-            this.slideTimer = this.slideDuration;
+            this.slideTimer = this.config.slideDuration;
+            Utils.audio.playClick();
         }
     }
-    
+
+    /**
+     * Changer de voie
+     */
     changeLane(direction) {
-        const newLane = this.currentLane + direction;
-        if (newLane >= 0 && newLane < this.laneCount) {
-            this.currentLane = newLane;
-            
-            // Lane change particles
-            this.particles.emit(
-                this.playerX - direction * 25,
-                this.playerY - 30,
-                {
-                    count: 5,
-                    speed: 2,
-                    size: 3,
-                    colors: ['#6366f1', '#818cf8'],
-                    life: 0.3,
-                    gravity: 50,
-                    spread: Math.PI * 0.5,
-                    direction: direction > 0 ? 0 : Math.PI
-                }
-            );
+        const newLane = this.targetLane + direction;
+        if (newLane >= 0 && newLane < this.config.lanes) {
+            this.targetLane = newLane;
         }
     }
-    
-    render() {
-        const ctx = this.ctx;
-        
-        // Fond avec gradient dynamique basé sur la vitesse
-        const speedRatio = (this.speed - this.baseSpeed) / (700 - this.baseSpeed);
-        const bgDarkness = Math.floor(10 + speedRatio * 10);
-        
-        const bgGradient = ctx.createLinearGradient(0, 0, 0, this.height);
-        bgGradient.addColorStop(0, `rgb(${bgDarkness}, ${bgDarkness}, ${bgDarkness + 10})`);
-        bgGradient.addColorStop(0.6, `rgb(${bgDarkness + 5}, ${bgDarkness + 5}, ${bgDarkness + 15})`);
-        bgGradient.addColorStop(1, `rgb(${bgDarkness + 10}, ${bgDarkness + 10}, ${bgDarkness + 20})`);
-        
-        ctx.fillStyle = bgGradient;
+
+    /**
+     * Rendre le jeu
+     */
+    render(ctx) {
+        // Fond
+        ctx.fillStyle = this.colors.background;
         ctx.fillRect(0, 0, this.width, this.height);
         
-        // Speed lines
-        this.renderSpeedLines(ctx);
+        // Ciel dégradé
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, this.height * 0.6);
+        skyGradient.addColorStop(0, '#1a1a2e');
+        skyGradient.addColorStop(1, '#16213e');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, this.width, this.height * 0.6);
         
-        // Ground/Road
-        this.renderGround(ctx);
+        // Bâtiments en arrière-plan
+        this.drawBuildings(ctx);
         
-        // Coins
-        this.renderCoins(ctx);
+        // Route
+        this.drawRoad(ctx);
+        
+        // Pièces
+        this.drawCoins(ctx);
         
         // Obstacles
-        this.renderObstacles(ctx);
+        this.drawObstacles(ctx);
         
-        // Player
-        this.renderPlayer(ctx);
+        // Joueur
+        this.drawPlayer(ctx);
         
-        // Particules
-        this.particles.render(ctx);
-        
-        // Trail particles
-        this.renderTrailParticles(ctx);
-        
-        // Flash effect
-        if (this.flashEffect.active) {
-            ctx.fillStyle = `${this.flashEffect.color}${Math.floor(this.flashEffect.alpha * 255).toString(16).padStart(2, '0')}`;
-            ctx.fillRect(0, 0, this.width, this.height);
-        }
-        
-        // UI
-        this.renderUI(ctx);
+        // Interface utilisateur
+        this.drawUI(ctx);
     }
-    
-    renderGround(ctx) {
-        // Route principale
-        const roadLeft = this.lanes[0] - this.laneWidth / 2 - 30;
-        const roadRight = this.lanes[this.laneCount - 1] + this.laneWidth / 2 + 30;
+
+    /**
+     * Dessiner les bâtiments
+     */
+    drawBuildings(ctx) {
+        this.buildings.forEach(building => {
+            const y = this.height - 80 - building.height;
+            
+            // Corps du bâtiment
+            ctx.fillStyle = this.colors.building;
+            ctx.fillRect(building.x, y, building.width, building.height);
+            
+            // Fenêtres
+            ctx.fillStyle = this.colors.buildingWindow;
+            const windowWidth = 10;
+            const windowHeight = 15;
+            const windowSpacingX = building.width / (building.windows + 1);
+            const windowSpacingY = 25;
+            
+            for (let row = 0; row < Math.floor(building.height / windowSpacingY); row++) {
+                for (let col = 0; col < building.windows; col++) {
+                    const wx = building.x + windowSpacingX * (col + 1) - windowWidth / 2;
+                    const wy = y + 20 + row * windowSpacingY;
+                    
+                    // Certaines fenêtres sont éteintes
+                    if (Math.random() > 0.3 || (row + col) % 3 !== 0) {
+                        ctx.fillRect(wx, wy, windowWidth, windowHeight);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Dessiner la route
+     */
+    drawRoad(ctx) {
+        const roadTop = this.height - 180;
+        const roadBottom = this.height - 80;
         
-        // Surface de route
-        ctx.fillStyle = '#1f2937';
-        ctx.fillRect(roadLeft, 0, roadRight - roadLeft, this.height);
+        // Surface de la route
+        ctx.fillStyle = this.colors.road;
+        ctx.fillRect(0, roadTop, this.width, roadBottom - roadTop);
         
-        // Bordures de route
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(roadLeft - 5, 0, 5, this.height);
-        ctx.fillRect(roadRight, 0, 5, this.height);
+        // Bordures de la route
+        ctx.fillStyle = this.colors.ground;
+        ctx.fillRect(0, roadBottom, this.width, this.height - roadBottom);
         
-        // Lignes de séparation des voies
-        ctx.strokeStyle = '#fbbf24';
+        // Lignes de voie
+        ctx.strokeStyle = this.colors.roadLine;
         ctx.lineWidth = 3;
-        ctx.setLineDash([40, 30]);
+        ctx.setLineDash([30, 30]);
         
-        for (let i = 0; i < this.laneCount - 1; i++) {
-            const x = (this.lanes[i] + this.lanes[i + 1]) / 2;
+        for (let i = 1; i < this.config.lanes; i++) {
+            const x = this.getLaneX(i);
             ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, this.height);
+            ctx.moveTo(x, roadTop - this.roadOffset);
+            ctx.lineTo(x, roadBottom);
             ctx.stroke();
         }
         
         ctx.setLineDash([]);
         
-        // Lignes de sol animées (parallaxe)
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
+        // Ligne de départ/arrivée
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 2;
-        
-        for (const line of this.groundLines) {
-            ctx.beginPath();
-            ctx.moveTo(roadLeft, line.y);
-            ctx.lineTo(roadRight, line.y);
-            ctx.stroke();
-        }
-        
-        // Sol en bas
-        ctx.fillStyle = '#374151';
-        ctx.fillRect(0, this.groundY + 50, this.width, this.height - this.groundY);
+        ctx.beginPath();
+        ctx.moveTo(0, roadTop);
+        ctx.lineTo(this.width, roadTop);
+        ctx.stroke();
     }
-    
-    renderSpeedLines(ctx) {
-        for (const line of this.speedLines) {
-            ctx.strokeStyle = `rgba(255, 255, 255, ${line.alpha})`;
-            ctx.lineWidth = line.width;
-            ctx.beginPath();
-            ctx.moveTo(line.x, 0);
-            ctx.lineTo(line.x, line.length);
-            ctx.stroke();
-        }
-    }
-    
-    renderCoins(ctx) {
-        for (const coin of this.coins) {
-            if (coin.collected) continue;
+
+    /**
+     * Dessiner les obstacles
+     */
+    drawObstacles(ctx) {
+        this.obstacles.forEach(obs => {
+            const x = obs.x - obs.width / 2;
+            const y = obs.y - obs.height / 2;
             
-            const displayY = Math.min(coin.y, coin.targetY);
-            const bobOffset = Math.sin(coin.bobPhase) * 5;
+            if (obs.type === 'train') {
+                // Train (rectangle arrondi rouge)
+                ctx.shadowColor = this.colors.train;
+                ctx.shadowBlur = 10;
+                ctx.fillStyle = this.colors.train;
+                Utils.canvas.roundRect(ctx, x, y, obs.width, obs.height, 8, this.colors.train);
+                
+                // Fenêtres du train
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+                ctx.fillRect(x + 10, y + 10, obs.width - 20, 20);
+                ctx.fillRect(x + 10, y + obs.height - 30, obs.width - 20, 20);
+                
+                ctx.shadowBlur = 0;
+            } else {
+                // Barrière (orange avec rayures)
+                ctx.shadowColor = this.colors.barrier;
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = this.colors.barrier;
+                Utils.canvas.roundRect(ctx, x, y, obs.width, obs.height, 4, this.colors.barrier);
+                
+                // Rayures
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(x + i * (obs.width / 3), y, obs.width / 6, obs.height);
+                }
+                
+                ctx.shadowBlur = 0;
+            }
+        });
+    }
+
+    /**
+     * Dessiner les pièces
+     */
+    drawCoins(ctx) {
+        const time = Date.now() / 200;
+        
+        this.coins.forEach(coin => {
+            if (coin.collected) return;
+            
+            const x = coin.x;
+            const y = coin.y + coin.yOffset;
+            
+            // Rotation visuelle
+            const scaleX = Math.cos(time + coin.x);
             
             ctx.save();
-            ctx.translate(coin.x, displayY + bobOffset);
-            ctx.rotate(coin.rotation);
+            ctx.translate(x, y);
+            ctx.scale(scaleScaleX, 1);
             
             // Glow
-            const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, coin.radius * 2);
-            glowGrad.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
-            glowGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
-            ctx.fillStyle = glowGrad;
-            ctx.beginPath();
-            ctx.arc(0, 0, coin.radius * 2, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.shadowColor = this.colors.coin;
+            ctx.shadowBlur = 15;
             
-            // Coin principal
-            const coinGrad = ctx.createRadialGradient(-4, -4, 0, 0, 0, coin.radius);
-            coinGrad.addColorStop(0, '#fef08a');
-            coinGrad.addColorStop(0.7, '#fbbf24');
-            coinGrad.addColorStop(1, '#f59e0b');
-            
-            ctx.fillStyle = coinGrad;
+            // Pièce
             ctx.beginPath();
             ctx.arc(0, 0, coin.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.colors.coin;
             ctx.fill();
             
             // Symbole $
-            ctx.fillStyle = '#b45309';
-            ctx.font = `bold ${coin.radius}px Arial`;
+            ctx.fillStyle = '#b8860b';
+            ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('$', 0, 1);
             
+            ctx.shadowBlur = 0;
             ctx.restore();
-        }
+        });
     }
-    
-    renderObstacles(ctx) {
-        for (const obs of this.obstacles) {
-            ctx.save();
-            ctx.translate(obs.x, obs.y);
-            
-            switch (obs.type) {
-                case 'train':
-                    this.renderTrain(ctx, obs);
-                    break;
-                case 'barrier':
-                    this.renderBarrier(ctx, obs);
-                    break;
-                case 'cone':
-                    this.renderCone(ctx, obs);
-                    break;
-                case 'truck':
-                    this.renderTruck(ctx, obs);
-                    break;
-            }
-            
-            ctx.restore();
-        }
-    }
-    
-    renderTrain(ctx, obs) {
-        // Corps du train
-        const grad = ctx.createLinearGradient(-obs.width/2, 0, obs.width/2, 0);
-        grad.addColorStop(0, '#dc2626');
-        grad.addColorStop(0.5, '#ef4444');
-        grad.addColorStop(1, '#dc2626');
+
+    /**
+     * Dessiner le joueur
+     */
+    drawPlayer(ctx) {
+        const x = this.player.x;
+        const y = this.player.y + this.playerY;
         
-        ctx.fillStyle = grad;
-        RenderUtils.roundRect(ctx, -obs.width/2, -obs.height/2, obs.width, obs.height, 10);
-        ctx.fill();
-        
-        // Fenêtres
-        ctx.fillStyle = '#1e293b';
-        RenderUtils.roundRect(ctx, -obs.width/2 + 10, -obs.height/2 + 15, 25, 30, 5);
-        ctx.fill();
-        RenderUtils.roundRect(ctx, obs.width/2 - 35, -obs.height/2 + 15, 25, 30, 5);
-        ctx.fill();
-        
-        // Bande décorative
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(-obs.width/2, -10, obs.width, 8);
-        
-        // Phares
-        ctx.fillStyle = '#fef08a';
-        ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(-obs.width/2 + 15, obs.height/2 - 10, 8, 0, Math.PI * 2);
-        ctx.arc(obs.width/2 - 15, obs.height/2 - 10, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-    
-    renderBarrier(ctx, obs) {
-        // Barrière orange/blanche
-        ctx.fillStyle = obs.color;
-        RenderUtils.roundRect(ctx, -obs.width/2, -obs.height/2, obs.width, obs.height, 5);
-        ctx.fill();
-        
-        // Rayures
-        ctx.fillStyle = '#fff';
-        const stripeWidth = obs.width / 4;
-        for (let i = 0; i < 4; i++) {
-            if (i % 2 === 0) {
-                ctx.fillRect(-obs.width/2 + i * stripeWidth, -obs.height/2, stripeWidth, obs.height);
-            }
-        }
-        
-        // Support
-        ctx.fillStyle = '#78716c';
-        ctx.fillRect(-5, obs.height/2 - 5, 10, 15);
-    }
-    
-    renderCone(ctx, obs) {
-        // Cône orange
-        ctx.fillStyle = obs.color;
-        ctx.beginPath();
-        ctx.moveTo(0, -obs.height/2);
-        ctx.lineTo(-obs.width/2, obs.height/2);
-        ctx.lineTo(obs.width/2, obs.height/2);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Bandes blanches
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.moveTo(-obs.width/3, obs.height/6);
-        ctx.lineTo(obs.width/3, obs.height/6);
-        ctx.lineTo(obs.width/4, obs.height/3);
-        ctx.lineTo(-obs.width/4, obs.height/3);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Base
-        ctx.fillStyle = '#78716c';
-        ctx.fillRect(-obs.width/2 - 3, obs.height/2 - 5, obs.width + 6, 8);
-    }
-    
-    renderTruck(ctx, obs) {
-        // Camionnette
-        const grad = ctx.createLinearGradient(-obs.width/2, 0, obs.width/2, 0);
-        grad.addColorStop(0, '#4338ca');
-        grad.addColorStop(0.5, '#6366f1');
-        grad.addColorStop(1, '#4338ca');
-        
-        ctx.fillStyle = grad;
-        RenderUtils.roundRect(ctx, -obs.width/2, -obs.height/2 + 20, obs.width, obs.height - 20, 8);
-        ctx.fill();
-        
-        // Cabine
-        ctx.fillStyle = '#3730a3';
-        RenderUtils.roundRect(ctx, obs.width/2 - 40, -obs.height/2, 40, 50, 8);
-        ctx.fill();
-        
-        // Fenêtre cabine
-        ctx.fillStyle = '#93c5fd';
-        RenderUtils.roundRect(ctx, obs.width/2 - 35, -obs.height/2 + 8, 28, 22, 4);
-        ctx.fill();
-        
-        // Roues
-        ctx.fillStyle = '#1f2937';
-        ctx.beginPath();
-        ctx.arc(-obs.width/3, obs.height/2 - 15, 12, 0, Math.PI * 2);
-        ctx.arc(obs.width/3, obs.height/2 - 15, 12, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Jantes
-        ctx.fillStyle = '#9ca3af';
-        ctx.beginPath();
-        ctx.arc(-obs.width/3, obs.height/2 - 15, 6, 0, Math.PI * 2);
-        ctx.arc(obs.width/3, obs.height/2 - 15, 6, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    renderPlayer(ctx) {
         ctx.save();
-        ctx.translate(this.playerX, this.playerY);
-        ctx.rotate(this.tiltAngle);
         
-        const isRunning = !this.isJumping;
-        const runBob = isRunning ? Math.sin(this.runAnimation) * 4 : 0;
-        const squash = this.isJumping ? 1 : (isRunning ? 1 + Math.abs(Math.sin(this.runAnimation * 2)) * 0.05 : 1);
+        if (this.isSliding) {
+            // Position glissée
+            ctx.translate(x, y - this.player.height * 0.3);
+            ctx.scale(1.3, 0.5);
+        } else {
+            ctx.translate(x, y - this.player.height / 2);
+        }
         
-        ctx.scale(1 / squash, squash);
-        ctx.translate(0, -runBob);
-        
-        // Ombre au sol
+        // Ombre sous le personnage
         if (!this.isJumping) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
             ctx.beginPath();
-            ctx.ellipse(0, 5, 25, 8, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, this.player.height / 2, this.player.width / 2, 8, 0, 0, Math.PI * 2);
             ctx.fill();
         }
         
-        // Corps
-        const bodyHeight = this.isSliding ? 35 : 55;
-        const bodyY = this.isSliding ? 17 : -bodyHeight / 2;
-        
-        const bodyGrad = ctx.createLinearGradient(-20, bodyY, 20, bodyY + bodyHeight);
-        bodyGrad.addColorStop(0, '#f9a8d4');
-        bodyGrad.addColorStop(1, '#ec4899');
-        
-        ctx.fillStyle = bodyGrad;
-        RenderUtils.roundRect(ctx, -20, bodyY, 40, bodyHeight, 12);
-        ctx.fill();
+        // Corps du personnage
+        ctx.shadowColor = this.colors.player;
+        ctx.shadowBlur = 15;
         
         // Tête
+        ctx.fillStyle = '#ffcc99';
+        ctx.beginPath();
+        ctx.arc(0, -this.player.height * 0.35, this.player.width * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Corps
+        ctx.fillStyle = this.colors.player;
+        Utils.canvas.roundRect(
+            ctx,
+            -this.player.width * 0.32,
+            -this.player.height * 0.15,
+            this.player.width * 0.64,
+            this.player.height * 0.55,
+            8,
+            this.colors.player
+        );
+        
+        // Jambes (si pas en glissade)
         if (!this.isSliding) {
-            const headGrad = ctx.createRadialGradient(-3, -bodyHeight/2 - 18, 0, 0, -bodyHeight/2 - 12, 18);
-            headGrad.addColorStop(0, '#fef08a');
-            headGrad.addColorStop(1, '#fcd34d');
-            
-            ctx.fillStyle = headGrad;
-            ctx.beginPath();
-            ctx.arc(0, -bodyHeight/2 - 12, 18, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Yeux
-            ctx.fillStyle = '#1f2937';
-            ctx.beginPath();
-            ctx.arc(-6, -bodyHeight/2 - 14, 3, 0, Math.PI * 2);
-            ctx.arc(6, -bodyHeight/2 - 14, 3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Sourire
-            ctx.strokeStyle = '#1f2937';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.arc(0, -bodyHeight/2 - 8, 7, 0.2, Math.PI - 0.2);
-            ctx.stroke();
-            
-            // Cheveux (style)
-            ctx.fillStyle = '#7c3aed';
-            ctx.beginPath();
-            ctx.ellipse(0, -bodyHeight/2 - 26, 14, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle = '#1565c0';
+            const legOffset = Math.sin(Date.now() / 100) * 5;
+            ctx.fillRect(-this.player.width * 0.22, this.player.height * 0.32, this.player.width * 0.18, this.player.height * 0.25 + legOffset);
+            ctx.fillRect(this.player.width * 0.04, this.player.height * 0.32, this.player.width * 0.18, this.player.height * 0.25 - legOffset);
         }
         
-        // Jambes (animation de course)
-        if (!this.isSliding && !this.isJumping) {
-            const legAngle = Math.sin(this.runAnimation) * 0.5;
-            
-            ctx.fillStyle = '#3b82f6';
-            ctx.save();
-            ctx.translate(-10, bodyY + bodyHeight - 5);
-            ctx.rotate(legAngle);
-            RenderUtils.roundRect(ctx, -6, 0, 12, 25, 5);
-            ctx.fill();
-            ctx.restore();
-            
-            ctx.save();
-            ctx.translate(10, bodyY + bodyHeight - 5);
-            ctx.rotate(-legAngle);
-            RenderUtils.roundRect(ctx, -6, 0, 12, 25, 5);
-            ctx.fill();
-            ctx.restore();
-        } else if (this.isSliding) {
-            // Position slide
-            ctx.fillStyle = '#3b82f6';
-            RenderUtils.roundRect(ctx, -25, 25, 50, 12, 6);
-            ctx.fill();
-        }
-        
-        // Bras
-        if (!this.isSliding) {
-            const armSwing = Math.sin(this.runAnimation) * 0.4;
-            
-            ctx.fillStyle = '#f9a8d4';
-            ctx.save();
-            ctx.translate(-22, bodyY + 10);
-            ctx.rotate(-armSwing - 0.3);
-            RenderUtils.roundRect(ctx, -5, 0, 10, 22, 5);
-            ctx.fill();
-            ctx.restore();
-            
-            ctx.save();
-            ctx.translate(22, bodyY + 10);
-            ctx.rotate(armSwing + 0.3);
-            RenderUtils.roundRect(ctx, -5, 0, 10, 22, 5);
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        // Effect de vitesse (lorsque rapide)
-        if (this.speed > 450) {
-            ctx.globalAlpha = 0.3;
-            for (let i = 0; i < 3; i++) {
-                ctx.fillStyle = '#6366f1';
-                ctx.beginPath();
-                ctx.arc(-30 - i * 15, -runBob + (Math.random() - 0.5) * 10, 5 - i, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1;
-        }
-        
+        ctx.shadowBlur = 0;
         ctx.restore();
     }
-    
-    renderTrailParticles(ctx) {
-        for (const p of this.trailParticles) {
-            ctx.fillStyle = p.color + p.life + ')';
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    renderUI(ctx) {
-        // Distance
-        ctx.font = 'bold 32px Orbitron';
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        ctx.shadowBlur = 10;
-        ctx.fillText(`${Math.floor(this.distance)}m`, 20, 45);
-        ctx.shadowBlur = 0;
+
+    /**
+     * Dessiner l'interface utilisateur
+     */
+    drawUI(ctx) {
+        // Distance parcourue
+        Utils.canvas.drawGlowText(ctx, `${Math.floor(this.distance)}m`, 70, 35, {
+            font: 'bold 24px Orbitron',
+            color: this.colors.text,
+            glowColor: this.colors.primary,
+            glowSize: 12,
+            align: 'left'
+        });
         
-        // Multiplicateur
-        if (this.multiplier > 1) {
-            ctx.font = 'bold 20px Orbitron';
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillText(`x${this.multiplier.toFixed(1)}`, 20, 75);
-        }
-        
-        // Pièces
-        ctx.font = '20px Rajdhani';
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillText(`🪙 ${this.totalCoins}`, this.width - 20, 45);
+        // Score
+        Utils.canvas.drawGlowText(ctx, `Score: ${Utils.formatScore(this.score)}`, this.width - 70, 35, {
+            font: 'bold 20px Orbitron',
+            color: this.colors.coin,
+            glowColor: this.colors.coin,
+            glowSize: 12,
+            align: 'right'
+        });
         
         // Vitesse
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '16px Rajdhani';
-        ctx.fillText(`${Math.floor(this.speed)} km/h`, this.width - 20, 70);
-        
-        // Indicateur de voie
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.font = '14px Rajdhani';
-        for (let i = 0; i < this.laneCount; i++) {
-            const indicator = i === this.currentLane ? '▲' : '○';
-            ctx.fillText(indicator, this.lanes[i], this.height - 15);
-        }
+        ctx.fillStyle = this.colors.textMuted;
+        ctx.textAlign = 'center';
+        ctx.fillText(`Vitesse: ${this.speed.toFixed(1)} km/h`, this.width / 2, 35);
     }
-    
-    handleKey(key, code) {
-        switch (code) {
-            case 'ArrowLeft':
-            case 'KeyA':
+
+    /**
+     * Gérer les touches pressées
+     */
+    handleKeyDown(e) {
+        switch (e.key.toLowerCase()) {
+            case 'arrowleft':
+            case 'a':
+            case 'q':
                 this.changeLane(-1);
                 break;
-            case 'ArrowRight':
-            case 'KeyD':
+            case 'arrowright':
+            case 'd':
                 this.changeLane(1);
                 break;
-            case 'ArrowUp':
-            case 'Space':
-            case 'KeyW':
-            case 'KeyZ':
+            case 'arrowup':
+            case 'w':
+            case 'z':
+            case ' ':
+                e.preventDefault();
                 this.jump();
                 break;
-            case 'ArrowDown':
-            case 'ShiftLeft':
-            case 'KeyS':
+            case 'arrowdown':
+            case 's':
                 this.slide();
+                break;
+            case 'r':
+                if (this.gameOver) this.init();
                 break;
         }
     }
-    
-    handleMobileInput(direction, state) {
-        if (state === 'down') {
-            switch (direction) {
-                case 'left': this.changeLane(-1); break;
-                case 'right': this.changeLane(1); break;
-                case 'up': this.jump(); break;
-                case 'down': this.slide(); break;
-            }
-        }
-    }
-    
-    handleMobileAction(action, state) {
-        if (state === 'down') {
-            if (action === 'a') this.jump();
-            if (action === 'b') this.slide();
-        }
+
+    /**
+     * Obtenir les instructions
+     */
+    getInstructions() {
+        return `
+            <strong>🏃 Subway Runner</strong> - Course infinie!<br>
+            <span style="color: var(--neon-blue)">⬅️➡️</span> Changer de voie | 
+            <span style="color: var(--neon-green)">⬆️/Espace</span> Sauter | 
+            <span style="color: var(--neon-pink)">⬇️</span> Glisser | 
+            Évitez les trains 🚂 et collectez les 💰!
+        `;
     }
 }
+
+// Enregistrer le jeu
+window.Games.subwayRunner = SubwayRunnerGame;
