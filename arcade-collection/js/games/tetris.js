@@ -1,820 +1,717 @@
+// arcade-collection/js/games/tetris.js
+
 /**
  * ============================================
- * ARCADE ULTIMATE - TETRIS GAME
- * Le classique des blocs tombants
+ * ARCADE COLLECTION - TETRIS
+ * Classique jeu de blocs qui tombent
+ * Contrôles: Flèches pour déplacer/rotation, Espace pour drop
  * ============================================
  */
 
 class TetrisGame extends BaseGame {
-    constructor(canvas, ctx) {
-        super(canvas, ctx);
+    constructor(ctx, width, height) {
+        super(ctx, width, height);
         
-        // Configuration de la grille
-        this.cols = 10;
-        this.rows = 20;
-        this.blockSize = Math.floor((canvas.width - 120) / this.cols); // Espace pour le panel
-        
-        // Formes Tétris (térominos)
-        this.shapes = {
-            I: { shape: [[1,1,1,1]], color: '#00f5ff' },
-            O: { shape: [[1,1],[1,1]], color: '#ffff00' },
-            T: { shape: [[0,1,0],[1,1,1]], color: '#a855f7' },
-            L: { shape: [[1,0,0],[1,1,1]], color: '#f97316' },
-            J: { shape: [[0,0,1],[1,1,1]], color: '#3b82f6' },
-            S: { shape: [[0,1,1],[1,1,0]], color: '#22c55e' },
-            Z: { shape: [[1,1,0],[0,1,1]], color: '#ef4444' }
+        // Configuration du plateau
+        this.config = {
+            cols: 10,
+            rows: 20,
+            blockSize: 0, // Calculé dynamiquement
+            previewSize: 4,
+            baseSpeed: 1,
+            speedIncrement: 0.1,
+            maxSpeed: 10,
+            softDropSpeed: 20,
+            lockDelay: 500,
+            dasDelay: 170,  // Delayed Auto Shift
+            dasRepeat: 50
         };
         
-        // Système d'effets
-        this.particles = new ParticleSystem(200);
-        this.lineClearEffects = [];
+        // Calculer la taille des blocs
+        this.calculateBlockSize();
         
-        // Initialiser
-        this.init();
-    }
-    
-    init() {
-        // Grille vide
-        this.board = Array(this.rows).fill(null).map(() => Array(this.cols).fill(0));
+        // Couleurs des pièces (style néon)
+        this.pieceColors = {
+            I: '#64b5f6',  // Cyan
+            O: '#fff176',  // Jaune
+            T: '#ce93d8',  // Violet
+            S: '#81c784',  // Vert
+            Z: '#f48fb1',  // Rose
+            J: '#90caf9',  // Bleu clair
+            L: '#ffb74d'   // Orange
+        };
         
-        // Pièce courante
+        // Formes des pièces (matrices 4x4)
+        this.pieces = {
+            I: [
+                [0, 0, 0, 0],
+                [1, 1, 1, 1],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ],
+            O: [
+                [1, 1],
+                [1, 1]
+            ],
+            T: [
+                [0, 1, 0],
+                [1, 1, 1],
+                [0, 0, 0]
+            ],
+            S: [
+                [0, 1, 1],
+                [1, 1, 0],
+                [0, 0, 0]
+            ],
+            Z: [
+                [1, 1, 0],
+                [0, 1, 1],
+                [0, 0, 0]
+            ],
+            J: [
+                [1, 0, 0],
+                [1, 1, 1],
+                [0, 0, 0]
+            ],
+            L: [
+                [0, 0, 1],
+                [1, 1, 1],
+                [0, 0, 0]
+            ]
+        };
+        
+        // État du jeu (initialisé dans init())
+        this.board = [];
         this.currentPiece = null;
         this.nextPiece = null;
-        
-        // Score et niveau
         this.score = 0;
         this.lines = 0;
         this.level = 1;
-        this.comboCount = -1; // -1 car le premier clear ne compte pas comme combo
-        
-        // Timing
         this.dropTimer = 0;
-        this.baseDropInterval = 1.0;
-        this.dropInterval = this.baseDropInterval;
-        this.lockDelay = 500;
         this.lockTimer = 0;
-        this.canHold = true;
-        this.heldPiece = null;
+        this.isLocking = false;
+        this.gameOver = false;
         
-        // Contrôles (soft drop, etc.)
-        this.softDropping = false;
-        this.moveLeftTimer = 0;
-        this.moveRightTimer = 0;
-        this.autoRepeatRate = 0.05;
-        this.dasDelay = 0.17; // Delayed Auto Shift
+        // Input state
+        this.keys = {};
+        this.dasTimer = {};
+        this.dasActive = {};
         
-        // État spécial
-        this.isSpinning = false; // T-Spin detection simplifiée
-        this.lastAction = '';
+        // Couleurs
+        this.colors = {
+            ...this.colors,
+            background: '#0a0a12',
+            boardBg: 'rgba(18, 18, 26, 0.9)',
+            gridLine: 'rgba(255, 255, 255, 0.05)',
+            ghostPiece: 'rgba(255, 255, 255, 0.15)'
+        };
+    }
+
+    /**
+     * Calculer la taille des blocs selon l'espace disponible
+     */
+    calculateBlockSize() {
+        const maxWidth = this.width * 0.7; // 70% pour le plateau
+        const maxHeight = this.height * 0.95;
         
-        // Stats
-        this.piecesPlaced = 0;
-        this.maxCombo = 0;
-        this.tetrisCount = 0; // 4 lignes en même temps
+        this.config.blockSize = Math.min(
+            Math.floor(maxWidth / this.config.cols),
+            Math.floor(maxHeight / this.config.rows)
+        );
         
-        // Animation de ligne complétée
-        this.clearingLines = [];
-        this.clearAnimationTimer = 0;
-        this.clearAnimationDuration = 0.4;
+        // Ajuster si trop petit
+        if (this.config.blockSize < 15) {
+            this.config.blockSize = 15;
+        }
+    }
+
+    /**
+     * Initialiser le jeu
+     */
+    init() {
+        super.init();
+        
+        // Recalculer les dimensions
+        this.calculateBlockSize();
+        
+        // Créer le plateau vide
+        this.board = Array(this.config.rows).fill(null).map(() => 
+            Array(this.config.cols).fill(null)
+        );
+        
+        // Réinitialiser les stats
+        this.score = 0;
+        this.lines = 0;
+        this.level = 1;
+        this.dropTimer = 0;
+        this.isLocking = false;
+        this.lockTimer = 0;
         
         // Générer les premières pièces
         this.nextPiece = this.createRandomPiece();
-        this.spawnNewPiece();
+        this.spawnPiece();
         
-        // État
-        this.gameOver = false;
-        this.gameState = GAME_STATES.IDLE;
+        console.log('[Tetris] Jeu initialisé');
     }
-    
+
+    /**
+     * Créer une pièce aléatoire
+     */
     createRandomPiece() {
-        const shapeNames = Object.keys(this.shapes);
-        const name = shapeNames[MathUtils.randomInt(0, shapeNames.length - 1)];
-        const shapeData = this.shapes[name];
-        
+        const types = Object.keys(this.pieces);
+        const type = types[Utils.randomInt(0, types.length - 1)];
         return {
-            name: name,
-            shape: shapeData.shape.map(row => [...row]),
-            color: shapeData.color,
-            x: Math.floor(this.cols / 2) - Math.ceil(shapeData.shape[0].length / 2),
-            y: 0,
-            rotation: 0
+            type: type,
+            shape: this.pieces[type].map(row => [...row]),
+            color: this.pieceColors[type],
+            x: 0,
+            y: 0
         };
     }
-    
-    spawnNewPiece() {
+
+    /**
+     * Faire apparaître une nouvelle pièce
+     */
+    spawnPiece() {
         this.currentPiece = this.nextPiece;
         this.nextPiece = this.createRandomPiece();
-        this.canHold = true;
-        this.lockTimer = 0;
+        
+        // Position initiale (centré en haut)
+        const pieceWidth = this.currentPiece.shape[0].length;
+        this.currentPiece.x = Math.floor((this.config.cols - pieceWidth) / 2);
+        this.currentPiece.y = 0;
         
         // Vérifier game over immédiat
-        if (!this.isValidPosition(this.currentPiece, 0, 0)) {
-            this.gameOverSequence();
+        if (!this.isValidPosition(this.currentPiece.shape, this.currentPiece.x, this.currentPiece.y)) {
+            this.endGame();
         }
         
-        this.piecesPlaced++;
+        this.isLocking = false;
+        this.lockTimer = 0;
     }
-    
-    isValidPosition(piece, offsetX, offsetY, newShape = null) {
-        const shape = newShape || piece.shape;
+
+    /**
+     * Mettre à jour le jeu
+     */
+    update(deltaTime) {
+        if (this.gameOver) return;
         
-        for (let row = 0; row < shape.length; row++) {
-            for (let col = 0; col < shape[row].length; col++) {
-                if (shape[row][col]) {
-                    const newX = piece.x + col + offsetX;
-                    const newY = piece.y + row + offsetY;
-                    
-                    // Hors limites
-                    if (newX < 0 || newX >= this.cols || newY >= this.rows) {
-                        return false;
-                    }
-                    
-                    // Collision avec bloc existant
-                    if (newY >= 0 && this.board[newY][newX]) {
-                        return false;
-                    }
-                }
-            }
+        // Gérer DAS (Delayed Auto Shift)
+        this.handleDAS(deltaTime);
+        
+        // Gravité
+        this.dropTimer += deltaTime * this.getDropSpeed();
+        
+        if (this.dropTimer >= 1) {
+            this.movePiece(0, 1);
+            this.dropTimer = 0;
         }
         
-        return true;
+        // Lock delay
+        if (this.isLocking && this.isOnGround()) {
+            this.lockTimer += deltaTime * 1000;
+            
+            if (this.lockTimer >= this.config.lockDelay) {
+                this.lockPiece();
+            }
+        } else if (!this.isOnGround()) {
+            this.isLocking = false;
+            this.lockTimer = 0;
+        }
     }
-    
-    rotatePiece(clockwise = true) {
-        if (!this.currentPiece || this.clearingLines.length > 0) return;
+
+    /**
+     * Obtenir la vitesse de chute actuelle
+     */
+    getDropSpeed() {
+        return this.config.baseSpeed + (this.level - 1) * this.config.speedIncrement;
+    }
+
+    /**
+     * Gérer DAS pour le mouvement fluide
+     */
+    handleDAS(deltaTime) {
+        const moveKeys = ['arrowleft', 'arrowright', 'a', 'd'];
         
-        const piece = this.currentPiece;
-        const shape = piece.shape;
-        const rows = shape.length;
-        const cols = shape[0].length;
-        
-        // Créer la matice rotée
-        const rotated = [];
-        if (clockwise) {
-            for (let c = 0; c < cols; c++) {
-                rotated[c] = [];
-                for (let r = rows - 1; r >= 0; r--) {
-                    rotated[c][rows - 1 - r] = shape[r][c];
+        for (const key of moveKeys) {
+            if (Utils.input.isKeyPressed(key)) {
+                if (!this.dasActive[key]) {
+                    // Premier mouvement immédiat
+                    this.handleKeyPress(key);
+                    this.dasActive[key] = true;
+                    this.dasTimer[key] = 0;
+                } else {
+                    // Répétition après DAS delay
+                    this.dasTimer[key] += deltaTime * 1000;
+                    
+                    if (this.dasTimer[key] >= this.config.dasDelay) {
+                        if ((this.dasTimer[key] - this.config.dasDelay) % this.config.dasRepeat < deltaTime * 1000) {
+                            this.handleKeyPress(key);
+                        }
+                    }
                 }
-            }
-        } else {
-            for (let c = cols - 1; c >= 0; c--) {
-                rotated[cols - 1 - c] = [];
-                for (let r = 0; r < rows; r++) {
-                    rotated[cols - 1 - c][r] = shape[r][c];
-                }
+            } else {
+                this.dasActive[key] = false;
+                this.dasTimer[key] = 0;
             }
         }
         
-        // Wall kicks - essayer différentes positions
-        const kicks = [0, -1, 1, -2, 2]; // Offsets à essayer
+        // Soft drop
+        if (Utils.input.isKeyPressed('arrowdown') || Utils.input.isKeyPressed('s')) {
+            this.dropTimer += deltaTime * this.config.softDropSpeed;
+        }
+    }
+
+    /**
+     * Gérer une touche pressée
+     */
+    handleKeyPress(key) {
+        switch (key.toLowerCase()) {
+            case 'arrowleft':
+            case 'a':
+            case 'q':
+                this.movePiece(-1, 0);
+                break;
+            case 'arrowright':
+            case 'd':
+                this.movePiece(1, 0);
+                break;
+        }
+    }
+
+    /**
+     * Déplacer la pièce
+     */
+    movePiece(dx, dy) {
+        const newX = this.currentPiece.x + dx;
+        const newY = this.currentPiece.y + dy;
         
-        for (const kick of kicks) {
-            if (this.isValidPosition(piece, kick, 0, rotated)) {
-                piece.shape = rotated;
-                piece.x += kick;
-                piece.rotation = (piece.rotation + 1) % 4;
-                
-                // Son de rotation
-                if (this.engine?.soundManager) {
-                    this.engine.soundManager.playClick();
-                }
-                
+        if (this.isValidPosition(this.currentPiece.shape, newX, newY)) {
+            this.currentPiece.x = newX;
+            this.currentPiece.y = newY;
+            
+            if (dy > 0 && this.isOnGround()) {
+                this.isLocking = true;
+                this.lockTimer = 0;
+            } else {
+                this.isLocking = false;
+                this.lockTimer = 0;
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Faire tourner la pièce
+     */
+    rotatePiece(direction = 1) { // 1 = horaire, -1 = anti-horaire
+        const rotated = this.rotateMatrix(this.currentPiece.shape, direction);
+        
+        // Essayer la rotation normale
+        if (this.isValidPosition(rotated, this.currentPiece.x, this.currentPiece.y)) {
+            this.currentPiece.shape = rotated;
+            Utils.audio.playClick();
+            return true;
+        }
+        
+        // Wall kicks (essayer différentes positions)
+        const kicks = [[-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1], [-1, -1], [1, -1]];
+        
+        for (const [kickX, kickY] of kicks) {
+            if (this.isValidPosition(rotated, this.currentPiece.x + kickX, this.currentPiece.y + kickY)) {
+                this.currentPiece.shape = rotated;
+                this.currentPiece.x += kickX;
+                this.currentPiece.y += kickY;
+                Utils.audio.playClick();
                 return true;
             }
         }
         
         return false;
     }
-    
-    movePiece(dir) {
-        if (!this.currentPiece || this.clearingLines.length > 0) return false;
+
+    /**
+     * Rotation d'une matrice
+     */
+    rotateMatrix(matrix, direction) {
+        const rows = matrix.length;
+        const cols = matrix[0].length;
+        const rotated = Array(cols).fill(null).map(() => Array(rows).fill(0));
         
-        if (this.isValidPosition(this.currentPiece, dir, 0)) {
-            this.currentPiece.x += dir;
-            
-            if (this.engine?.soundManager && Math.random() > 0.7) {
-                this.engine.soundManager.playClick();
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (direction === 1) { // Horaire
+                    rotated[c][rows - 1 - r] = matrix[r][c];
+                } else { // Anti-horaire
+                    rotated[cols - 1 - c][r] = matrix[r][c];
+                }
             }
-            
-            return true;
         }
         
-        return false;
+        return rotated;
     }
-    
-    moveDown(instant = false) {
-        if (!this.currentPiece || this.clearingLines.length > 0) return false;
-        
-        if (this.isValidPosition(this.currentPiece, 0, 1)) {
-            this.currentPiece.y++;
-            
-            if (instant) {
-                this.score += 1;
-            }
-            
-            return true;
-        } else {
-            // Ne peut plus descendre = lock
-            this.lockPiece();
-            return false;
-        }
-    }
-    
+
+    /**
+     * Hard drop (chute instantanée)
+     */
     hardDrop() {
-        if (!this.currentPiece || this.clearingLines.length > 0) return;
-        
-        let dropDistance = 0;
-        while (this.isValidPosition(this.currentPiece, 0, dropDistance + 1)) {
-            dropDistance++;
+        let distance = 0;
+        while (this.movePiece(0, 1)) {
+            distance++;
         }
-        
-        this.currentPiece.y += dropDistance;
-        this.score += dropDistance * 2;
-        
-        // Particules de hard drop
-        const pieceX = (this.currentPiece.x + this.currentPiece.shape[0].length / 2) * this.blockSize;
-        const pieceY = (this.currentPiece.y + this.currentPiece.shape.length / 2) * this.blockSize;
-        
-        this.particles.emit(pieceX, pieceY, {
-            count: 15,
-            speed: 8,
-            size: 4,
-            colors: ['#ffffff', this.currentPiece.color],
-            life: 0.5,
-            gravity: 300,
-            spread: Math.PI * 2
-        });
-        
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playHit();
-        }
-        
+        this.addScore(distance * 2);
         this.lockPiece();
+        Utils.audio.playBounce();
     }
-    
-    lockPiece() {
-        if (!this.currentPiece) return;
-        
-        // Placer la pièce sur le board
-        const piece = this.currentPiece;
-        
-        for (let row = 0; row < piece.shape.length; row++) {
-            for (let col = 0; col < piece.shape[row].length; col++) {
-                if (piece.shape[row][col]) {
-                    const boardY = piece.y + row;
-                    const boardX = piece.x + col;
+
+    /**
+     * Vérifier si une position est valide
+     */
+    isValidPosition(shape, offsetX, offsetY) {
+        for (let r = 0; r < shape.length; r++) {
+            for (let c = 0; c < shape[r].length; c++) {
+                if (shape[r][c]) {
+                    const newX = offsetX + c;
+                    const newY = offsetY + r;
                     
-                    if (boardY >= 0 && boardY < this.rows && boardX >= 0 && boardX < this.cols) {
-                        this.board[boardY][boardX] = {
-                            color: piece.color,
-                            locked: true
-                        };
+                    // Hors limites
+                    if (newX < 0 || newX >= this.config.cols || newY >= this.config.rows) {
+                        return false;
+                    }
+                    
+                    // Collision avec le plateau
+                    if (newY >= 0 && this.board[newY][newX]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Vérifier si la pièce touche le sol ou un autre bloc
+     */
+    isOnGround() {
+        return !this.isValidPosition(this.currentPiece.shape, this.currentPiece.x, this.currentPiece.y + 1);
+    }
+
+    /**
+     * Verrouiller la pièce sur le plateau
+     */
+    lockPiece() {
+        const shape = this.currentPiece.shape;
+        
+        for (let r = 0; r < shape.length; r++) {
+            for (let c = 0; c < shape[r].length; c++) {
+                if (shape[r][c]) {
+                    const boardY = this.currentPiece.y + r;
+                    const boardX = this.currentPiece.x + c;
+                    
+                    if (boardY >= 0) {
+                        this.board[boardY][boardX] = this.currentPiece.color;
                     }
                 }
             }
         }
         
         // Vérifier les lignes complètes
-        this.checkLines();
-    }
-    
-    checkLines() {
-        const completedLines = [];
+        this.clearLines();
         
-        for (let row = this.rows - 1; row >= 0; row--) {
-            if (this.board[row].every(cell => cell !== 0)) {
-                completedLines.push(row);
+        // Nouvelle pièce
+        this.spawnPiece();
+        this.dropTimer = 0;
+        
+        Utils.audio.playBounce();
+    }
+
+    /**
+     * Effacer les lignes complètes
+     */
+    clearLines() {
+        let linesCleared = 0;
+        
+        for (let r = this.config.rows - 1; r >= 0; r--) {
+            if (this.board[r].every(cell => cell !== null)) {
+                // Supprimer la ligne
+                this.board.splice(r, 1);
+                // Ajouter une ligne vide en haut
+                this.board.unshift(Array(this.config.cols).fill(null));
+                
+                linesCleared++;
+                r++; // Revérifier cette ligne
             }
         }
         
-        if (completedLines.length > 0) {
-            // Démarrer l'animation de clear
-            this.clearingLines = completedLines;
-            this.clearAnimationTimer = this.clearAnimationDuration;
+        if (linesCleared > 0) {
+            // Calculer les points
+            const points = [0, 100, 300, 500, 800]; // 1, 2, 3, 4 lignes
+            this.addScore(points[linesCleared] * this.level);
+            this.lines += linesCleared;
             
-            // Calcul du score
-            this.comboCount++;
-            const linePoints = [0, 100, 300, 500, 800]; // Points par nombre de lignes
-            const points = linePoints[completedLines.length] * this.level;
-            const comboBonus = this.comboCount > 1 ? 50 * this.comboCount * this.level : 0;
-            
-            this.score += points + comboBonus;
-            this.lines += completedLines.length;
-            
-            if (completedLines.length === 4) {
-                this.tetrisCount++;
-            }
-            
-            if (this.comboCount > this.maxCombo) {
-                this.maxCombo = this.comboCount;
-            }
-            
-            // Particules pour chaque ligne
-            for (const lineRow of completedLines) {
-                const y = lineRow * this.blockSize + this.blockSize / 2;
-                for (let x = 0; x < this.cols; x++) {
-                    this.particles.emit(x * this.blockSize + this.blockSize / 2, y, {
-                        count: 3,
-                        speed: 6,
-                        size: 5,
-                        colors: ['#ffffff', '#fbbf24', this.board[lineRow][x]?.color || '#fff'],
-                        life: 0.8,
-                        gravity: 200,
-                        spread: Math.PI * 2
-                    });
-                }
-            }
-            
-            // Son
-            if (this.engine?.soundManager) {
-                if (completedLines.length === 4) {
-                    this.engine.soundManager.playVictory();
-                } else {
-                    this.engine.soundManager.playCoin();
-                }
-            }
-            
-            // Mettre à jour le niveau
+            // Augmenter le niveau
             this.level = Math.floor(this.lines / 10) + 1;
-            this.dropInterval = Math.max(0.05, this.baseDropInterval - (this.level - 1) * 0.08);
             
-            // Mettre à jour l'affichage
-            if (this.engine) {
-                this.engine.score = this.score;
-                this.engine.updateScoreDisplay();
-            }
-        } else {
-            // Pas de lignes, reset combo
-            this.comboCount = -1;
-            
-            // Spawner nouvelle pièce
-            this.spawnNewPiece();
+            Utils.audio.playSuccess();
         }
     }
-    
-    completeLineClear() {
-        // Supprimer les lignes complétées (de bas en haut)
-        const sortedLines = [...this.clearingLines].sort((a, b) => b - a);
-        
-        for (const line of sortedLines) {
-            this.board.splice(line, 1);
-            this.board.unshift(Array(this.cols).fill(0));
-        }
-        
-        this.clearingLines = [];
-        
-        // Spawner nouvelle pièce
-        this.spawnNewPiece();
-    }
-    
-    holdPiece() {
-        if (!this.canHold || !this.currentPiece || this.clearingLines.length > 0) return;
-        
-        const currentName = this.currentPiece.name;
-        
-        if (this.heldPiece) {
-            // Échanger avec le held
-            const temp = this.heldPiece;
-            this.heldPiece = currentName;
-            
-            // Créer la pièce tenue
-            const shapeData = this.shapes[temp];
-            this.currentPiece = {
-                name: temp,
-                shape: shapeData.shape.map(row => [...row]),
-                color: shapeData.color,
-                x: Math.floor(this.cols / 2) - Math.ceil(shapeData.shape[0].length / 2),
-                y: 0,
-                rotation: 0
-            };
-        } else {
-            // Premier hold
-            this.heldPiece = currentName;
-            this.spawnNewPiece();
-        }
-        
-        this.canHold = false;
-        
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playClick();
-        }
-    }
-    
-    gameOverSequence() {
-        this.gameOver = true;
-        this.gameState = GAME_STATES.GAME_OVER;
-        
-        // Effet de game over - faire clignoter le board
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.board[row][col]) {
-                    const x = col * this.blockSize + this.blockSize / 2;
-                    const y = row * this.blockSize + this.blockSize / 2;
-                    
-                    setTimeout(() => {
-                        this.particles.emit(x, y, {
-                            count: 5,
-                            speed: 4,
-                            size: 4,
-                            colors: ['#ef4444', '#ffffff'],
-                            life: 1,
-                            gravity: 150,
-                            spread: Math.PI * 2
-                        });
-                    }, (row * this.cols + col) * 10);
-                }
-            }
-        }
-        
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playGameOver();
-        }
-        
-        setTimeout(() => {
-            this.endGame(false, '💀 GAME OVER', '💀');
-        }, 1500);
-    }
-    
+
+    /**
+     * Obtenir la position ghost piece (projection au sol)
+     */
     getGhostPosition() {
-        if (!this.currentPiece) return null;
-        
         let ghostY = this.currentPiece.y;
-        while (this.isValidPosition(this.currentPiece, 0, ghostY - this.currentPiece.y + 1)) {
+        
+        while (this.isValidPosition(this.currentPiece.shape, this.currentPiece.x, ghostY + 1)) {
             ghostY++;
         }
         
         return ghostY;
     }
-    
-    update(dt) {
-        super.update(dt);
+
+    /**
+     * Rendre le jeu
+     */
+    render(ctx) {
+        // Fond
+        Utils.canvas.clear(ctx, this.width, this.height, this.colors.background);
         
-        if (this.gameOver || this.gameState !== GAME_STATES.PLAYING) return;
+        // Calculer les offsets pour centrer le plateau
+        const boardWidth = this.config.cols * this.config.blockSize;
+        const boardHeight = this.config.rows * this.config.blockSize;
+        const offsetX = (this.width - boardWidth) / 2;
+        const offsetY = (this.height - boardHeight) / 2;
         
-        // Mise à jour particules
-        this.particles.update(dt);
+        // Dessiner le plateau
+        this.drawBoard(ctx, offsetX, offsetY);
         
-        // Animation de clear de lignes
-        if (this.clearingLines.length > 0) {
-            this.clearAnimationTimer -= dt;
+        // Dessiner la pièce courante
+        if (this.currentPiece && !this.gameOver) {
+            // Ghost piece
+            this.drawGhostPiece(ctx, offsetX, offsetY);
             
-            if (this.clearAnimationTimer <= 0) {
-                this.completeLineClear();
-            }
-            return; // Pas de mouvement pendant l'animation
+            // Pièce actuelle
+            this.drawPiece(ctx, this.currentPiece, offsetX, offsetY);
         }
         
-        // Auto-drop
-        const currentInterval = this.softDropping ? this.dropInterval * 0.1 : this.dropInterval;
-        this.dropTimer += dt;
+        // Dessiner le next piece preview
+        this.drawNextPreview(ctx, offsetX + boardWidth + 20, offsetY);
         
-        if (this.dropTimer >= currentInterval) {
-            this.dropTimer = 0;
-            this.moveDown();
-        }
+        // Dessiner les stats
+        this.drawStats(ctx, offsetX, offsetY + boardHeight + 20);
+    }
+
+    /**
+     * Dessiner le plateau
+     */
+    drawBoard(ctx, offsetX, offsetY) {
+        const bs = this.config.blockSize;
         
-        // Lock delay
-        if (this.currentPiece && !this.isValidPosition(this.currentPiece, 0, 1)) {
-            this.lockTimer += dt * 1000;
-            
-            if (this.lockTimer >= this.lockDelay) {
-                this.lockPiece();
-            }
-        } else {
-            this.lockTimer = 0;
-        }
+        // Fond du plateau
+        ctx.fillStyle = this.colors.boardBg;
+        ctx.fillRect(offsetX - 2, offsetY - 2, 
+                     this.config.cols * bs + 4, 
+                     this.config.rows * bs + 4);
         
-        // Auto-repeat pour les touches maintenues
-        if (this.moveLeftTimer > 0) {
-            this.moveLeftTimer -= dt;
-            if (this.moveLeftTimer <= 0) {
-                this.movePiece(-1);
-                this.moveLeftTimer = -this.autoRepeatRate; // Continue tant que la touche est pressée
-            }
-        }
+        // Bordure
+        ctx.strokeStyle = 'rgba(100, 181, 246, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(offsetX - 2, offsetY - 2, 
+                       this.config.cols * bs + 4, 
+                       this.config.rows * bs + 4);
         
-        if (this.moveRightTimer > 0) {
-            this.moveRightTimer -= dt;
-            if (this.moveRightTimer <= 0) {
-                this.movePiece(1);
-                this.moveRightTimer = -this.autoRepeatRate;
+        // Grille et blocs
+        for (let r = 0; r < this.config.rows; r++) {
+            for (let c = 0; c < this.config.cols; c++) {
+                const x = offsetX + c * bs;
+                const y = offsetY + r * bs;
+                
+                if (this.board[r][c]) {
+                    // Bloc rempli
+                    this.drawBlock(ctx, x, y, bs, this.board[r][c]);
+                } else {
+                    // Cellule vide avec grille subtile
+                    ctx.strokeStyle = this.colors.gridLine;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, bs, bs);
+                }
             }
         }
     }
-    
-    render() {
-        const ctx = this.ctx;
-        const panelWidth = 115;
-        const playAreaWidth = this.cols * this.blockSize;
-        const offsetX = (this.width - playAreaWidth - panelWidth) / 2;
-        const offsetY = (this.height - this.rows * this.blockSize) / 2;
+
+    /**
+     * Dessiner un bloc
+     */
+    drawBlock(ctx, x, y, size, color) {
+        const padding = 1;
+        
+        // Bloc principal
+        ctx.fillStyle = color;
+        ctx.fillRect(x + padding, y + padding, size - padding * 2, size - padding * 2);
+        
+        // Highlight (haut-gauche)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(x + padding, y + padding, size - padding * 2, 3);
+        ctx.fillRect(x + padding, y + padding, 3, size - padding * 2);
+        
+        // Shadow (bas-droite)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(x + size - padding - 3, y + padding + 3, 3, size - padding * 2 - 3);
+        ctx.fillRect(x + padding + 3, y + size - padding - 3, size - padding * 2 - 3, 3);
+    }
+
+    /**
+     * Dessiner une pièce
+     */
+    drawPiece(ctx, piece, offsetX, offsetY) {
+        const bs = this.config.blockSize;
+        
+        for (let r = 0; r < piece.shape.length; r++) {
+            for (let c = 0; c < piece.shape[r].length; c++) {
+                if (piece.shape[r][c]) {
+                    const x = offsetX + (piece.x + c) * bs;
+                    const y = offsetY + (piece.y + r) * bs;
+                    this.drawBlock(ctx, x, y, bs, piece.color);
+                }
+            }
+        }
+    }
+
+    /**
+     * Dessiner la ghost piece
+     */
+    drawGhostPiece(ctx, offsetX, offsetY) {
+        const bs = this.config.blockSize;
+        const ghostY = this.getGhostPosition();
+        
+        ctx.globalAlpha = 0.3;
+        
+        for (let r = 0; r < this.currentPiece.shape.length; r++) {
+            for (let c = 0; c < this.currentPiece.shape[r].length; c++) {
+                if (this.currentPiece.shape[r][c]) {
+                    const x = offsetX + (this.currentPiece.x + c) * bs;
+                    const y = offsetY + (ghostY + r) * bs;
+                    
+                    ctx.strokeStyle = this.currentPiece.color;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + 2, y + 2, bs - 4, bs - 4);
+                }
+            }
+        }
+        
+        ctx.globalAlpha = 1;
+    }
+
+    /**
+     * Dessiner le preview de la prochaine pièce
+     */
+    drawNextPreview(ctx, x, y) {
+        // Titre
+        ctx.font = 'bold 14px Orbitron';
+        ctx.fillStyle = this.colors.textMuted;
+        ctx.textAlign = 'left';
+        ctx.fillText('SUIVANT', x, y - 10);
         
         // Fond
-        ctx.fillStyle = '#0a0a12';
-        ctx.fillRect(0, 0, this.width, this.height);
-        
-        // Zone de jeu
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-        
-        // Fond de la grille
-        ctx.fillStyle = '#111118';
-        RenderUtils.roundRect(ctx, -5, -5, playAreaWidth + 10, this.rows * this.blockSize + 10, 10);
-        ctx.fill();
-        
-        // Bordure glow
-        ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
-        ctx.lineWidth = 2;
-        RenderUtils.roundRect(ctx, -5, -5, playAreaWidth + 10, this.rows * this.blockSize + 10, 10);
-        ctx.stroke();
-        
-        // Grille
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.fillStyle = this.colors.boardBg;
+        ctx.fillRect(x, y, 90, 70);
+        ctx.strokeStyle = 'rgba(100, 181, 246, 0.2)';
         ctx.lineWidth = 1;
-        
-        for (let i = 0; i <= this.cols; i++) {
-            ctx.beginPath();
-            ctx.moveTo(i * this.blockSize, 0);
-            ctx.lineTo(i * this.blockSize, this.rows * this.blockSize);
-            ctx.stroke();
-        }
-        
-        for (let i = 0; i <= this.rows; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, i * this.blockSize);
-            ctx.lineTo(playAreaWidth, i * this.blockSize);
-            ctx.stroke();
-        }
-        
-        // Board (blocs placés)
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const cell = this.board[row][col];
-                if (cell) {
-                    const isClearing = this.clearingLines.includes(row);
-                    
-                    if (isClearing) {
-                        // Animation de flash blanc
-                        const flashAlpha = this.clearAnimationTimer / this.clearAnimationDuration;
-                        ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
-                    } else {
-                        this.renderBlock(ctx, col * this.blockSize, row * this.blockSize, cell.color);
-                    }
-                    
-                    if (!isClearing) {
-                        this.renderBlock(ctx, col * this.blockSize, row * this.blockSize, cell.color);
-                    } else {
-                        ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
-                        this.renderBlock(ctx, col * this.blockSize, row * this.blockSize, '#ffffff');
-                        ctx.globalAlpha = 1;
-                    }
-                }
-            }
-        }
-        
-        // Ghost piece
-        if (this.currentPiece && this.clearingLines.length === 0) {
-            const ghostY = this.getGhostPosition();
-            
-            for (let row = 0; row < this.currentPiece.shape.length; row++) {
-                for (let col = 0; col < this.currentPiece.shape[row].length; col++) {
-                    if (this.currentPiece.shape[row][col]) {
-                        const x = (this.currentPiece.x + col) * this.blockSize;
-                        const y = (ghostY + row) * this.blockSize;
-                        
-                        ctx.strokeStyle = this.currentPiece.color;
-                        ctx.lineWidth = 2;
-                        ctx.globalAlpha = 0.3;
-                        RenderUtils.roundRect(ctx, x + 2, y + 2, this.blockSize - 4, this.blockSize - 4, 4);
-                        ctx.stroke();
-                        ctx.globalAlpha = 1;
-                    }
-                }
-            }
-        }
-        
-        // Pièce courante
-        if (this.currentPiece && this.clearingLines.length === 0) {
-            for (let row = 0; row < this.currentPiece.shape.length; row++) {
-                for (let col = 0; col < this.currentPiece.shape[row].length; col++) {
-                    if (this.currentPiece.shape[row][col]) {
-                        const x = (this.currentPiece.x + col) * this.blockSize;
-                        const y = (this.currentPiece.y + row) * this.blockSize;
-                        
-                        this.renderBlock(ctx, x, y, this.currentPiece.color);
-                    }
-                }
-            }
-        }
-        
-        ctx.restore();
-        
-        // Particules
-        this.particles.render(ctx);
-        
-        // Panel d'info
-        this.renderPanel(ctx, offsetX + playAreaWidth + 20, offsetY);
-    }
-    
-    renderBlock(ctx, x, y, color) {
-        const size = this.blockSize;
-        const padding = 2;
-        
-        // Bloc principal avec gradient
-        const grad = ctx.createLinearGradient(x, y, x + size, y + size);
-        grad.addColorStop(0, this.lightenColor(color, 30));
-        grad.addColorStop(0.5, color);
-        grad.addColorStop(1, this.darkenColor(color, 20));
-        
-        ctx.fillStyle = grad;
-        RenderUtils.roundRect(ctx, x + padding, y + padding, size - padding * 2, size - padding * 2, 5);
-        ctx.fill();
-        
-        // Highlight en haut à gauche
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        RenderUtils.roundRect(ctx, x + padding + 2, y + padding + 2, size - padding * 2 - 4, (size - padding * 2) / 3, 3);
-        ctx.fill();
-        
-        // Shadow en bas à droite
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        RenderUtils.roundRect(ctx, x + padding + 2, y + size - padding - (size - padding * 2) / 3, size - padding * 2 - 4, (size - padding * 2) / 3 - 2, 3);
-        ctx.fill();
-    }
-    
-    renderPanel(ctx, x, y) {
-        // Fond du panel
-        ctx.fillStyle = 'rgba(17, 17, 24, 0.9)';
-        RenderUtils.roundRect(ctx, x - 10, y - 10, 130, this.rows * this.blockSize + 20, 10);
-        ctx.fill();
-        
-        ctx.strokeStyle = 'rgba(99, 102, 241, 0.2)';
-        ctx.lineWidth = 1;
-        RenderUtils.roundRect(ctx, x - 10, y - 10, 130, this.rows * this.blockSize + 20, 10);
-        ctx.stroke();
-        
-        let currentY = y + 20;
-        
-        // NEXT PIECE
-        ctx.font = 'bold 14px Orbitron';
-        ctx.fillStyle = '#94a3b8';
-        ctx.textAlign = 'center';
-        ctx.fillText('SUIVANT', x + 55, currentY);
-        currentY += 25;
+        ctx.strokeRect(x, y, 90, 70);
         
         if (this.nextPiece) {
-            this.renderMiniPiece(ctx, x + 55, currentY, this.nextPiece);
-        }
-        currentY += 100;
-        
-        // HOLD
-        ctx.font = 'bold 14px Orbitron';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('HOLD', x + 55, currentY);
-        currentY += 25;
-        
-        if (this.heldPiece) {
-            const heldShapeData = this.shapes[this.heldPiece];
-            const alpha = this.canHold ? 1 : 0.4;
-            ctx.globalAlpha = alpha;
-            this.renderMiniPieceFromShape(ctx, x + 55, currentY, heldShapeData.shape, heldShapeData.color);
-            ctx.globalAlpha = 1;
-        }
-        currentY += 80;
-        
-        // SCORE
-        ctx.font = 'bold 14px Orbitron';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('SCORE', x + 55, currentY);
-        currentY += 22;
-        
-        ctx.font = 'bold 22px Orbitron';
-        ctx.fillStyle = '#10b981';
-        ctx.fillText(this.score.toLocaleString(), x + 55, currentY);
-        currentY += 40;
-        
-        // NIVEAU
-        ctx.font = 'bold 14px Orbitron';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('NIVEAU', x + 55, currentY);
-        currentY += 22;
-        
-        ctx.font = 'bold 22px Orbitron';
-        ctx.fillStyle = '#06b6d4';
-        ctx.fillText(this.level.toString(), x + 55, currentY);
-        currentY += 40;
-        
-        // LIGNES
-        ctx.font = 'bold 14px Orbitron';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('LIGNES', x + 55, currentY);
-        currentY += 22;
-        
-        ctx.font = 'bold 22px Orbitron';
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillText(this.lines.toString(), x + 55, currentY);
-        currentY += 50;
-        
-        // Combo actuel
-        if (this.comboCount > 0) {
-            ctx.font = 'bold 16px Orbitron';
-            ctx.fillStyle = '#ec4899';
-            ctx.fillText(`${this.comboCount}x COMBO`, x + 55, currentY);
-        }
-        
-        ctx.textAlign = 'left';
-    }
-    
-    renderMiniPiece(ctx, centerX, centerY, piece) {
-        this.renderMiniPieceFromShape(ctx, centerX, centerY, piece.shape, piece.color);
-    }
-    
-    renderMiniPieceFromShape(ctx, centerX, centerY, shape, color) {
-        const miniBlockSize = 18;
-        const width = shape[0].length * miniBlockSize;
-        const height = shape.length * miniBlockSize;
-        const startX = centerX - width / 2;
-        const startY = centerY - height / 2;
-        
-        for (let row = 0; row < shape.length; row++) {
-            for (let col = 0; col < shape[row].length; col++) {
-                if (shape[row][col]) {
-                    const x = startX + col * miniBlockSize;
-                    const y = startY + row * miniBlockSize;
-                    
-                    ctx.fillStyle = color;
-                    RenderUtils.roundRect(ctx, x, y, miniBlockSize - 2, miniBlockSize - 2, 3);
-                    ctx.fill();
+            const shape = this.nextPiece.shape;
+            const blockSize = 18;
+            const pieceWidth = shape[0].length * blockSize;
+            const pieceHeight = shape.length * blockSize;
+            const px = x + (90 - pieceWidth) / 2;
+            const py = y + (70 - pieceHeight) / 2;
+            
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (shape[r][c]) {
+                        this.drawBlock(ctx, px + c * blockSize, py + r * blockSize, 
+                                      blockSize, this.nextPiece.color);
+                    }
                 }
             }
         }
     }
-    
-    lightenColor(hex, percent) {
-        const num = parseInt(hex.replace('#', ''), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = Math.min(255, (num >> 16) + amt);
-        const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
-        const B = Math.min(255, (num & 0x0000FF) + amt);
-        return `rgb(${R}, ${G}, ${B})`;
-    }
-    
-    darkenColor(hex, percent) {
-        const num = parseInt(hex.replace('#', ''), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = Math.max(0, (num >> 16) - amt);
-        const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
-        const B = Math.max(0, (num & 0x0000FF) - amt);
-        return `rgb(${R}, ${G}, ${B})`;
-    }
-    
-    handleKey(key, code) {
-        if (this.gameOver || this.clearingLines.length > 0) return;
+
+    /**
+     * Dessiner les statistiques
+     */
+    drawStats(ctx, x, y) {
+        const stats = [
+            { label: 'SCORE', value: Utils.formatScore(this.score), color: this.colors.primary },
+            { label: 'LIGNES', value: this.lines.toString(), color: this.colors.secondary },
+            { label: 'NIVEAU', value: this.level.toString(), color: this.colors.accent }
+        ];
         
-        switch (code) {
-            case 'ArrowLeft':
-                if (this.movePiece(-1)) {
-                    this.moveLeftTimer = this.dasDelay;
-                }
+        ctx.font = 'bold 14px Orbitron';
+        ctx.textAlign = 'center';
+        
+        stats.forEach((stat, i) => {
+            const statX = x + (i * (this.config.cols * this.config.blockSize / 3)) + 
+                         (this.config.cols * this.config.blockSize / 6);
+            
+            ctx.fillStyle = this.colors.textMuted;
+            ctx.font = '11px Orbitron';
+            ctx.fillText(stat.label, statX, y);
+            
+            ctx.fillStyle = stat.color;
+            ctx.font = 'bold 20px Orbitron';
+            ctx.fillText(stat.value, statX, y + 25);
+        });
+    }
+
+    /**
+     * Gérer les touches pressées
+     */
+    handleKeyDown(e) {
+        if (this.gameOver) {
+            if (e.key === 'r') {
+                this.init();
+            }
+            return;
+        }
+        
+        switch (e.key.toLowerCase()) {
+            case 'arrowup':
+            case 'w':
+            case 'x':
+                this.rotatePiece(1);
                 break;
-            case 'ArrowRight':
-                if (this.movePiece(1)) {
-                    this.moveRightTimer = this.dasDelay;
-                }
+            case 'z':
+            case 'control':
+                this.rotatePiece(-1); // Rotation anti-horaire
                 break;
-            case 'ArrowDown':
-                this.softDropping = true;
-                this.moveDown(true);
-                break;
-            case 'ArrowUp':
-            case 'KeyX':
-                this.rotatePiece(true);
-                break;
-            case 'KeyZ':
-            case 'ControlLeft':
-                this.rotatePiece(false);
-                break;
-            case 'Space':
+            case ' ':
+                e.preventDefault();
                 this.hardDrop();
                 break;
-            case 'ShiftLeft':
-            case 'KeyC':
-                this.holdPiece();
+            case 'r':
+                if (this.gameOver) this.init();
                 break;
         }
     }
-    
-    handleKeyUp(key, code) {
-        switch (code) {
-            case 'ArrowDown':
-                this.softDropping = false;
-                break;
-            case 'ArrowLeft':
-                this.moveLeftTimer = 0;
-                break;
-            case 'ArrowRight':
-                this.moveRightTimer = 0;
-                break;
-        }
+
+    /**
+     * Obtenir les instructions
+     */
+    getInstructions() {
+        return `
+            <strong>🧱 Tetris</strong> - Le puzzle classique!<br>
+            <span style="color: var(--neon-blue)">⬅️➡️</span> Déplacer | 
+            <span style="color: var(--neon-green)">⬆️</span> Rotation | 
+            <span style="color: var(--neon-pink)">⬇️</span> Chute rapide | 
+            <span style="color: var(--neon-yellow)">Espace</span> Drop instantané!
+        `;
     }
 }
+
+// Enregistrer le jeu
+window.Games.tetris = TetrisGame;
