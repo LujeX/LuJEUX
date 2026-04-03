@@ -2,703 +2,1779 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Arcade Collection - Suite de jeux rétro modernes, performants et immersifs.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade Collection</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=VT323&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-dark: #0b0c10;
-            --bg-panel: #151720;
-            --bg-card: #1c1f2b;
-            --accent-blue: #a0c4ff;
-            --accent-green: #b9fbc0;
-            --accent-pink: #ffd6a5;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --glow: 0 0 14px rgba(160, 196, 255, 0.35);
-            --radius: 16px;
-            --font-display: 'VT323', monospace;
-            --font-body: 'Space Grotesk', sans-serif;
-            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; background: var(--bg-dark); color: var(--text-main); font-family: var(--font-body); overflow-x: hidden; }
-
-        /* Fond animé subtil */
-        #bg-particles {
-            position: fixed; inset: 0; z-index: -1; overflow: hidden;
-            background: radial-gradient(circle at 30% 20%, #1e2130 0%, var(--bg-dark) 60%);
-        }
-        #bg-particles::before, #bg-particles::after {
-            content: ''; position: absolute; border-radius: 50%;
-            background: radial-gradient(circle, rgba(160,196,255,0.12) 0%, transparent 70%);
-            width: 120%; height: 120%;
-            animation: float 18s infinite alternate ease-in-out;
-        }
-        #bg-particles::after {
-            top: -20%; left: -30%; width: 150%; height: 150%;
-            background: radial-gradient(circle, rgba(185,251,192,0.08) 0%, transparent 65%);
-            animation-duration: 24s; animation-direction: alternate-reverse;
-        }
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(8%, 6%) scale(1.05); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* Navigation */
-        .nav-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 1rem 1.5rem; background: rgba(11, 12, 16, 0.85);
-            backdrop-filter: blur(12px); border-bottom: 1px solid rgba(160, 196, 255, 0.15);
-            position: sticky; top: 0; z-index: 100;
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(100, 181, 246, 0.2);
         }
+
         .logo {
-            font-family: var(--font-display); font-size: 2rem; letter-spacing: 2px;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
-            -webkit-background-clip: text; background-clip: text; color: transparent;
+            font-size: 24px;
+            font-weight: bold;
+            color: #64b5f6;
         }
-        .nav-actions { display: flex; gap: 0.5rem; }
-        .nav-btn {
-            background: transparent; border: 1px solid var(--accent-blue);
-            color: var(--accent-blue); padding: 0.5rem 1rem; border-radius: 8px;
-            cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: 0.9rem;
-            transition: var(--transition);
-        }
-        .nav-btn:hover { background: var(--accent-blue); color: var(--bg-dark); box-shadow: var(--glow); }
-        .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--text-muted); color: var(--text-muted); }
 
-        /* Grille de jeux */
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        .game-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem; padding: 1rem 0;
+        .nav-links {
+            display: flex;
+            gap: 25px;
         }
+
+        .nav-links a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #64b5f6;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            padding: 100px 30px 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #64b5f6, #ce93d8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #64b5f6, #ce93d8);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
         .game-card {
-            background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--radius); padding: 1.5rem; cursor: pointer;
-            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease, border-color 0.3s;
-            position: relative; overflow: hidden;
+            background: rgba(20, 20, 40, 0.9);
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(100, 181, 246, 0.1);
         }
+
         .game-card:hover {
-            transform: translateY(-6px); box-shadow: 0 12px 30px rgba(160,196,255,0.12);
-            border-color: var(--accent-blue);
-        }
-        .card-title { font-family: var(--font-display); font-size: 1.8rem; color: var(--accent-pink); margin-bottom: 0.5rem; }
-        .card-desc { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
-        .card-tag {
-            position: absolute; top: 1rem; right: 1rem; background: rgba(160,196,255,0.15);
-            color: var(--accent-blue); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;
+            transform: translateY(-10px);
+            border-color: #64b5f6;
+            box-shadow: 0 20px 40px rgba(100, 181, 246, 0.2);
         }
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(5, 6, 10, 0.94);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s;
-            z-index: 200; backdrop-filter: blur(10px); padding: 1rem;
+        .game-preview {
+            height: 150px;
+            background: linear-gradient(135deg, #1a1a3a, #0a0a1a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: var(--radius); padding: 1rem; width: 100%; max-width: 900px;
-            display: flex; flex-direction: column; align-items: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .modal-header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
-        #modal-title { font-family: var(--font-display); font-size: 1.8rem; color: var(--accent-green); }
-        #modal-score { font-weight: 600; color: var(--text-main); background: rgba(255,255,255,0.05); padding: 0.3rem 0.8rem; border-radius: 6px; }
 
-        canvas#game-canvas {
-            background: #0a0b0e; border-radius: 8px; border: 2px solid rgba(255,255,255,0.05);
-            width: 100%; max-height: 70vh; aspect-ratio: 16/9; touch-action: none; image-rendering: pixelated;
+        .game-info {
+            padding: 20px;
         }
-        .modal-controls { margin-top: 1rem; width: 100%; display: flex; justify-content: flex-end; }
-        .action-btn {
-            background: linear-gradient(135deg, var(--accent-pink), #ff9999);
-            color: #0a0b0e; border: none; padding: 0.6rem 1.4rem; border-radius: 8px;
-            font-weight: 700; cursor: pointer; transition: transform 0.2s, filter 0.2s, box-shadow 0.2s;
-        }
-        .action-btn:hover { transform: scale(1.04); filter: brightness(1.08); box-shadow: 0 6px 20px rgba(255,214,165,0.3); }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .game-grid { grid-template-columns: 1fr; }
-            .nav-bar { padding: 0.8rem; flex-wrap: wrap; }
-            .logo { font-size: 1.5rem; }
-            .modal-header { flex-direction: column; gap: 0.3rem; align-items: flex-start; }
-            canvas#game-canvas { max-height: 50vh; }
+        .game-info h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #64b5f6;
+        }
+
+        .game-info p {
+            font-size: 14px;
+            color: #888;
+            line-height: 1.4;
+        }
+
+        /* Game Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a1a;
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: rgba(20, 20, 40, 0.95);
+            border-bottom: 1px solid rgba(100, 181, 246, 0.2);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            color: #64b5f6;
+        }
+
+        .score-display {
+            font-size: 18px;
+            color: #ffd54f;
+        }
+
+        .modal-buttons button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 16px;
+        }
+
+        .modal-buttons button:hover {
+            background: rgba(100, 181, 246, 0.3);
+        }
+
+        .close-btn:hover {
+            background: rgba(244, 143, 177, 0.3) !important;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #050510;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(100, 181, 246, 0.2);
+        }
+
+        .instructions {
+            padding: 12px 25px;
+            background: rgba(20, 20, 40, 0.95);
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            border-top: 1px solid rgba(100, 181, 246, 0.1);
+        }
+
+        /* Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        .overlay-box {
+            background: #1a1a3a;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .overlay-box h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #64b5f6;
+        }
+
+        .overlay-box p {
+            margin-bottom: 25px;
+            color: #aaa;
+        }
+
+        .overlay-box .final-score {
+            font-size: 48px;
+            color: #ffd54f;
+            margin: 20px 0;
+        }
+
+        .overlay-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .overlay-buttons button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #64b5f6, #ce93d8);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Scores Table */
+        .scores-table {
+            width: 100%;
+            max-width: 700px;
+            margin: 30px auto;
+            border-collapse: collapse;
+            background: rgba(20, 20, 40, 0.9);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .scores-table th,
+        .scores-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .scores-table th {
+            background: rgba(100, 181, 246, 0.1);
+            color: #64b5f6;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .no-scores {
+            text-align: center;
+            padding: 60px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div id="bg-particles"></div>
 
-    <header class="nav-bar">
-        <div class="logo">🎮 ARCADE COLLECTION</div>
-        <div class="nav-actions">
-            <button id="btn-home" class="nav-btn">Accueil</button>
-            <button id="btn-fullscreen" class="nav-btn" disabled>⛶ Plein écran</button>
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="logo">🎮 Arcade Collection</div>
+        <div class="nav-links">
+            <a onclick="showSection('home')" class="active" id="nav-home">Accueil</a>
+            <a onclick="showSection('games')" id="nav-games">Jeux</a>
+            <a onclick="showSection('scores')" id="nav-scores">Scores</a>
         </div>
-    </header>
+    </nav>
 
-    <main class="container">
-        <section class="game-grid" id="game-grid"></section>
-    </main>
+    <!-- SECTION ACCUEIL -->
+    <section id="home" class="section active">
+        <div class="hero">
+            <h1>🎮 Arcade Collection</h1>
+            <p>Collection de jeux gratuits - Cliquez sur un jeu pour jouer !</p>
+            <button class="btn" onclick="showSection('games')">▶ Jouer maintenant</button>
+        </div>
+    </section>
 
-    <div id="game-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span id="modal-title">Jeu</span>
-                <span id="modal-score">Score: 0</span>
+    <!-- SECTION JEUX -->
+    <section id="games" class="section">
+        <h2 style="text-align:center;margin-bottom:10px;color:#64b5f6;">Choisissez votre jeu</h2>
+        <p style="text-align:center;color:#888;margin-bottom:30px;">Cliquez sur une carte pour lancer le jeu</p>
+        <div class="games-grid" id="gamesGrid"></div>
+    </section>
+
+    <!-- SECTION SCORES -->
+    <section id="scores" class="section">
+        <h2 style="text-align:center;color:#64b5f6;">🏆 Tableau des scores</h2>
+        <div id="scoresContainer"></div>
+    </section>
+
+    <!-- MODAL JEU -->
+    <div class="modal" id="gameModal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Jeu</span>
+            <span class="score-display" id="modalScore">Score: 0</span>
+            <div class="modal-buttons">
+                <button onclick="togglePause()" title="Pause">⏸</button>
+                <button class="close-btn" onclick="closeGame()" title="Fermer">✕</button>
             </div>
-            <canvas id="game-canvas"></canvas>
-            <div class="modal-controls">
-                <button id="btn-quit" class="action-btn">Quitter</button>
+        </div>
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+        </div>
+        <div class="instructions" id="instructions"></div>
+    </div>
+
+    <!-- OVERLAY PAUSE/GAME OVER -->
+    <div class="overlay" id="overlay">
+        <div class="overlay-box">
+            <h2 id="overlayTitle">Pause</h2>
+            <p id="overlayMessage"></p>
+            <div class="final-score" id="finalScore"></div>
+            <div class="overlay-buttons">
+                <button class="btn-primary" id="btnResume" onclick="resumeGame()">Reprendre</button>
+                <button class="btn-secondary" id="btnRestart" onclick="restartGame()">Recommencer</button>
+                <button class="btn-secondary" onclick="closeGame()">Quitter</button>
             </div>
         </div>
     </div>
 
-    <script>
-        /**
-         * ARCADE COLLECTION - Architecture Unifiée
-         * Structure modulaire encapsulée dans l'espace de noms `Arcade`
-         */
-        const Arcade = {
-            // ======================================================================
-            // 1. UTILITAIRES (Audio, Entrées, Stockage, Canvas)
-            // ======================================================================
-            Utils: {
-                clamp: (val, min, max) => Math.min(Math.max(val, min), max),
-                lerp: (start, end, t) => start + (end - start) * t,
-                rand: (min, max) => Math.random() * (max - min) + min,
-                randInt: (min, max) => Math.floor(Arcade.Utils.rand(min, max + 1)),
+<script>
+// ============================================================
+// ARCADE COLLECTION - VERSION COMPLETE ET FONCTIONNELLE
+// ============================================================
 
-                storage: {
-                    save(key, value) { try { localStorage.setItem(`arcade_${key}`, JSON.stringify(value)); } catch (e) { console.warn('LocalStorage indisponible', e); } },
-                    load(key, fallback = 0) { try { const d = localStorage.getItem(`arcade_${key}`); return d !== null ? JSON.parse(d) : fallback; } catch { return fallback; } }
-                },
+// Variables globales
+let currentGame = null;
+let gameLoopId = null;
+let isPaused = false;
+let isGameOver = false;
 
-                audio: {
-                    ctx: null,
-                    init() {
-                        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        if (this.ctx.state === 'suspended') this.ctx.resume();
-                    },
-                    play(freq = 440, type = 'sine', duration = 0.12, vol = 0.15) {
-                        if (!this.ctx) this.init();
-                        const osc = this.ctx.createOscillator();
-                        const gain = this.ctx.createGain();
-                        osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-                        osc.connect(gain).connect(this.ctx.destination);
-                        osc.start(); osc.stop(this.ctx.currentTime + duration);
-                    }
-                },
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-                input: {
-                    keys: {}, mouse: { x: 0, y: 0, down: false, clicked: false },
-                    init() {
-                        const self = this;
-                        window.addEventListener('keydown', e => { self.keys[e.key.toLowerCase()] = true; if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault(); });
-                        window.addEventListener('keyup', e => { self.keys[e.key.toLowerCase()] = false; });
-                        const updateMouse = (x, y) => { self.mouse.x = x; self.mouse.y = y; };
-                        window.addEventListener('mousemove', e => updateMouse(e.clientX, e.clientY));
-                        window.addEventListener('mousedown', () => self.mouse.down = true);
-                        window.addEventListener('mouseup', () => { self.mouse.down = false; self.mouse.clicked = true; });
-                        window.addEventListener('touchmove', e => { if(e.touches[0]) { updateMouse(e.touches[0].clientX, e.touches[0].clientY); self.mouse.down = true; } }, { passive: true });
-                        window.addEventListener('touchstart', e => { if(e.touches[0]) updateMouse(e.touches[0].clientX, e.touches[0].clientY); self.mouse.down = true; });
-                        window.addEventListener('touchend', () => { self.mouse.down = false; self.mouse.clicked = true; });
-                    },
-                    consumeClick() { const c = this.mouse.clicked; this.mouse.clicked = false; return c; }
-                },
+// Liste des jeux disponibles
+const GAMES_LIST = [
+    { id: 'pong', name: 'Pong', icon: '🏓', desc: 'Le classique tennis contre l\'IA', color: '#64b5f6' },
+    { id: 'snake', name: 'Snake', icon: '🐍', desc: 'Mangez les pommes et grandissez', color: '#81c784' },
+    { id: 'breakout', name: 'Breakout', icon: '🧱', desc: 'Cassez toutes les briques', color: '#ff7043' },
+    { id: 'memory', name: 'Memory', icon: '🃏', desc: 'Trouvez les paires de cartes', color: '#ba68c8' },
+    { id: 'racing', name: 'Racing', icon: '🏎️', desc: 'Évitez les voitures, course infinie', color: '#4fc3f7' },
+    { id: 'tictactoe', name: 'Morpion', icon: '⭕', desc: 'Tic-Tac-Toe contre l\'IA', color: '#f48fb1' }
+];
 
-                canvas: {
-                    setup(canvas) {
-                        const dpr = window.devicePixelRatio || 1;
-                        const rect = canvas.getBoundingClientRect();
-                        canvas.width = rect.width * dpr;
-                        canvas.height = rect.height * dpr;
-                        const ctx = canvas.getContext('2d');
-                        ctx.scale(dpr, dpr);
-                        return { ctx, w: rect.width, h: rect.height };
-                    }
-                }
-            },
+// ============================================================
+// NAVIGATION
+// ============================================================
 
-            // ======================================================================
-            // 2. NOYAU CENTRAL (Boucle de jeu, gestion de l'état, cycle de vie)
-            // ======================================================================
-            Core: {
-                canvas: null, ctx: null, w: 0, h: 0,
-                activeGame: null, score: 0, isRunning: false, lastTime: 0,
-                onGameOver: null, onScoreUpdate: null,
+function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    const navLink = document.getElementById('nav-' + sectionId);
+    if (navLink) navLink.classList.add('active');
 
-                init(canvasId) {
-                    this.canvas = document.getElementById(canvasId);
-                    window.addEventListener('resize', () => {
-                        if (this.activeGame) {
-                            const res = Arcade.Utils.canvas.setup(this.canvas);
-                            this.ctx = res.ctx; this.w = res.w; this.h = res.h;
-                            this.activeGame.resize?.(this.w, this.h);
-                        }
-                    });
-                    Arcade.Utils.input.init();
-                    this.onScoreUpdate = (val) => {
-                        this.score = val;
-                        const el = document.getElementById('modal-score');
-                        if(el) el.textContent = `Score: ${this.score}`;
-                    };
-                    this.onGameOver = (final) => {
-                        this.isRunning = false;
-                        Arcade.Utils.audio.play(180, 'sawtooth', 0.4, 0.2);
-                        setTimeout(() => {
-                            alert(`Fin de partie ! Score final : ${final}\nMeilleur score sauvegardé.`);
-                        }, 50);
-                    };
-                },
+    if (sectionId === 'scores') loadScores();
+}
 
-                start(gameId) {
-                    const gameDef = Arcade.Games[gameId];
-                    if (!gameDef) return console.error(`Module de jeu "${gameId}" introuvable.`);
-                    this.activeGame = gameDef;
-                    this.score = 0;
-                    this.isRunning = true;
-                    this.lastTime = performance.now();
-                    
-                    const res = Arcade.Utils.canvas.setup(this.canvas);
-                    this.ctx = res.ctx; this.w = res.w; this.h = res.h;
-                    
-                    this.activeGame.init(this.w, this.h, this.onGameOver.bind(this), this.onScoreUpdate.bind(this));
-                    this.activeGame.start?.();
-                    Arcade.Utils.audio.init();
-                    Arcade.Utils.audio.play(500, 'triangle', 0.2);
-                    this.loop();
-                },
+function generateGamesGrid() {
+    const grid = document.getElementById('gamesGrid');
+    grid.innerHTML = '';
+    
+    GAMES_LIST.forEach(game => {
+        const highScore = getHighScore(game.id);
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+            <div class="game-preview">${game.icon}</div>
+            <div class="game-info">
+                <h3>${game.name}</h3>
+                <p>${game.desc}</p>
+                <small style="color:#ffd54f">🏆 ${highScore > 0 ? highScore : '-'}</small>
+            </div>
+        `;
+        card.onclick = () => launchGame(game.id);
+        grid.appendChild(card);
+    });
+}
 
-                stop() {
-                    this.isRunning = false;
-                    if (this.activeGame) {
-                        this.activeGame.destroy?.();
-                        this.activeGame = null;
-                    }
-                },
+// ============================================================
+// LANCEMENT DES JEUX
+// ============================================================
 
-                loop(now = 0) {
-                    if (!this.isRunning) return;
-                    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
-                    this.lastTime = now;
+function launchGame(gameId) {
+    // Initialiser audio au premier clic
+    try {
+        if (!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {}
 
-                    this.activeGame.update(dt);
-                    this.ctx.clearRect(0, 0, this.w, this.h);
-                    this.activeGame.draw(this.ctx);
-                    
-                    // Reset frame-specific input state
-                    if (Arcade.Utils.input.mouse.clicked) Arcade.Utils.input.mouse.clicked = false;
-                    requestAnimationFrame((t) => this.loop(t));
-                }
-            },
+    currentGame = gameId;
+    isPaused = false;
+    isGameOver = false;
 
-            // ======================================================================
-            // 3. BIBLIOTHÈQUE DE JEUX (9 titres)
-            // ======================================================================
-            Games: {
-                // --- SNAKE ---
-                snake: {
-                    grid: 18, cols: 0, rows: 0, snake: [], dir: {x:1,y:0}, food: {x:0,y:0}, speed: 0.12, timer: 0,
-                    onOver: null, onScore: null,
-                    init(w,h,onOver,onScore) {
-                        this.cols = Math.floor(w/this.grid); this.rows = Math.floor(h/this.grid);
-                        this.snake = [{x:Math.floor(this.cols/2), y:Math.floor(this.rows/2)}];
-                        this.dir = {x:1,y:0}; this.timer = 0; this.placeFood();
-                        this.onOver = onOver; this.onScore = onScore; this.onScore(0);
-                    },
-                    placeFood() {
-                        do { this.food = {x:Arcade.Utils.randInt(0,this.cols-1), y:Arcade.Utils.randInt(0,this.rows-1)}; }
-                        while(this.snake.some(s=>s.x===this.food.x && s.y===this.food.y));
-                    },
-                    update(dt) {
-                        const k = Arcade.Utils.input.keys;
-                        if((k['arrowup']||k['w'])&&this.dir.y!==1) this.dir={x:0,y:-1};
-                        if((k['arrowdown']||k['s'])&&this.dir.y!==-1) this.dir={x:0,y:1};
-                        if((k['arrowleft']||k['a'])&&this.dir.x!==1) this.dir={x:-1,y:0};
-                        if((k['arrowright']||k['d'])&&this.dir.x!==-1) this.dir={x:1,y:0};
-                        this.timer += dt;
-                        if(this.timer < this.speed) return;
-                        this.timer = 0;
-                        const h = {x:this.snake[0].x+this.dir.x, y:this.snake[0].y+this.dir.y};
-                        if(h.x<0||h.x>=this.cols||h.y<0||h.y>=this.rows||this.snake.some(s=>s.x===h.x&&s.y===h.y)) {
-                            return this.onOver(this.snake.length-1);
-                        }
-                        this.snake.unshift(h);
-                        if(h.x===this.food.x && h.y===this.food.y) {
-                            Arcade.Utils.audio.play(600,'sine',0.08); this.placeFood(); this.speed=Math.max(0.04, this.speed-0.0015);
-                        } else this.snake.pop();
-                        this.onScore(this.snake.length-1);
-                    },
-                    draw(ctx) {
-                        ctx.fillStyle='#0b0d14'; ctx.fillRect(0,0,ctx.canvas.width/window.devicePixelRatio,ctx.canvas.height/window.devicePixelRatio);
-                        const g=this.grid;
-                        ctx.fillStyle='#b9fbc0'; this.snake.forEach((s,i)=>{
-                            ctx.fillRect(s.x*g+1, s.y*g+1, g-2, g-2);
-                            if(i===0){ctx.fillStyle='#ffd6a5'; ctx.fillRect(s.x*g, s.y*g, g, g);} else ctx.fillStyle='#b9fbc0';
-                        });
-                        ctx.fillStyle='#ff6b6b'; ctx.fillRect(this.food.x*g+4, this.food.y*g+4, g-8, g-8);
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+    const game = GAMES_LIST.find(g => g.id === gameId);
+    document.getElementById('modalTitle').textContent = game.icon + ' ' + game.name;
+    document.getElementById('modalScore').textContent = 'Score: 0';
+    document.getElementById('gameModal').classList.add('active');
+    
+    // Instructions
+    const instructions = getInstructions(gameId);
+    document.getElementById('instructions').innerHTML = instructions;
 
-                // --- TETRIS ---
-                tetris: {
-                    cols:10, rows:20, grid:0, board:[], piece:null, next:null, score:0, dropSpd:0.8, timer:0,
-                    onOver:null, onScore:null, ox:0, oy:0,
-                    shapes: [[[1,1,1,1]], [[1,1],[1,1]], [[0,1,0],[1,1,1]], [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]], [[1,0],[1,0],[1,1]], [[0,1],[0,1],[1,1]]],
-                    colors: ['#a0c4ff','#b9fbc0','#ffd6a5','#ff9999','#c8b6ff','#9bf6ff','#ffb3c6'],
-                    init(w,h,onOver,onScore){
-                        this.grid = Math.floor(Math.min(w/this.cols, h/this.rows));
-                        this.ox = (w-this.cols*this.grid)/2; this.oy = (h-this.rows*this.grid)/2;
-                        this.board = Array.from({length:this.rows}, ()=>Array(this.cols).fill(0));
-                        this.score=0; this.dropSpd=0.8; this.timer=0;
-                        this.piece=this.spawn(); this.next=this.spawn();
-                        this.onOver=onOver; this.onScore=onScore; this.onScore(0);
-                    },
-                    spawn(){ const i=Arcade.Utils.randInt(0,this.shapes.length-1); return {shape:this.shapes[i].map(r=>[...r]), x:3, y:0, c:this.colors[i]}; },
-                    rotate(m){ return m[0].map((_,i)=>m.map(r=>r[i]).reverse()); },
-                    collide(px,py,s){ return s.some((r,dy)=>r.some((v,dx)=>{ if(!v)return false; const nx=px+dx,ny=py+dy; return nx<0||nx>=this.cols||ny>=this.rows||(ny>=0&&this.board[ny][nx]); })); },
-                    lock(){
-                        this.piece.shape.forEach((r,dy)=>r.forEach((v,dx)=>{ if(v&&this.piece.y+dy>=0) this.board[this.piece.y+dy][this.piece.x+dx]=this.piece.c; }));
-                        let lines=0; for(let r=this.rows-1;r>=0;r--){ if(this.board[r].every(c=>c)){ this.board.splice(r,1); this.board.unshift(Array(this.cols).fill(0)); lines++; r++; } }
-                        if(lines){ Arcade.Utils.audio.play(800,'square',0.15); this.score+=lines*100; this.onScore(this.score); }
-                        this.piece=this.next; this.next=this.spawn();
-                        if(this.collide(this.piece.x, this.piece.y, this.piece.shape)) this.onOver(this.score);
-                    },
-                    update(dt){
-                        const k=Arcade.Utils.input.keys;
-                        if(k['arrowleft']){this.piece.x--;if(this.collide(this.piece.x,this.piece.y,this.piece.shape))this.piece.x++;}
-                        if(k['arrowright']){this.piece.x++;if(this.collide(this.piece.x,this.piece.y,this.piece.shape))this.piece.x--;}
-                        if(k['arrowdown']) this.timer+=dt*4;
-                        this.timer+=dt;
-                        if(this.timer>this.dropSpd){ this.timer=0; if(!this.collide(this.piece.x,this.piece.y+1,this.piece.shape))this.piece.y++; else this.lock(); }
-                        if(Arcade.Utils.input.consumeClick()||k[' ']){ const old=this.piece.shape.map(r=>[...r]); this.piece.shape=this.rotate(this.piece.shape); if(this.collide(this.piece.x,this.piece.y,this.piece.shape))this.piece.shape=old; }
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,ctx.canvas.width/window.devicePixelRatio,ctx.canvas.height/window.devicePixelRatio);
-                        const g=this.grid;
-                        for(let y=0;y<this.rows;y++) for(let x=0;x<this.cols;x++){ ctx.fillStyle=this.board[y][x]||'#151720'; ctx.fillRect(this.ox+x*g, this.oy+y*g, g-1, g-1); }
-                        if(this.piece){ ctx.fillStyle=this.piece.c; this.piece.shape.forEach((r,dy)=>r.forEach((v,dx)=>{ if(v) ctx.fillRect(this.ox+(this.piece.x+dx)*g, this.oy+(this.piece.y+dy)*g, g-1, g-1); })); }
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+    // Initialiser le jeu
+    initGame(gameId);
 
-                // --- PONG ---
-                pong: {
-                    w:0,h:0, pw:12,ph:70, br:7, p1y:0,p2y:0, bx:0,by:0, vx:3,vy:2, s1:0,s2:0, onOver:null,onScore:null,
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h; this.p1y=h/2-35; this.p2y=h/2-35; this.reset(); this.onOver=onOver; this.onScore=onScore; },
-                    reset(){ this.bx=this.w/2;this.by=this.h/2; this.vx=3*(Math.random()>0.5?1:-1); this.vy=2*(Math.random()>0.5?1:-1); },
-                    update(dt){
-                        const spd=350*dt; if(Arcade.Utils.input.keys['arrowup']||Arcade.Utils.input.keys['w']) this.p1y-=spd;
-                        if(Arcade.Utils.input.keys['arrowdown']||Arcade.Utils.input.keys['s']) this.p1y+=spd;
-                        this.p1y=Arcade.Utils.clamp(this.p1y,0,this.h-this.ph);
-                        const ai=this.p2y+this.ph/2; if(ai<this.by-10)this.p2y+=spd*0.8; else if(ai>this.by+10)this.p2y-=spd*0.8;
-                        this.p2y=Arcade.Utils.clamp(this.p2y,0,this.h-this.ph);
-                        this.bx+=this.vx; this.by+=this.vy;
-                        if(this.by-this.br<0||this.by+this.br>this.h){this.vy*=-1; Arcade.Utils.audio.play(300,'sine',0.05);}
-                        if(this.bx-this.br<this.pw && this.by>this.p1y && this.by<this.p1y+this.ph){this.vx=Math.abs(this.vx);this.vy+=Arcade.Utils.rand(-0.5,0.5); Arcade.Utils.audio.play(500,'triangle',0.05);}
-                        if(this.bx+this.br>this.w-this.pw && this.by>this.p2y && this.by<this.p2y+this.ph){this.vx=-Math.abs(this.vx); Arcade.Utils.audio.play(500,'triangle',0.05);}
-                        if(this.bx<0){this.s2++;this.reset(); if(this.s2>=5)this.onOver(this.s1); Arcade.Utils.audio.play(150,'square',0.3);}
-                        if(this.bx>this.w){this.s1++;this.reset(); this.onScore(this.s1); if(this.s1>=5)this.onOver(this.s1); Arcade.Utils.audio.play(150,'square',0.3);}
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0b0d17'; ctx.fillRect(0,0,this.w,this.h);
-                        ctx.setLineDash([8,8]); ctx.strokeStyle='#333'; ctx.beginPath(); ctx.moveTo(this.w/2,0); ctx.lineTo(this.w/2,this.h); ctx.stroke(); ctx.setLineDash([]);
-                        ctx.fillStyle='#b9fbc0'; ctx.fillRect(15,this.p1y,this.pw,this.ph);
-                        ctx.fillStyle='#ffd6a5'; ctx.fillRect(this.w-15-this.pw,this.p2y,this.pw,this.ph);
-                        ctx.beginPath(); ctx.arc(this.bx,this.by,this.br,0,Math.PI*2); ctx.fillStyle='#a0c4ff'; ctx.fill();
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+    // Démarrer la boucle
+    if (gameLoopId) cancelAnimationFrame(gameLoopId);
+    gameLoopId = requestAnimationFrame(mainLoop);
+}
 
-                // --- AIR HOCKEY ---
-                airHockey: {
-                    w:0,h:0, pr:22,br:13, p1x:0,p1y:0,p2x:0,p2y:0, bx:0,by:0, vx:0,vy:0, s1:0,s2:0, onOver:null,onScore:null,
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h; this.p1x=w/2;this.p1y=h*0.75; this.p2x=w/2;this.p2y=h*0.25; this.reset(); this.onOver=onOver; this.onScore=onScore; },
-                    reset(){ this.bx=this.w/2;this.by=this.h/2;this.vx=0;this.vy=0; Arcade.Utils.audio.play(200,'sine',0.2); },
-                    update(dt){
-                        const m=Arcade.Utils.input.mouse;
-                        this.p1x=Arcade.Utils.clamp(m.x, this.pr, this.w-this.pr);
-                        this.p1y=Arcade.Utils.clamp(m.y, this.h/2+this.pr, this.h-this.pr);
-                        this.p2x+=(this.bx-this.p2x)*0.035;
-                        this.p2y=Arcade.Utils.clamp(this.by*0.3+this.h*0.25, this.pr, this.h/2-this.pr);
-                        this.bx+=this.vx; this.by+=this.vy; this.vx*=0.996; this.vy*=0.996;
-                        if(this.bx-this.br<0||this.bx+this.br>this.w) this.vx*=-0.8;
-                        if(this.by-this.br<0||this.by+this.br>this.h){ this.vy*=-0.8; Arcade.Utils.audio.play(300,'sine',0.05); }
-                        if(this.by<0){ this.s2++; this.reset(); if(this.s2>=5)this.onOver(this.s1); }
-                        if(this.by>this.h){ this.s1++; this.reset(); this.onScore(this.s1); if(this.s1>=5)this.onOver(this.s1); }
-                        [{x:this.p1x,y:this.p1y},{x:this.p2x,y:this.p2y}].forEach(p=>{
-                            const dx=this.bx-p.x, dy=this.by-p.y, d=Math.hypot(dx,dy);
-                            if(d<this.pr+this.br){
-                                const nx=dx/d, ny=dy/d; this.bx=p.x+nx*(this.pr+this.br+1); this.by=p.y+ny*(this.pr+this.br+1);
-                                const rv=this.vx*nx+this.vy*ny; if(rv<0){ this.vx-=2*rv*nx; this.vy-=2*rv*ny; this.vx*=1.05; this.vy*=1.05; Arcade.Utils.audio.play(600,'triangle',0.08); }
-                            }
-                        });
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0f111a'; ctx.fillRect(0,0,this.w,this.h);
-                        ctx.strokeStyle='#2a3040'; ctx.lineWidth=3; ctx.strokeRect(4,4,this.w-8,this.h-8);
-                        ctx.beginPath(); ctx.moveTo(0,this.h/2); ctx.lineTo(this.w,this.h/2); ctx.stroke();
-                        ctx.fillStyle='#b9fbc0'; ctx.beginPath(); ctx.arc(this.p1x,this.p1y,this.pr,0,Math.PI*2); ctx.fill();
-                        ctx.fillStyle='#ffd6a5'; ctx.beginPath(); ctx.arc(this.p2x,this.p2y,this.pr,0,Math.PI*2); ctx.fill();
-                        ctx.fillStyle='#a0c4ff'; ctx.beginPath(); ctx.arc(this.bx,this.by,this.br,0,Math.PI*2); ctx.fill();
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+function closeGame() {
+    if (gameLoopId) cancelAnimationFrame(gameLoopId);
+    document.getElementById('gameModal').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+    currentGame = null;
+    generateGamesGrid();
+}
 
-                // --- MORPION (Tic-Tac-Toe) ---
-                morpion: {
-                    w:0,h:0,cell:0,board:[],turn:'X',over:false,onOver:null,onScore:null,
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h; this.cell=Math.floor(Math.min(w/3,h/3)); this.board=Array(9).fill(''); this.turn='X'; this.over=false; this.onOver=onOver; this.onScore=onScore; },
-                    check(b,p){ const w=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; return w.some(r=>r.every(i=>b[i]===p)); },
-                    aiMove(){
-                        const empty=this.board.map((v,i)=>v===''?i:-1).filter(i=>i!==-1); if(!empty.length) return -1;
-                        for(const p of ['O','X']) for(const i of empty){ this.board[i]=p; if(this.check(this.board,p)){this.board[i]='';return i;} this.board[i]=''; }
-                        if(this.board[4]==='') return 4; return empty[Arcade.Utils.randInt(0,empty.length-1)];
-                    },
-                    update(dt){
-                        if(this.over||!Arcade.Utils.input.consumeClick()) return;
-                        const mx=Arcade.Utils.input.mouse.x-(this.w-this.cell*3)/2, my=Arcade.Utils.input.mouse.y-(this.h-this.cell*3)/2;
-                        if(mx<0||my<0) return;
-                        const cx=Math.floor(mx/this.cell), cy=Math.floor(my/this.cell);
-                        if(cx>=0&&cx<3&&cy>=0&&cy<3){
-                            const idx=cy*3+cx;
-                            if(this.board[idx]===''){
-                                this.board[idx]='X'; Arcade.Utils.audio.play(400,'sine',0.08);
-                                if(this.check(this.board,'X')){this.over=true;this.onScore(1);this.onOver(1);return;}
-                                if(!this.board.includes('')){this.over=true;this.onScore(0);return;}
-                                const ai=this.aiMove(); if(ai!==-1){ this.board[ai]='O'; Arcade.Utils.audio.play(300,'sine',0.08); if(this.check(this.board,'O')){this.over=true;this.onScore(0);} }
-                            }
-                        }
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0b0d17'; ctx.fillRect(0,0,this.w,this.h);
-                        const ox=(this.w-this.cell*3)/2, oy=(this.h-this.cell*3)/2;
-                        ctx.strokeStyle='#2a3241'; ctx.lineWidth=5;
-                        ctx.beginPath(); ctx.moveTo(ox+this.cell,oy);ctx.lineTo(ox+this.cell,oy+this.cell*3);
-                        ctx.moveTo(ox+this.cell*2,oy);ctx.lineTo(ox+this.cell*2,oy+this.cell*3);
-                        ctx.moveTo(ox,oy+this.cell);ctx.lineTo(ox+this.cell*3,oy+this.cell);
-                        ctx.moveTo(ox,oy+this.cell*2);ctx.lineTo(ox+this.cell*3,oy+this.cell*2); ctx.stroke();
-                        ctx.font=`${this.cell*0.55}px VT323`; ctx.textAlign='center'; ctx.textBaseline='middle';
-                        for(let i=0;i<9;i++) if(this.board[i]){
-                            const cx=ox+(i%3)*this.cell+this.cell/2, cy=oy+Math.floor(i/3)*this.cell+this.cell/2;
-                            ctx.fillStyle=this.board[i]==='X'?'#b9fbc0':'#ffd6a5'; ctx.fillText(this.board[i],cx,cy);
-                        }
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+function togglePause() {
+    if (isGameOver || !currentGame) return;
+    isPaused = !isPaused;
+    
+    if (isPaused) {
+        showOverlay('⏸ Pause', 'Appuyez sur Reprendre pour continuer', '');
+        document.getElementById('btnResume').style.display = 'inline-block';
+    } else {
+        hideOverlay();
+    }
+}
 
-                // --- BLACKJACK ---
-                blackjack: {
-                    w:0,h:0,deck:[],ph:[],dh:[],phase:'play',score:100,onOver:null,onScore:null,
-                    suits:['♠','♥','♦','♣'],vals:['A','2','3','4','5','6','7','8','9','10','J','Q','K'],
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h; this.score=Arcade.Utils.storage.load('bj',100); this.onOver=onOver; this.onScore=onScore; this.deal(); },
-                    deal(){
-                        this.deck=[]; this.suits.forEach(s=>this.vals.forEach(v=>this.deck.push({v,s})));
-                        for(let i=0;i<300;i++){const j=Math.random()*this.deck.length|0;[this.deck[0],this.deck[j]]=[this.deck[j],this.deck[0]];}
-                        this.ph=[this.deck.pop(),this.deck.pop()]; this.dh=[this.deck.pop(),this.deck.pop()]; this.phase='play'; Arcade.Utils.input.consumeClick(); this.onScore(this.score);
-                    },
-                    calc(h){ let s=0,a=0; h.forEach(c=>{let v=parseInt(c.v)||10; if(c.v==='A'){a++;s+=11;}else s+=v;}); while(s>21&&a>0){s-=10;a--;} return s; },
-                    update(dt){
-                        if(Arcade.Utils.input.consumeClick()){
-                            const mx=Arcade.Utils.input.mouse.x, my=Arcade.Utils.input.mouse.y, cy=this.h-60;
-                            if(my>cy-15&&my<cy+35){
-                                if(mx>this.w/2-110&&mx<this.w/2-10&&this.phase==='play'){ this.ph.push(this.deck.pop()); Arcade.Utils.audio.play(500,'sine',0.08); if(this.calc(this.ph)>21)this.phase='end'; }
-                                else if(mx>this.w/2+10&&mx<this.w/2+110&&this.phase==='play'){ this.phase='end'; Arcade.Utils.audio.play(600,'square',0.15); }
-                                else if(this.phase==='end'){
-                                    const p=this.calc(this.ph), d=this.calc(this.dh); let msg='Perdu'; this.score-=10;
-                                    if(p<=21){ if(d>21||p>d){msg='Gagné';this.score+=20;} else if(p===d){msg='Égalité';this.score+=10;} }
-                                    Arcade.Utils.audio.play(msg==='Gagné'?800:250,'sine',0.25); Arcade.Utils.storage.save('bj',this.score); this.deal();
-                                }
-                            }
-                        }
-                        if(this.phase==='dealer'){
-                            // Simulation synchrone pour la boucle
-                            if(this.calc(this.dh)<17) this.dh.push(this.deck.pop());
-                            else this.phase='end';
-                        }
-                    },
-                    drawCard(ctx,c,x,y,up=true){
-                        ctx.fillStyle='#1e2130'; ctx.fillRect(x,y,38,55); ctx.strokeStyle='#333'; ctx.strokeRect(x,y,38,55);
-                        if(up){ ctx.fillStyle=(c.suit==='♥'||c.suit==='♦')?'#ff6b6b':'#e0e0e0'; ctx.font='14px VT323'; ctx.fillText(`${c.v}${c.suit}`,x+8,y+28); }
-                        else{ ctx.fillStyle='#0b0c10'; ctx.fillRect(x+4,y+4,30,47); }
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0a0c14'; ctx.fillRect(0,0,this.w,this.h);
-                        let px=this.w/2-35; this.ph.forEach((c,i)=>this.drawCard(ctx,c,px+i*40,this.h/2,true));
-                        this.dh.forEach((c,i)=>this.drawCard(ctx,c,px+i*40,35,this.phase==='end'));
-                        const cy=this.h-40; ctx.fillStyle='#333'; ctx.fillRect(this.w/2-110,cy-10,90,35); ctx.fillRect(this.w/2+20,cy-10,90,35);
-                        ctx.fillStyle='#fff'; ctx.font='18px VT323'; ctx.textAlign='center';
-                        if(this.phase==='play'){ ctx.fillText('Tirer',this.w/2-65,cy+8); ctx.fillText('Rester',this.w/2+65,cy+8); }
-                        else ctx.fillText('Continuer',this.w/2,cy+8);
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+function resumeGame() {
+    isPaused = false;
+    hideOverlay();
+}
 
-                // --- PUISSANCE 4 ---
-                puissance4: {
-                    w:0,h:0,cols:7,rows:6,grid:[],turn:'red',over:false,onOver:null,onScore:null,
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h; this.grid=Array.from({length:this.rows},()=>Array(this.cols).fill(null)); this.turn='red'; this.over=false; this.onOver=onOver; this.onScore=onScore; },
-                    drop(col,p){ for(let r=this.rows-1;r>=0;r--) if(!this.grid[r][col]){this.grid[r][col]=p;return r;} return -1; },
-                    check(r,c,p){
-                        const d=[[1,0],[0,1],[1,1],[1,-1]];
-                        return d.some(([dx,dy])=>{ let n=1; for(let k=-1;k<=1;k+=2){let x=c+dx*k,y=r+dy*k; while(x>=0&&x<this.cols&&y>=0&&y<this.rows&&this.grid[y][x]===p){n++;x+=dx*k;y+=dy*k;} } return n>=4; });
-                    },
-                    update(dt){
-                        if(this.over||!Arcade.Utils.input.consumeClick()) return;
-                        const cw=this.w/this.cols, col=Math.floor(Arcade.Utils.input.mouse.x/cw);
-                        if(col>=0&&col<this.cols){
-                            const row=this.drop(col, this.turn==='red'?'yellow':'red');
-                            this.turn='yellow'; Arcade.Utils.audio.play(400,'triangle',0.08);
-                            if(this.check(row,col,'red')){this.over=true;this.onScore(1);this.onOver(1);return;}
-                            // AI
-                            setTimeout(()=>{ const ac=Arcade.Utils.randInt(0,this.cols-1); const ar=this.drop(ac,'yellow'); if(ar!==-1){Arcade.Utils.audio.play(300,'sine',0.08); if(this.check(ar,ac,'yellow'))this.over=true; this.turn='red';} }, 350);
-                        }
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0b0d17'; ctx.fillRect(0,0,this.w,this.h);
-                        const cw=this.w/this.cols, ch=this.h/this.rows, r=cw*0.35;
-                        for(let y=0;y<this.rows;y++) for(let x=0;x<this.cols;x++){
-                            ctx.fillStyle='#1a1f2e'; ctx.beginPath(); ctx.arc(x*cw+cw/2, y*ch+ch/2, r, 0, Math.PI*2); ctx.fill();
-                            const v=this.grid[y][x]; if(v){ctx.fillStyle=v==='red'?'#ffd6a5':'#a0c4ff'; ctx.beginPath(); ctx.arc(x*cw+cw/2, y*ch+ch/2, r, 0, Math.PI*2); ctx.fill();}
-                        }
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+function restartGame() {
+    hideOverlay();
+    initGame(currentGame);
+    isGameOver = false;
+    isPaused = false;
+}
 
-                // --- SUBWAY RUNNER ---
-                subwayRunner: {
-                    w:0,h:0,lane:1,lanes:[],pj:{y:0,jp:0,vy:0},obs:[],coins:[],dist:0,speed:3,onOver:null,onScore:null,
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h;this.lane=1; const lw=w/3; this.lanes=[lw/2,lw*1.5,lw*2.5]; this.pj={y:h*0.65,jp:0,vy:0}; this.obs=[];this.coins=[];this.dist=0;this.speed=3; this.onOver=onOver; this.onScore=onScore; },
-                    update(dt){
-                        const k=Arcade.Utils.input.keys;
-                        if((k['arrowleft']||k['a'])&&this.lane>0){this.lane--;Arcade.Utils.audio.play(400,'sine',0.05);}
-                        if((k['arrowright']||k['d'])&&this.lane<2){this.lane++;Arcade.Utils.audio.play(400,'sine',0.05);}
-                        if((k['arrowup']||k[' ']||Arcade.Utils.input.mouse.clicked)&&this.pj.jp===0){this.pj.vy=11; Arcade.Utils.input.consumeClick();}
-                        this.pj.jp+=this.pj.vy; this.pj.vy-=0.55; if(this.pj.jp<0){this.pj.jp=0;this.pj.vy=0;}
-                        this.dist+=this.speed; this.speed+=0.0015;
-                        if(Math.random()<0.018*this.speed) this.obs.push({l:Arcade.Utils.randInt(0,2),y:-40});
-                        if(Math.random()<0.012*this.speed) this.coins.push({l:Arcade.Utils.randInt(0,2),y:-40});
-                        const px=this.lanes[this.lane], py=this.pj.y-this.pj.jp;
-                        this.obs.forEach((o,i)=>{ o.y+=this.speed; if(o.y>this.h+50)this.obs.splice(i,1); else if(o.y+30>py&&o.y<py+40&&Math.abs(px-this.lanes[o.l])<25){this.onOver(this.dist);this.speed=0;} });
-                        this.coins.forEach((c,i)=>{ c.y+=this.speed; if(c.y>this.h+50)this.coins.splice(i,1); else if(Math.abs(c.y-py)<25&&Math.abs(px-this.lanes[c.l])<25){this.dist+=40;this.coins.splice(i,1);Arcade.Utils.audio.play(800,'sine',0.08);} });
-                        this.onScore(Math.floor(this.dist));
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0f111a'; ctx.fillRect(0,0,this.w,this.h); const lw=this.w/3;
-                        for(let i=0;i<2;i++){ctx.strokeStyle='#222';ctx.beginPath();ctx.moveTo((i+1)*lw,0);ctx.lineTo((i+1)*lw,this.h);ctx.stroke();}
-                        ctx.fillStyle='#ff6b6b'; this.obs.forEach(o=>ctx.fillRect(this.lanes[o.l]-18, o.y, 36, 36));
-                        ctx.fillStyle='#ffd6a5'; this.coins.forEach(c=>{ctx.beginPath();ctx.arc(this.lanes[c.l],c.y,7,0,Math.PI*2);ctx.fill();});
-                        ctx.fillStyle='#b9fbc0'; ctx.fillRect(this.lanes[this.lane]-12, this.pj.y-this.pj.jp-28, 24, 38);
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                },
+function showOverlay(title, message, score) {
+    document.getElementById('overlayTitle').textContent = title;
+    document.getElementById('overlayMessage').textContent = message;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('overlay').classList.add('active');
+    
+    if (title === '💀 Game Over') {
+        document.getElementById('btnResume').style.display = 'none';
+    } else {
+        document.getElementById('btnResume').style.display = 'inline-block';
+    }
+}
 
-                // --- PAC-MAN ---
-                pacman: {
-                    w:0,h:0,ts:20,map:[],pl:{x:10,y:10,d:'right'},ghosts:[],dots:0,score:0,onOver:null,onScore:null,
-                    layout:["11111111111111111111","10000000011000000001","10111011100111101101","10100000000000011101","10101101111010100001","10000000000010111001","10110111011100011001","10100001000111000001","10101111011111101101","10000000000000001001","11111111111111111111"],
-                    init(w,h,onOver,onScore){ this.w=w;this.h=h; this.ts=Math.floor(Math.min(w/this.layout[0].length,h/this.layout.length)); this.map=this.layout.map(r=>r.split('').map(Number)); this.dots=0;this.score=0; for(let y=0;y<this.map.length;y++) for(let x=0;x<this.map[y].length;x++) if(this.map[y][x]===0) this.dots++; this.pl={x:9,y:7,d:'right'}; this.ghosts=[{x:9,y:5,d:'up',c:'#ff9999'},{x:10,y:5,d:'up',c:'#c8b6ff'}]; this.onOver=onOver; this.onScore=onScore; },
-                    move(e){
-                        const dirs={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}; const d=dirs[e.d]; const nx=e.x+d.x,ny=e.y+d.y;
-                        if(this.map[ny]&&this.map[ny][nx]!==1){e.x=nx;e.y=ny;}
-                        else{ if(e===this.pl) e.d=['up','down','left','right'].find(k=>{const t=dirs[k];return this.map[e.y+t.y]&&this.map[e.y+t.y][e.x+t.x]!==1;})||'right'; else e.d=['up','down','left','right'][Arcade.Utils.randInt(0,3)]; }
-                    },
-                    update(dt){
-                        if(dt>0.12){
-                            this.move(this.pl);
-                            if(this.map[this.pl.y][this.pl.x]===0){this.map[this.pl.y][this.pl.x]=2;this.dots--;this.score+=10;this.onScore(this.score);Arcade.Utils.audio.play(440,'sine',0.04);}
-                            this.ghosts.forEach(g=>this.move(g));
-                            if(this.ghosts.some(g=>g.x===this.pl.x&&g.y===this.pl.y)) this.onOver(this.score);
-                            if(this.dots<=0) this.onOver(this.score);
-                        }
-                        const k=Arcade.Utils.input.keys;
-                        if(k['arrowup']||k['w']) this.pl.d='up'; if(k['arrowdown']||k['s']) this.pl.d='down'; if(k['arrowleft']||k['a']) this.pl.d='left'; if(k['arrowright']||k['d']) this.pl.d='right';
-                    },
-                    draw(ctx){
-                        ctx.fillStyle='#0b0c10'; ctx.fillRect(0,0,this.w,this.h);
-                        const t=this.ts,ox=(this.w-this.layout[0].length*t)/2,oy=(this.h-this.layout.length*t)/2;
-                        for(let y=0;y<this.map.length;y++) for(let x=0;x<this.map[y].length;x++){
-                            if(this.map[y][x]===1){ctx.fillStyle='#1e2740';ctx.fillRect(ox+x*t,oy+y*t,t,t);}
-                            if(this.map[y][x]===0){ctx.fillStyle='#ffd6a5';ctx.fillRect(ox+x*t+t/2-2,oy+y*t+t/2-2,4,4);}
-                        }
-                        ctx.fillStyle='#ffd6a5'; ctx.beginPath(); let a=0; if(this.pl.d==='up')a=1.5*Math.PI;else if(this.pl.d==='down')a=0.5*Math.PI;else if(this.pl.d==='left')a=Math.PI;
-                        ctx.arc(ox+this.pl.x*t+t/2, oy+this.pl.y*t+t/2, t*0.4, a+0.3, a+6); ctx.lineTo(ox+this.pl.x*t+t/2, oy+this.pl.y*t+t/2); ctx.fill();
-                        this.ghosts.forEach(g=>{ctx.fillStyle=g.c;ctx.fillRect(ox+g.x*t+2, oy+g.y*t+2, t-4, t-4);});
-                    },
-                    start(){}, resize(w,h){ this.init(w,h,this.onOver,this.onScore); }, destroy(){}
-                }
-            },
+function hideOverlay() {
+    document.getElementById('overlay').classList.remove('active');
+}
 
-            // ======================================================================
-            // 4. INTERFACE & INITIALISATION
-            // ======================================================================
-            UI: {
-                init() {
-                    const grid = document.getElementById('game-grid');
-                    const modal = document.getElementById('game-modal');
-                    const btnHome = document.getElementById('btn-home');
-                    const btnFS = document.getElementById('btn-fullscreen');
-                    const btnQuit = document.getElementById('btn-quit');
-                    const modalTitle = document.getElementById('modal-title');
+function endGame(score) {
+    isGameOver = true;
+    saveScore(currentGame, score);
+    showOverlay('💀 Game Over', 'Votre score final:', score);
+    playSound('gameover');
+}
 
-                    const games = [
-                        {id:'snake',t:'Snake',d:'Collectez les fragments, évitez les murs et votre propre queue.'},
-                        {id:'tetris',t:'Tetris',d:'Empilez les blocs avec précision. Effacez les lignes pour marquer.'},
-                        {id:'pong',t:'Pong',d:'Affrontez une IA réactive. Vitesse et réflexes exigés.'},
-                        {id:'airHockey',t:'Air Hockey',d:'Physique fluide. Contrôlez la palette pour marquer le premier but.'},
-                        {id:'morpion',t:'Morpion',d:'Stratégie pure. Affrontez l\'ordinateur sur un plateau minimaliste.'},
-                        {id:'blackjack',t:'Blackjack',d:'Rapprochez-vous de 21 sans dépasser. Le croupier vous attend.'},
-                        {id:'puissance4',t:'Puissance 4',d:'Alignez quatre jetons. Bloquez l\'adversaire pour remporter la manche.'},
-                        {id:'subwayRunner',t:'Subway Runner',d:'Courez sur trois voies. Évitez les obstacles et collectez les éclats.'},
-                        {id:'pacman',t:'Pac-Man',d:'Parcourez le labyrinthe, collectez les pastilles, fuyez les fantômes.'}
-                    ];
+// ============================================================
+// AUDIO
+// ============================================================
 
-                    games.forEach(g => {
-                        const card = document.createElement('article');
-                        card.className = 'game-card';
-                        card.innerHTML = `<div class="card-tag">Jouable</div><div class="card-title">${g.t}</div><p class="card-desc">${g.d}</p>`;
-                        card.onclick = () => {
-                            modalTitle.textContent = g.t;
-                            modal.classList.add('active');
-                            btnFS.disabled = false;
-                            Arcade.Core.start(g.id);
-                        };
-                        grid.appendChild(card);
-                    });
-
-                    const closeModal = () => {
-                        modal.classList.remove('active');
-                        btnFS.disabled = true;
-                        Arcade.Core.stop();
-                        if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-                    };
-                    btnQuit.onclick = closeModal;
-                    btnHome.onclick = closeModal;
-                    btnFS.onclick = () => { if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen().catch(()=>{}); };
-
-                    Arcade.Core.init('game-canvas');
-                }
-            }
-        };
-
-        // Démarrage sécurisé une fois le DOM prêt
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', Arcade.UI.init);
-        } else {
-            Arcade.UI.init();
+function playSound(type) {
+    if (!window.audioCtx) return;
+    try {
+        const osc = window.audioCtx.createOscillator();
+        const gain = window.audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(window.audioCtx.destination);
+        
+        switch(type) {
+            case 'click':
+                osc.frequency.value = 800;
+                gain.gain.value = 0.1;
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+                break;
+            case 'success':
+                osc.frequency.value = 600;
+                gain.gain.value = 0.15;
+                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+                break;
+            case 'error':
+                osc.frequency.value = 200;
+                gain.gain.value = 0.15;
+                osc.type = 'square';
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+                break;
+            case 'gameover':
+                osc.frequency.value = 150;
+                gain.gain.value = 0.2;
+                osc.type = 'sawtooth';
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+                break;
         }
-    </script>
+    } catch(e) {}
+}
+
+// ============================================================
+// STOCKAGE SCORES
+// ============================================================
+
+function saveScore(game, score) {
+    let scores = JSON.parse(localStorage.getItem('arcade_scores') || '{}');
+    if (!scores[game]) scores[game] = [];
+    scores[game].push({ score: score, date: Date.now() });
+    scores[game].sort((a, b) => b.score - a.score);
+    scores[game] = scores[game].slice(0, 10);
+    localStorage.setItem('arcade_scores', JSON.stringify(scores));
+}
+
+function getHighScore(game) {
+    let scores = JSON.parse(localStorage.getItem('arcade_scores') || '{}');
+    return scores[game] && scores[game][0] ? scores[game][0].score : 0;
+}
+
+function loadScores() {
+    let scores = JSON.parse(localStorage.getItem('arcade_scores') || '{}');
+    const container = document.getElementById('scoresContainer');
+    
+    let flatScores = [];
+    for (let [game, list] of Object.entries(scores)) {
+        const info = GAMES_LIST.find(g => g.id === game);
+        const name = info ? info.icon + ' ' + info.name : game;
+        list.forEach((s, i) => flatScores.push({ rank: i+1, game: name, score: s.score }));
+    }
+    flatScores.sort((a, b) => b.score - a.score).slice(0, 20);
+    
+    if (flatScores.length === 0) {
+        container.innerHTML = '<div class="no-scores"><h3>🏆 Aucun score</h3><p>Jouez pour établir vos premiers records!</p></div>';
+        return;
+    }
+    
+    let html = '<table class="scores-table"><thead><tr><th>#</th><th>Jeu</th><th>Score</th></tr></thead><tbody>';
+    flatScores.forEach((s, i) => {
+        html += `<tr><td>#${i+1}</td><td>${s.game}</td><td style="color:#ffd54f;font-weight:bold">${s.score}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function getInstructions(id) {
+    const instr = {
+        pong: '<strong>🏓 Pong:</strong> Déplacez la souris ou utilisez ← → | Premier à 7 points gagne',
+        snake: '<strong>🐍 Snake:</strong> Flèches directionnelles ou ZQSD | Mangez les pommes rouges (+10) et étoiles (+50)',
+        breakout: '<strong>🧱 Breakout:</strong> Souris ou ← → | Ne laissez pas tomber la balle',
+        memory: '<strong>🃏 Memory:</strong> Cliquez sur les cartes pour trouver les paires',
+        racing: '<strong>🏎️ Racing:</strong> ← → changer de voie | Évitez les voitures rouges',
+        tictactoe: '<strong>⭕ Morpion:</strong> Cliquez pour placer votre symbole | Alignez 3'
+    };
+    return instr[id] || '';
+}
+
+// ============================================================
+// BOUCLE DE JEU PRINCIPALE
+// ============================================================
+
+function mainLoop() {
+    if (!currentGame) return;
+    
+    if (!isPaused && !isGameOver) {
+        updateGame(currentGame);
+        renderGame(currentGame);
+        updateScoreDisplay();
+    } else if (isPaused) {
+        renderGame(currentGame); // Afficher même en pause
+    }
+    
+    gameLoopId = requestAnimationFrame(mainLoop);
+}
+
+function updateScoreDisplay() {
+    if (window.gameState && window.gameState.score !== undefined) {
+        document.getElementById('modalScore').textContent = 'Score: ' + window.gameState.score;
+    }
+}
+
+// ============================================================
+// INPUT GLOBAL
+// ============================================================
+
+document.addEventListener('keydown', function(e) {
+    if (!currentGame) return;
+    
+    if (e.key === 'Escape' || e.key === ' ') {
+        e.preventDefault();
+        togglePause();
+        return;
+    }
+    
+    handleKeyDown(currentGame, e.key);
+});
+
+document.addEventListener('mousemove', function(e) {
+    if (!currentGame || isPaused || isGameOver) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    
+    handleMouseMove(currentGame, x, y);
+});
+
+canvas.addEventListener('click', function(e) {
+    if (!currentGame || isPaused || isGameOver) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    
+    handleClick(currentGame, x, y);
+});
+
+// ============================================================
+// ===================== PONG ================================
+// ============================================================
+
+function initPong() {
+    window.gameState = {
+        ballX: 400, ballY: 300, ballVX: 5, ballVY: 3,
+        paddle1Y: 250, paddle2Y: 250,
+        score1: 0, score2: 0,
+        paddleHeight: 90, paddleWidth: 12,
+        ballSize: 10
+    };
+}
+
+function updatePong() {
+    const s = window.gameState;
+    
+    // Mouvement balle
+    s.ballX += s.ballVX;
+    s.ballY += s.ballVY;
+    
+    // Rebond haut/bas
+    if (s.ballY <= s.ballSize || s.ballY >= 600 - s.ballSize) {
+        s.ballVY *= -1;
+        playSound('click');
+    }
+    
+    // Rebond raquette gauche (joueur)
+    if (s.ballX <= 45 + s.paddleWidth && 
+        s.ballY >= s.paddle1Y - s.paddleHeight/2 && 
+        s.ballY <= s.paddle1Y + s.paddleHeight/2 &&
+        s.ballVX < 0) {
+        s.ballVX *= -1.05;
+        s.ballVY += (s.ballY - s.paddle1Y) * 0.08;
+        s.ballX = 45 + s.paddleWidth + s.ballSize;
+        playSound('success');
+    }
+    
+    // Rebond raquette droite (IA)
+    if (s.ballX >= 755 - s.paddleWidth - s.ballSize && 
+        s.ballY >= s.paddle2Y - s.paddleHeight/2 && 
+        s.ballY <= s.paddle2Y + s.paddleHeight/2 &&
+        s.ballVX > 0) {
+        s.ballVX *= -1.05;
+        s.ballVY += (s.ballY - s.paddle2Y) * 0.08;
+        s.ballX = 755 - s.paddleWidth - s.ballSize;
+    }
+    
+    // IA suit la balle
+    const targetY = s.ballY;
+    s.paddle2Y += (targetY - s.paddle2Y) * 0.08;
+    s.paddle2Y = Math.max(s.paddleHeight/2, Math.min(600 - s.paddleHeight/2, s.paddle2Y));
+    
+    // Points
+    if (s.ballX < 0) {
+        s.score2++;
+        resetBall(-1);
+        playSound('error');
+    }
+    if (s.ballX > 800) {
+        s.score1++;
+        resetBall(1);
+        playSound('success');
+    }
+    
+    // Victoire
+    if (s.score1 >= 7 || s.score2 >= 7) {
+        endGame(Math.max(s.score1, s.score2) * 100);
+    }
+    
+    window.gameState.score = Math.max(s.score1, s.score2) * 100;
+}
+
+function resetBall(dir) {
+    const s = window.gameState;
+    s.ballX = 400;
+    s.ballY = 300;
+    s.ballVX = 5 * dir;
+    s.ballVY = (Math.random() - 0.5) * 6;
+}
+
+function renderPong() {
+    const s = window.gameState;
+    
+    // Fond
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Ligne centrale
+    ctx.setLineDash([10, 10]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(400, 0);
+    ctx.lineTo(400, 600);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Traînée balle
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    ctx.arc(s.ballX - s.ballVX, s.ballY - s.ballVY, s.ballSize, 0, Math.PI*2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    
+    // Balle
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(s.ballX, s.ballY, s.ballSize, 0, Math.PI*2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Raquette joueur
+    ctx.shadowColor = '#64b5f6';
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = '#64b5f6';
+    roundRect(ctx, 30, s.paddle1Y - s.paddleHeight/2, s.paddleWidth, s.paddleHeight, 6);
+    ctx.shadowBlur = 0;
+    
+    // Raquette IA
+    ctx.shadowColor = '#f48fb1';
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = '#f48fb1';
+    roundRect(ctx, 755 - s.paddleWidth, s.paddle2Y - s.paddleHeight/2, s.paddleWidth, s.paddleHeight, 6);
+    ctx.shadowBlur = 0;
+    
+    // Scores
+    ctx.font = 'bold 60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(100,181,246,0.3)';
+    ctx.fillText(s.score1.toString(), 200, 320);
+    ctx.fillStyle = 'rgba(244,143,177,0.3)';
+    ctx.fillText(s.score2.toString(), 600, 320);
+}
+
+function handleKeyDown_Pong(key) {
+    const k = key.toLowerCase();
+    if (k === 'arrowup' || k === 'z' || k === 'w') {
+        window.gameState.paddle1Y -= 25;
+    }
+    if (k === 'arrowdown' || k === 's') {
+        window.gameState.paddle1Y += 25;
+    }
+    window.gameState.paddle1Y = Math.max(45, Math.min(555, window.gameState.paddle1Y));
+}
+
+function handleMouseMove_Pong(x, y) {
+    window.gameState.paddle1Y = y;
+}
+
+// ============================================================
+// ===================== SNAKE ===============================
+// ============================================================
+
+function initSnake() {
+    window.gameState = {
+        snake: [{x:10,y:10},{x:9,y:10},{x:8,y:10}],
+        dir: {x:1,y:0},
+        nextDir: {x:1,y:0},
+        food: {x:15,y:10},
+        specialFood: null,
+        specialTimer: 0,
+        gridSize: 20,
+        speed: 8,
+        moveTimer: 0,
+        score: 0
+    };
+    placeFood();
+}
+
+function placeFood() {
+    const s = window.gameState;
+    do {
+        s.food = {
+            x: Math.floor(Math.random() * 38) + 1,
+            y: Math.floor(Math.random() * 28) + 1
+        };
+    } while (s.snake.some(seg => seg.x === s.food.x && seg.y === s.food.y));
+}
+
+function updateSnake() {
+    const s = window.gameState;
+    s.moveTimer++;
+    
+    if (s.moveTimer >= 60 / s.speed) {
+        s.moveTimer = 0;
+        s.dir = {...s.nextDir};
+        
+        const head = {
+            x: s.snake[0].x + s.dir.x,
+            y: s.snake[0].y + s.dir.y
+        };
+        
+        // Collision mur
+        if (head.x < 0 || head.x >= 39 || head.y < 0 || head.y >= 29 ||
+            s.snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+            endGame(s.score);
+            return;
+        }
+        
+        s.snake.unshift(head);
+        
+        // Manger nourriture normale
+        if (head.x === s.food.x && head.y === s.food.y) {
+            s.score += 10;
+            s.speed = Math.min(s.speed + 0.2, 15);
+            placeFood();
+            playSound('success');
+            
+            // Chance nourriture spéciale
+            if (Math.random() < 0.2) {
+                s.specialFood = {
+                    x: Math.floor(Math.random() * 38) + 1,
+                    y: Math.floor(Math.random() * 28) + 1
+                };
+                s.specialTimer = 200;
+            }
+        } else {
+            s.snake.pop();
+        }
+        
+        // Manger spéciale
+        if (s.specialFood && head.x === s.specialFood.x && head.y === s.specialFood.y) {
+            s.score += 50;
+            s.specialFood = null;
+            playSound('success');
+        }
+    }
+    
+    // Timer spéciale
+    if (s.specialFood) {
+        s.specialTimer--;
+        if (s.specialTimer <= 0) s.specialFood = null;
+    }
+}
+
+function renderSnake() {
+    const s = window.gameState;
+    const gs = s.gridSize;
+    
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Grille subtile
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    for (let i = 0; i <= 39; i++) {
+        ctx.beginPath(); ctx.moveTo(i*gs, 0); ctx.lineTo(i*gs, 600); ctx.stroke();
+    }
+    for (let i = 0; i <= 29; i++) {
+        ctx.beginPath(); ctx.moveTo(0, i*gs); ctx.lineTo(780, i*gs); ctx.stroke();
+    }
+    
+    // Nourriture spéciale
+    if (s.specialFood) {
+        const pulse = 1 + Math.sin(Date.now()/100) * 0.3;
+        ctx.shadowColor = '#f48fb1';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#f48fb1';
+        ctx.beginPath();
+        ctx.arc(s.specialFood.x*gs + gs/2, s.specialFood.y*gs + gs/2, gs/2*pulse, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+    
+    // Nourriture normale
+    ctx.shadowColor = '#81c784';
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = '#81c784';
+    ctx.beginPath();
+    ctx.arc(s.food.x*gs + gs/2, s.food.y*gs + gs/2, gs/3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Serpent
+    s.snake.forEach((seg, i) => {
+        const x = seg.x * gs + 2;
+        const y = seg.y * gs + 2;
+        const size = gs - 4;
+        
+        if (i === 0) {
+            // Tête
+            ctx.shadowColor = '#64b5f6';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#64b5f6';
+            roundRect(ctx, x, y, size, size, 5);
+            ctx.shadowBlur = 0;
+            
+            // Yeux
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(x+size/3, y+size/3, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x+size*2/3, y+size*2/3, 3, 0, Math.PI*2); ctx.fill();
+        } else {
+            // Corps avec dégradé
+            const alpha = 1 - (i / s.snake.length) * 0.5;
+            ctx.fillStyle = `rgba(79, 195, 247, ${alpha})`;
+            roundRect(ctx, x + i*0.5, y + i*0.5, size - i, size - i, 3);
+        }
+    });
+    
+    // Score
+    ctx.font = 'bold 20px Arial';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Score: ' + s.score, 15, 30);
+    ctx.fillText('Longueur: ' + s.snake.length, 750, 30);
+}
+
+function handleKeyDown_Snake(key) {
+    const s = window.gameState;
+    const k = key.toLowerCase();
+    
+    if ((k === 'arrowup' || k === 'w' || k === 'z') && s.dir.y !== 1) {
+        s.nextDir = {x:0, y:-1};
+    }
+    if ((k === 'arrowdown' || k === 's') && s.dir.y !== -1) {
+        s.nextDir = {x:0, y:1};
+    }
+    if ((k === 'arrowleft' || k === 'a' || k === 'q') && s.dir.x !== 1) {
+        s.nextDir = {x:-1, y:0};
+    }
+    if ((k === 'arrowright' || k === 'd') && s.dir.x !== -1) {
+        s.nextDir = {x:1, y:0};
+    }
+}
+
+// ============================================================
+// ==================== BREAKOUT =============================
+// ============================================================
+
+function initBreakout() {
+    window.gameState = {
+        paddle: {x:350, y:560, w:100, h:15},
+        ball: {x:400, y:500, r:8, vx:4, vy:-4},
+        bricks: [],
+        score: 0,
+        lives: 3,
+        started: false
+    };
+    
+    // Créer briques
+    const colors = ['#ef5350', '#ffa726', '#66bb6a', '#42a5f5', '#ab47bc'];
+    for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 10; col++) {
+            window.gameState.bricks.push({
+                x: col * 76 + 35,
+                y: row * 30 + 60,
+                w: 70,
+                h: 25,
+                alive: true,
+                color: colors[row]
+            });
+        }
+    }
+}
+
+function updateBreakout() {
+    const s = window.gameState;
+    
+    if (!s.started) return;
+    
+    // Mouvement balle
+    s.ball.x += s.ball.vx;
+    s.ball.y += s.ball.vy;
+    
+    // Rebond murs
+    if (s.ball.x <= s.ball.r || s.ball.x >= 800 - s.ball.r) s.ball.vx *= -1;
+    if (s.ball.y <= s.ball.r) s.ball.vy *= -1;
+    
+    // Rebond palette
+    if (s.ball.y >= s.paddle.y - s.ball.r - s.paddle.h/2 &&
+        s.ball.x >= s.paddle.x - s.paddle.w/2 &&
+        s.ball.x <= s.paddle.x + s.paddle.w/2 &&
+        s.ball.vy > 0) {
+        s.ball.vy = -Math.abs(s.ball.vy);
+        const hitPos = (s.ball.x - s.paddle.x) / (s.paddle.w/2);
+        s.ball.vx = hitPos * 6;
+        playSound('click');
+    }
+    
+    // Balle tombe
+    if (s.ball.y > 620) {
+        s.lives--;
+        if (s.lives <= 0) {
+            endGame(s.score);
+            return;
+        }
+        resetBallBreakout();
+    }
+    
+    // Collisions briques
+    s.bricks.forEach(b => {
+        if (b.alive && 
+            s.ball.x + s.ball.r > b.x && s.ball.x - s.ball.r < b.x + b.w &&
+            s.ball.y + s.ball.r > b.y && s.ball.y - s.ball.r < b.y + b.h) {
+            b.alive = false;
+            s.score += 10;
+            s.ball.vy *= -1;
+            playSound('success');
+        }
+    });
+    
+    // Victoire
+    if (s.bricks.every(b => !b.alive)) {
+        s.score += 500;
+        initBreakout();
+    }
+    
+    window.gameState.score = s.score;
+}
+
+function resetBallBreakout() {
+    const s = window.gameState;
+    s.ball = {x: s.paddle.x, y: s.paddle.y - 30, r:8, vx: 4*(Math.random()>0.5?1:-1), vy:-4};
+    s.started = false;
+}
+
+function renderBreakout() {
+    const s = window.gameState;
+    
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Briques
+    s.bricks.forEach(b => {
+        if (b.alive) {
+            ctx.fillStyle = b.color;
+            shadow(ctx, b.color, 8);
+            roundRect(ctx, b.x, b.y, b.w, b.h, 4);
+        }
+    });
+    ctx.shadowBlur = 0;
+    
+    // Palette
+    ctx.fillStyle = '#64b5f6';
+    shadow(ctx, '#64b5f6', 12);
+    roundRect(ctx, s.paddle.x - s.paddle.w/2, s.paddle.y - s.paddle.h/2, s.paddle.w, s.paddle.h, 8);
+    ctx.shadowBlur = 0;
+    
+    // Balle
+    ctx.fillStyle = '#fff';
+    shadow(ctx, '#fff', 15);
+    ctx.beginPath();
+    ctx.arc(s.ball.x, s.ball.y, s.ball.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Message démarrage
+    if (!s.started) {
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillText('Cliquez pour commencer', 400, 300);
+    }
+    
+    // UI
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Score: ' + s.score + '   ❤️'.repeat(s.lives), 20, 30);
+}
+
+function handleMouseMove_Breakout(x, y) {
+    window.gameState.paddle.x = x;
+}
+
+function handleClick_Breakout() {
+    if (!window.gameState.started) {
+        window.gameState.started = true;
+    }
+}
+
+// ============================================================
+// ===================== MEMORY ===============================
+// ============================================================
+
+function initMemory() {
+    const emojis = ['🎮','🎲','🎯','🎪','🎨','🎭','🎵','🎬'];
+    const pairs = [...emojis, ...emojis];
+    
+    // Shuffle
+    for (let i = pairs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+    }
+    
+    window.gameState = {
+        cards: pairs.map((emoji, i) => ({
+            emoji: emoji,
+            x: 120 + (i % 4) * 160,
+            y: 100 + Math.floor(i / 4) * 130,
+            flipped: false,
+            matched: false
+        })),
+        firstCard: null,
+        canClick: true,
+        moves: 0,
+        score: 0,
+        found: 0
+    };
+}
+
+function updateMemory() {}
+
+function renderMemory() {
+    const s = window.gameState;
+    
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ce93d8';
+    ctx.fillText('🃏 Memory', 400, 50);
+    
+    s.cards.forEach(card => {
+        const size = 120;
+        
+        if (card.matched) {
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = '#81c784';
+            roundRect(ctx, card.x - size/2, card.y - size/2, size, size, 15);
+            ctx.globalAlpha = 1;
+            ctx.font = '50px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(card.emoji, card.x, card.y);
+        } else if (card.flipped) {
+            ctx.fillStyle = '#fff';
+            shadow(ctx, '#fff', 12);
+            roundRect(ctx, card.x - size/2, card.y - size/2, size, size, 15);
+            ctx.shadowBlur = 0;
+            ctx.font = '50px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(card.emoji, card.x, card.y);
+        } else {
+            ctx.fillStyle = 'rgba(100,181,246,0.2)';
+            roundRect(ctx, card.x - size/2, card.y - size/2, size, size, 15);
+            ctx.font = '40px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillText('?', card.x, card.y);
+        }
+    });
+    
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#aaa';
+    ctx.fillText(`Coups: ${s.moves}  |  Trouvés: ${s.found}/8`, 400, 570);
+    
+    if (s.found === 8) {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(200, 220, 400, 160);
+        ctx.font = 'bold 36px Arial';
+        ctx.fillStyle = '#81c784';
+        ctx.fillText('🎉 Bravo!', 400, 290);
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('Score: ' + s.score, 400, 340);
+    }
+}
+
+function handleClick_Memory(x, y) {
+    const s = window.gameState;
+    if (!s.canClick || s.found === 8) return;
+    
+    const card = s.cards.find(c => 
+        !c.matched && !c.flipped && 
+        Math.abs(x - c.x) < 60 && Math.abs(y - c.y) < 65
+    );
+    
+    if (card) {
+        card.flipped = true;
+        playSound('click');
+        
+        if (!s.firstCard) {
+            s.firstCard = card;
+        } else {
+            s.moves++;
+            s.canClick = false;
+            
+            if (s.firstCard.emoji === card.emoji) {
+                // Match!
+                setTimeout(() => {
+                    s.firstCard.matched = true;
+                    card.matched = true;
+                    s.found++;
+                    s.score += 50;
+                    s.canClick = true;
+                    s.firstCard = null;
+                    
+                    if (s.found === 8) {
+                        s.score += 200;
+                        setTimeout(() => endGame(s.score), 500);
+                    }
+                    playSound('success');
+                }, 400);
+            } else {
+                // Pas match
+                setTimeout(() => {
+                    s.firstCard.flipped = false;
+                    card.flipped = false;
+                    s.canClick = true;
+                    s.firstCard = null;
+                }, 800);
+            }
+        }
+    }
+}
+
+// ============================================================
+// ===================== RACING ===============================
+// ============================================================
+
+function initRacing() {
+    window.gameState = {
+        playerLane: 1,
+        lanes: [180, 400, 620],
+        speed: 6,
+        distance: 0,
+        obstacles: [],
+        coins: [],
+        lives: 3,
+        score: 0,
+        roadOffset: 0
+    };
+}
+
+function updateRacing() {
+    const s = window.gameState;
+    
+    s.distance += s.speed / 10;
+    s.speed = Math.min(s.speed + 0.008, 16);
+    s.roadOffset = (s.roadOffset + s.speed) % 50;
+    
+    // Spawn obstacles
+    if (Math.random() < 0.02 * s.speed / 8) {
+        const lane = Math.floor(Math.random() * 3);
+        s.obstacles.push({
+            lane: lane,
+            x: s.lanes[lane],
+            y: -80,
+            type: Math.random() > 0.5 ? 'car' : 'cone'
+        });
+    }
+    
+    // Spawn coins
+    if (Math.random() < 0.015) {
+        const lane = Math.floor(Math.random() * 3);
+        s.coins.push({
+            lane: lane,
+            x: s.lanes[lane],
+            y: -50
+        });
+    }
+    
+    // Update obstacles
+    s.obstacles = s.obstacles.filter(o => {
+        o.y += s.speed;
+        if (o.y > 650) return false;
+        
+        // Collision
+        if (o.lane === s.playerLane && o.y > 450 && o.y < 550) {
+            s.lives--;
+            playSound('error');
+            if (s.lives <= 0) {
+                endGame(Math.floor(s.distance) + s.score);
+            }
+            return true;
+        }
+        return false;
+    });
+    
+    // Update coins
+    s.coins = s.coins.filter(c => {
+        c.y += s.speed;
+        if (c.y > 650) return false;
+        
+        if (c.lane === s.playerLane && c.y > 480 && c.y < 520) {
+            s.score += 10;
+            playSound('click');
+            return false;
+        }
+        return true;
+    });
+    
+    window.gameState.score = Math.floor(s.distance) + s.score;
+}
+
+function renderRacing() {
+    const s = window.gameState;
+    
+    // Ciel
+    const grad = ctx.createLinearGradient(0, 0, 0, 600);
+    grad.addColorStop(0, '#1a1a3e');
+    grad.addColorStop(1, '#0a0a1a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Route
+    ctx.fillStyle = '#16213e';
+    ctx.fillRect(100, 0, 600, 600);
+    
+    // Bordures route
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(0, 550, 800, 50);
+    
+    // Lignes voie
+    ctx.strokeStyle = '#f39c12';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([30, 30]);
+    [290, 510].forEach(x => {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 600);
+        ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    
+    // Obstacles
+    s.obstacles.forEach(o => {
+        if (o.type === 'car') {
+            ctx.fillStyle = '#e74c3c';
+            shadow(ctx, '#e74c3c', 10);
+            roundRect(ctx, o.x - 35, o.y, 70, 55, 8);
+        } else {
+            ctx.fillStyle = '#f39c12';
+            ctx.beginPath();
+            ctx.moveTo(o.x, o.y + 50);
+            ctx.lineTo(o.x - 20, o.y);
+            ctx.lineTo(o.x + 20, o.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+    });
+    ctx.shadowBlur = 0;
+    
+    // Coins
+    s.coins.forEach(c => {
+        ctx.fillStyle = '#ffd700';
+        shadow(ctx, '#ffd700', 12);
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 15, 0, Math.PI*2);
+        ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+    
+    // Voiture joueur
+    ctx.fillStyle = '#64b5f6';
+    shadow(ctx, '#64b5f6', 15);
+    roundRect(ctx, s.lanes[s.playerLane] - 35, 480, 70, 50, 10);
+    ctx.shadowBlur = 0;
+    
+    // Conducteur
+    ctx.fillStyle = '#ffcc99';
+    ctx.beginPath();
+    ctx.arc(s.lanes[s.playerLane], 505, 15, 0, Math.PI*2);
+    ctx.fill();
+    
+    // UI
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(Math.floor(s.distance) + 'm', 20, 30);
+    
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText(s.score + ' 💰', 780, 30);
+    
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#aaa';
+    ctx.font = '14px Arial';
+    ctx.fillText(s.speed.toFixed(1) + ' km/h', 400, 30);
+    
+    ctx.font = '18px Arial';
+    ctx.fillStyle = '#ef5350';
+    ctx.fillText('❤️'.repeat(s.lives), 400, 575);
+}
+
+function handleKeyDown_Racing(key) {
+    if (key === 'ArrowLeft' || key.toLowerCase() === 'a' || key.toLowerCase() === 'q') {
+        window.gameState.playerLane = Math.max(0, window.gameState.playerLane - 1);
+    }
+    if (key === 'ArrowRight' || key.toLowerCase() === 'd') {
+        window.gameState.playerLane = Math.min(2, window.gameState.playerLane + 1);
+    }
+}
+
+// ============================================================
+// =================== TIC-TAC-TOE ===========================
+// ============================================================
+
+function initTicTacToe() {
+    window.gameState = {
+        board: Array(9).fill(null),
+        playerTurn: true,
+        winner: null,
+        gameOver: false,
+        score: 0
+    };
+}
+
+function updateTicTacToe() {}
+
+function renderTicTacToe() {
+    const s = window.gameState;
+    
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    ctx.font = 'bold 36px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f48fb1';
+    ctx.fillText('⭕ Morpion', 400, 60);
+    
+    // Grille
+    ctx.strokeStyle = 'rgba(100,181,246,0.4)';
+    ctx.lineWidth = 4;
+    for (let i = 1; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(200 + i * 150, 150);
+        ctx.lineTo(200 + i * 150, 520);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(200, 150 + i * 185);
+        ctx.lineTo(650, 150 + i * 185);
+        ctx.stroke();
+    }
+    
+    // Symboles
+    s.board.forEach((cell, i) => {
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        const x = 275 + col * 150;
+        const y = 277 + row * 185;
+        
+        if (cell === 'X') {
+            ctx.strokeStyle = '#64b5f6';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            shadow(ctx, '#64b5f6', 15);
+            ctx.beginPath();
+            ctx.moveTo(x - 40, y - 40);
+            ctx.lineTo(x + 40, y + 40);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + 40, y - 40);
+            ctx.lineTo(x - 40, y + 40);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        } else if (cell === 'O') {
+            ctx.strokeStyle = '#f48fb1';
+            ctx.lineWidth = 8;
+            shadow(ctx, '#f48fb1', 15);
+            ctx.beginPath();
+            ctx.arc(x, y, 45, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+    });
+    
+    // Status
+    let msg = '', color = '#fff';
+    if (s.winner === 'X') {
+        msg = '🎉 Vous avez gagné!';
+        color = '#64b5f6';
+    } else if (s.winner === 'O') {
+        msg = '😔 L\'IA a gagné';
+        color = '#f48fb1';
+    } else if (s.gameOver) {
+        msg = '🤝 Match nul!';
+        color = '#81c784';
+    } else {
+        msg = s.playerTurn ? '👤 Votre tour (X)' : '🤖 Tour IA...';
+        color = s.playerTurn ? '#64b5f6' : '#f48fb1';
+    }
+    
+    ctx.font = 'bold 24px Arial';
+    ctx.fillStyle = color;
+    ctx.fillText(msg, 400, 565);
+}
+
+function handleClick_TicTacToe(x, y) {
+    const s = window.gameState;
+    if (s.gameOver || !s.playerTurn) return;
+    
+    // Calculer case cliquée
+    if (x < 200 || x > 650 || y < 150 || y > 520) return;
+    
+    const col = Math.floor((x - 200) / 150);
+    const row = Math.floor((y - 150) / 185);
+    const idx = row * 3 + col;
+    
+    if (idx < 0 || idx > 8 || s.board[idx]) return;
+    
+    // Joueur joue
+    s.board[idx] = 'X';
+    playSound('click');
+    
+    // Check victoire
+    if (checkWinnerTTT('X')) {
+        s.winner = 'X';
+        s.gameOver = true;
+        s.score = 100;
+        setTimeout(() => endGame(100), 500);
+        return;
+    }
+    
+    // Check match nul
+    if (s.board.every(c => c)) {
+        s.gameOver = true;
+        return;
+    }
+    
+    // Tour IA
+    s.playerTurn = false;
+    setTimeout(() => aiMoveTTT(), 400);
+}
+
+function checkWinnerTTT(player) {
+    const b = window.gameState.board;
+    const wins = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+    return wins.some(([a,b,c]) => b[a] === player && b[b] === player && b[c] === player);
+}
+
+function aiMoveTTT() {
+    const s = window.gameState;
+    
+    // IA simple: essayer de gagner, bloquer, sinon aléatoire
+    let move = findBestMoveTTT('O') ?? findBestMoveTTT('X') ?? getRandomMoveTTT();
+    
+    if (move !== null) {
+        s.board[move] = 'O';
+        playSound('click');
+        
+        if (checkWinnerTTT('O')) {
+            s.winner = 'O';
+            s.gameOver = true;
+            return;
+        }
+        
+        if (s.board.every(c => c)) {
+            s.gameOver = true;
+            return;
+        }
+    }
+    
+    s.playerTurn = true;
+}
+
+function findBestMoveTTT(player) {
+    const b = window.gameState.board;
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    
+    for (const [a,b,c] of wins) {
+        if ((b[a] === player) + (b[b] === player) + (b[c] === player) === 2) {
+            if (!b[a]) return a;
+            if (!b[b]) return b;
+            if (!b[c]) return c;
+        }
+    }
+    return null;
+}
+
+function getRandomMoveTTT() {
+    const b = window.gameState.board;
+    const available = b.map((v,i) => v === null ? i : -1).filter(i => i >= 0);
+    return available.length > 0 ? available[Math.floor(Math.random() * available.length)] : null;
+}
+
+// ============================================================
+// DISPATCHERS GENERAUX
+// ============================================================
+
+function initGame(id) {
+    switch(id) {
+        case 'pong': initPong(); break;
+        case 'snake': initSnake(); break;
+        case 'breakout': initBreakout(); break;
+        case 'memory': initMemory(); break;
+        case 'racing': initRacing(); break;
+        case 'tictactoe': initTicTacToe(); break;
+    }
+}
+
+function updateGame(id) {
+    switch(id) {
+        case 'pong': updatePong(); break;
+        case 'snake': updateSnake(); break;
+        case 'breakout': updateBreakout(); break;
+        case 'memory': updateMemory(); break;
+        case 'racing': updateRacing(); break;
+        case 'tictactoe': updateTicTacToe(); break;
+    }
+}
+
+function renderGame(id) {
+    switch(id) {
+        case 'pong': renderPong(); break;
+        case 'snake': renderSnake(); break;
+        case 'breakout': renderBreakout(); break;
+        case 'memory': renderMemory(); break;
+        case 'racing': renderRacing(); break;
+        case 'tictactoe': renderTicTacToe(); break;
+    }
+}
+
+function handleKeyDown(id, key) {
+    switch(id) {
+        case 'pong': handleKeyDown_Pong(key); break;
+        case 'snake': handleKeyDown_Snake(key); break;
+        case 'racing': handleKeyDown_Racing(key); break;
+    }
+    
+    // Redémarrer avec R
+    if (key.toLowerCase() === 'r' && isGameOver) {
+        restartGame();
+    }
+}
+
+function handleMouseMove(id, x, y) {
+    switch(id) {
+        case 'pong': handleMouseMove_Pong(x, y); break;
+        case 'breakout': handleMouseMove_Breakout(x, y); break;
+    }
+}
+
+function handleClick(id, x, y) {
+    switch(id) {
+        case 'breakout': handleClick_Breakout(); break;
+        case 'memory': handleClick_Memory(x, y); break;
+        case 'tictactoe': handleClick_TicTacToe(x, y); break;
+    }
+}
+
+// Utilitaire dessin rectangle arrondi
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function shadow(ctx, color, blur) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = blur;
+}
+
+// ============================================================
+// INITIALISATION
+// ============================================================
+
+generateGamesGrid();
+
+console.log('%c🎮 Arcade Collection chargé!', 'font-size: 20px; color: #64b5f6;');
+console.log('%cCliquez sur un jeu pour commencer!', 'color: #81c784;');
+
+</script>
 </body>
 </html>
