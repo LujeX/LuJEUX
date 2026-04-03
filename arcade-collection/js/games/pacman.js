@@ -1,927 +1,700 @@
+// arcade-collection/js/games/pacman.js
+
 /**
  * ============================================
- * ARCADE ULTIMATE - PAC-MAN GAME
- * Le classique des fantômes et pac-gommes
+ * ARCADE COLLECTION - PAC-MAN
+ * Classique jeu du mangeur de pastilles
+ * Contrôles: Flèches directionnelles
  * ============================================
  */
 
 class PacManGame extends BaseGame {
-    constructor(canvas, ctx) {
-        super(canvas, ctx);
+    constructor(ctx, width, height) {
+        super(ctx, width, height);
         
-        // Configuration du labyrinthe
-        this.tileSize = 28;
-        
-        // Map originale simplifiée (19x21)
-        this.originalMap = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1],
-            [1,3,1,1,2,1,1,1,2,1,2,1,1,1,2,1,1,3,1],
-            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-            [1,2,1,1,2,1,2,1,1,1,1,1,2,1,2,1,1,2,1],
-            [1,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,1],
-            [1,1,1,1,2,1,1,1,0,1,0,1,1,1,2,1,1,1,1],
-            [0,0,0,1,2,1,0,0,0,0,0,0,0,1,2,1,0,0,0],
-            [1,1,1,1,2,1,0,1,1,0,1,1,0,1,2,1,1,1,1],
-            [0,0,0,0,2,0,0,1,0,0,0,1,0,0,2,0,0,0,0],
-            [1,1,1,1,2,1,0,1,1,1,1,1,0,1,2,1,1,1,1],
-            [0,0,0,1,2,1,0,0,0,0,0,0,0,1,2,1,0,0,0],
-            [1,1,1,1,2,1,0,1,1,1,1,1,0,1,2,1,1,1,1],
-            [1,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,1],
-            [1,2,1,1,2,1,1,1,2,1,2,1,1,1,2,1,1,2,1],
-            [1,3,2,1,2,2,2,2,2,0,2,2,2,2,2,1,2,3,1],
-            [1,1,2,1,2,1,2,1,1,1,1,1,2,1,2,1,2,1,1],
-            [1,2,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,1],
-            [1,2,1,1,1,1,1,1,2,1,2,1,1,1,1,1,1,2,1],
-            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-        ];
-        
-        // Légende: 0=vide, 1=mur, 2=pac-gomme, 3=super pac-gomme
-        
-        this.mapWidth = 19;
-        this.mapHeight = 21;
-        
-        // Système de particules
-        this.particles = new ParticleSystem(150);
-        
-        // Initialiser
-        this.init();
-    }
-    
-    init() {
-        // Copier la map
-        this.map = this.originalMap.map(row => [...row]);
-        
-        // Compter les dots
-        this.totalDots = 0;
-        for (let row of this.map) {
-            for (let cell of row) {
-                if (cell === 2 || cell === 3) this.totalDots++;
-            }
-        }
-        this.dotsEaten = 0;
-        
-        // Pac-Man
-        this.pacman = {
-            x: 9.5,
-            y: 15,
-            direction: { x: 0, y: 0 },
-            nextDirection: { x: 0, y: 0 },
-            speed: 5,
-            mouthAngle: 0,
-            mouthOpen: true,
-            mouthSpeed: 12
+        // Configuration
+        this.config = {
+            tileSize: 0, // Calculé dynamiquement
+            pacmanSpeed: 3,
+            ghostSpeed: 2,
+            powerUpDuration: 8000,
+            totalDots: 0
         };
         
-        // Fantômes avec IA
-        this.ghosts = [
-            {   // Blinky (Rouge) - Aggressif, cible directe
-                name: 'blinky',
-                x: 9,
-                y: 9,
-                color: '#ff0000',
-                scaredColor: '#2563eb',
-                direction: { x: 1, y: 0 },
-                mode: 'scatter', // scatter, chase, frightened, eaten
-                speed: 4,
-                targetX: 18,
-                targetY: 0,
-                homeX: 9,
-                homeY: 9,
-                inHouse: false
-            },
-            {   // Pinky (Rose) - Cible 4 cases devant Pac-Man
-                name: 'pinky',
-                x: 8,
-                y: 10,
-                color: '#ffb8ff',
-                scaredColor: '#2563eb',
-                direction: { x: -1, y: 0 },
-                mode: 'scatter',
-                speed: 3.8,
-                targetX: 2,
-                targetY: 0,
-                homeX: 8,
-                homeY: 10,
-                inHouse: false
-            },
-            {   // Inky (Cyan) - Comportement complexe
-                name: 'inky',
-                x: 10,
-                y: 10,
-                color: '#00ffff',
-                scaredColor: '#2563eb',
-                direction: { x: 1, y: 0 },
-                mode: 'scatter',
-                speed: 3.6,
-                targetX: 18,
-                targetY: 17,
-                homeX: 10,
-                homeY: 10,
-                inHouse: false
-            },
-            {   // Clyde (Orange) - Aléatoire quand proche
-                name: 'clyde',
-                x: 9,
-                y: 10,
-                color: '#ffb852',
-                scaredColor: '#2563eb',
-                direction: { x: 0, y: 1 },
-                mode: 'scatter',
-                speed: 3.5,
-                targetX: 0,
-                targetY: 17,
-                homeX: 9,
-                homeY: 10,
-                inHouse: false
-            }
+        // Labyrinthe simplifié (1 = mur, 0 = chemin, 2 = pastille, 3 = super pastille)
+        this.mapTemplate = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,2,2,2,2,2,2,1,2,2,2,2,2,2,1],
+            [1,3,1,1,2,1,2,2,2,1,2,1,1,3,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,2,1,1,2,1,2,1,1,2,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,1,1,2,1,2,1,1,1,2,1,2,1,1,1],
+            [1,2,2,2,2,2,2,0,2,2,2,2,2,2,1],
+            [1,1,1,2,1,2,1,1,1,2,1,2,1,1,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,2,1,1,2,1,2,1,1,2,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,3,1,1,2,1,2,1,2,1,2,1,1,3,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
         ];
         
-        // Power mode
+        // État du jeu (initialisé dans init())
+        this.map = [];
+        this.pacman = null;
+        this.ghosts = [];
+        this.dotsRemaining = 0;
         this.powerMode = false;
         this.powerTimer = 0;
-        this.powerDuration = 7;
+        this.mouthAngle = 0;
+        this.mouthDirection = 1;
         
-        // Score
-        this.score = 0;
-        this.lives = 3;
-        this.ghostsEaten = 0;
+        // Directions
+        this.nextDirection = { x: 0, y: 0 };
         
-        // Timers pour changements de mode
-        this.modeTimer = 0;
-        this.scatterDuration = 7;
-        this.chaseDuration = 20;
-        this.currentModeTimer = 0;
-        this.isScatterPhase = true;
-        
-        // Animation
-        this.deathAnimation = false;
-        this.deathTimer = 0;
-        this.levelComplete = false;
-        this.readyState = true;
-        this.readyTimer = 2;
-        
-        // Stats
-        this.timePlayed = 0;
-        
-        // État
-        this.gameOver = false;
-        this.gameState = GAME_STATES.IDLE;
-    }
-    
-    canMoveTo(x, y) {
-        const tileX = Math.floor(x);
-        const tileY = Math.floor(y);
-        
-        // Tunnel (bords gauche/droite)
-        if (tileX < 0 || tileX >= this.mapWidth) return true;
-        if (tileY < 0 || tileY >= this.mapHeight) return true;
-        
-        return this.map[tileY][tileX] !== 1;
-    }
-    
-    getTileCenter(tileX, tileY) {
-        return {
-            x: tileX * this.tileSize + this.tileSize / 2,
-            y: tileY * this.tileSize + this.tileSize / 2
+        // Couleurs
+        this.colors = {
+            ...this.colors,
+            background: '#000000',
+            wall: '#1919a6',
+            dot: '#ffb8ff',
+            superDot: '#ffb8ff',
+            pacman: '#ffff00',
+            ghostScared: '#2121de',
+            ghostColors: ['#ff0000', '#00ffff', '#ffb8ff', '#ffb852']
         };
     }
-    
-    update(dt) {
-        super.update(dt);
+
+    /**
+     * Calculer la taille des tuiles
+     */
+    calculateTileSize() {
+        const mapWidth = this.mapTemplate[0].length;
+        const mapHeight = this.mapTemplate.length;
         
-        if (this.gameOver || this.gameState !== GAME_STATES.PLAYING) return;
+        this.config.tileSize = Math.min(
+            (this.width - 40) / mapWidth,
+            (this.height - 40) / mapHeight
+        );
+    }
+
+    /**
+     * Initialiser le jeu
+     */
+    init() {
+        super.init();
         
-        // Ready state au début
-        if (this.readyState) {
-            this.readyTimer -= dt;
-            if (this.readyTimer <= 0) {
-                this.readyState = false;
-            }
-            this.render();
-            return;
-        }
+        // Recalculer la taille des tuiles
+        this.calculateTileSize();
         
-        // Death animation
-        if (this.deathAnimation) {
-            this.deathTimer -= dt;
-            if (this.deathTimer <= 0) {
-                this.lives--;
+        // Copier et parser le labyrinthe
+        this.parseMap();
+        
+        // Initialiser Pac-Man
+        this.pacman = {
+            x: 7,
+            y: 11,
+            targetX: 7,
+            targetY: 11,
+            pixelX: 7 * this.config.tileSize + this.config.tileSize / 2,
+            pixelY: 11 * this.config.tileSize + this.config.tileSize / 2,
+            direction: { x: 1, y: 0 },
+            mouthOpen: true
+        };
+        
+        // Initialiser les fantômes
+        this.ghosts = [
+            { x: 7, y: 7, color: this.colors.ghostColors[0], name: 'Blinky', mode: 'scatter' },
+            { x: 6, y: 7, color: this.colors.ghostColors[1], name: 'Inky', mode: 'scatter' },
+            { x: 8, y: 7, color: this.colors.ghostColors[2], name: 'Pinky', mode: 'scatter' },
+            { x: 7, y: 8, color: this.colors.ghostColors[3], name: 'Clyde', mode: 'scatter' }
+        ].map(ghost => ({
+            ...ghost,
+            pixelX: ghost.x * this.config.tileSize + this.config.tileSize / 2,
+            pixelY: ghost.y * this.config.tileSize + this.config.tileSize / 2,
+            direction: { x: 0, y: -1 }
+        }));
+        
+        // Réinitialiser l'état
+        this.powerMode = false;
+        this.powerTimer = 0;
+        this.score = 0;
+        this.nextDirection = { x: 0, y: 0 };
+        
+        console.log('[PacMan] Jeu initialisé');
+    }
+
+    /**
+     * Parser le labyrinthe
+     */
+    parseMap() {
+        this.map = [];
+        this.config.totalDots = 0;
+        
+        for (let r = 0; r < this.mapTemplate.length; r++) {
+            this.map[r] = [];
+            for (let c = 0; c < this.mapTemplate[r].length; c++) {
+                const cell = this.mapTemplate[r][c];
                 
-                if (this.lives <= 0) {
-                    this.endGame(false, '💀 GAME OVER', '💀');
+                if (cell === 1) {
+                    this.map[r][c] = { type: 'wall' };
+                } else if (cell === 2) {
+                    this.map[r][c] = { type: 'dot' };
+                    this.config.totalDots++;
+                } else if (cell === 3) {
+                    this.map[r][c] = { type: 'superDot' };
+                    this.config.totalDots++;
                 } else {
-                    // Reset positions
-                    this.resetPositions();
-                    this.deathAnimation = false;
-                    this.readyState = true;
-                    this.readyTimer = 2;
+                    this.map[r][c] = { type: 'empty' };
                 }
             }
-            this.render();
-            return;
         }
         
-        // Level complete check
-        if (this.dotsEaten >= this.totalDots && !this.levelComplete) {
-            this.levelComplete = true;
-            if (this.engine?.soundManager) {
-                this.engine.soundManager.playVictory();
-            }
-            setTimeout(() => {
-                this.endGame(true, '🎉 NIVEAU TERMINÉ!', '🏆');
-            }, 1500);
+        this.dotsRemaining = this.config.totalDots;
+    }
+
+    /**
+     * Mettre à jour le jeu
+     */
+    update(deltaTime) {
+        if (this.gameOver) return;
+        
+        // Animation de la bouche
+        this.mouthAngle += 0.15 * this.mouthDirection;
+        if (this.mouthAngle > 0.4 || this.mouthAngle < 0) {
+            this.mouthDirection *= -1;
         }
         
-        // Mise à jour temps
-        this.timePlayed += dt;
-        
-        // Power mode timer
+        // Gérer le mode power-up
         if (this.powerMode) {
-            this.powerTimer -= dt;
-            
-            // Clignotement quand il reste peu de temps
-            if (this.powerTimer <= 2 && Math.floor(this.powerTimer * 4) % 2 === 0) {
-                for (const ghost of this.ghosts) {
-                    if (ghost.mode === 'frightened') {
-                        ghost.displayColor = '#ffffff';
-                    }
-                }
-            } else {
-                for (const ghost of this.ghosts) {
-                    if (ghost.mode === 'frightened') {
-                        ghost.displayColor = ghost.scaredColor;
-                    }
-                }
-            }
-            
+            this.powerTimer -= deltaTime * 1000;
             if (this.powerTimer <= 0) {
                 this.powerMode = false;
-                this.ghostsEaten = 0;
-                for (const ghost of this.ghosts) {
-                    if (ghost.mode === 'frightened') {
-                        ghost.mode = this.isScatterPhase ? 'scatter' : 'chase';
-                        ghost.speed = ghost.baseSpeed || ghost.speed;
-                    }
-                }
+                this.ghosts.forEach(g => g.mode = 'chase');
             }
         }
         
-        // Mode scatter/chase alternance
-        this.currentModeTimer -= dt;
-        if (this.currentModeTimer <= 0) {
-            this.isScatterPhase = !this.isScatterPhase;
-            this.currentModeTimer = this.isScatterPhase ? this.scatterDuration : this.chaseDuration;
-            
-            for (const ghost of this.ghosts) {
-                if (ghost.mode !== 'frightened' && ghost.mode !== 'eaten') {
-                    ghost.mode = this.isScatterPhase ? 'scatter' : 'chase';
-                }
-            }
-        }
+        // Déplacer Pac-Man
+        this.updatePacman(deltaTime);
         
-        // Update Pac-Man
-        this.updatePacMan(dt);
+        // Déplacer les fantômes
+        this.updateGhosts(deltaTime);
         
-        // Update Ghosts
-        for (const ghost of this.ghosts) {
-            this.updateGhost(ghost, dt);
-        }
-        
-        // Check collisions
+        // Vérifier les collisions
         this.checkCollisions();
         
-        // Particules
-        this.particles.update(dt);
-        
-        // Score display
-        if (this.engine) {
-            this.engine.score = this.score;
-            this.engine.updateScoreDisplay();
+        // Victoire si toutes les pastilles mangées
+        if (this.dotsRemaining <= 0) {
+            Utils.audio.playSuccess();
+            this.addScore(1000);
+            this.init(); // Niveau suivant
         }
     }
-    
-    updatePacMan(dt) {
-        // Changer de direction si possible
-        const nextX = this.pacman.x + this.pacman.nextDirection.x * this.pacman.speed * dt;
-        const nextY = this.pacman.y + this.pacman.nextDirection.y * this.pacman.speed * dt;
+
+    /**
+     * Mettre à jour Pac-Man
+     */
+    updatePacman(deltaTime) {
+        const ts = this.config.tileSize;
+        const speed = this.config.pacmanSpeed * ts * deltaTime;
         
-        if (this.canMoveTo(nextX, nextY)) {
-            this.pacman.direction = { ...this.pacman.nextDirection };
+        // Essayer de changer de direction
+        const nextTileX = this.pacman.x + this.nextDirection.x;
+        const nextTileY = this.pacman.y + this.nextDirection.y;
+        
+        if (this.canMoveTo(nextTileX, nextTileY)) {
+            this.pacman.direction = { ...this.nextDirection };
         }
         
-        // Mouvement
-        const moveX = this.pacman.x + this.pacman.direction.x * this.pacman.speed * dt;
-        const moveY = this.pacman.y + this.pacman.direction.y * this.pacman.speed * dt;
+        // Calculer la position cible
+        const targetPixelX = this.pacman.x * ts + ts / 2 + this.pacman.direction.x * ts;
+        const targetPixelY = this.pacman.y * ts + ts / 2 + this.pacman.direction.y * ts;
         
-        if (this.canMoveTo(moveX, this.pacman.y)) {
-            this.pacman.x = moveX;
-        }
-        if (this.canMoveTo(this.pacman.x, moveY)) {
-            this.pacman.y = moveY;
-        }
+        // Se déplacer vers la cible
+        const dx = targetPixelX - this.pacman.pixelX;
+        const dy = targetPixelY - this.pacman.pixelY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
         
-        // Tunnel
-        if (this.pacman.x < -0.5) {
-            this.pacman.x = this.mapWidth - 0.5;
-        } else if (this.pacman.x > this.mapWidth - 0.5) {
-            this.pacman.x = -0.5;
-        }
-        
-        // Animation bouche
-        this.pacman.mouthAngle += this.pacman.mouthSpeed * dt;
-        if (this.pacman.mouthAngle >= 0.45) {
-            this.pacman.mouthOpen = false;
-        }
-        if (this.pacman.mouthAngle >= 0.9) {
-            this.pacman.mouthAngle = 0;
-            this.pacman.mouthOpen = true;
-        }
-        
-        // Manger dots
-        const tileX = Math.floor(this.pacman.x);
-        const tileY = Math.floor(this.pacman.y);
-        
-        if (tileX >= 0 && tileX < this.mapWidth && tileY >= 0 && tileY < this.mapHeight) {
-            const cell = this.map[tileY][tileX];
+        if (dist > 0 && dist <= speed) {
+            // Atteindre la case suivante
+            this.pacman.pixelX = targetPixelX;
+            this.pacman.pixelY = targetPixelY;
             
-            if (cell === 2) {
-                this.map[tileY][tileX] = 0;
-                this.score += 10;
-                this.dotsEaten++;
-                
-                // Petit effet particule
-                const pos = this.getTileCenter(tileX, tileY);
-                this.particles.emit(pos.x, pos.y, {
-                    count: 5,
-                    speed: 3,
-                    size: 3,
-                    colors: ['#fcd34d', '#fbbf24'],
-                    life: 0.3,
-                    spread: Math.PI * 2
-                });
-                
-                if (this.engine?.soundManager) {
-                    this.engine.soundManager.playClick();
-                }
-            } else if (cell === 3) {
-                this.map[tileY][tileX] = 0;
-                this.score += 50;
-                this.dotsEaten++;
-                
-                // Activer power mode
-                this.powerMode = true;
-                this.powerTimer = this.powerDuration;
-                this.ghostsEaten = 0;
-                
-                // Effet spectaculaire
-                const pos = this.getTileCenter(tileX, tileY);
-                this.particles.emit(pos.x, pos.y, {
-                    count: 25,
-                    speed: 6,
-                    size: 5,
-                    colors: ['#fbbf24', '#ffffff', '#06b6d4'],
-                    life: 0.8,
-                    spread: Math.PI * 2
-                });
-                
-                // Effrayer les fantômes
-                for (const ghost of this.ghosts) {
-                    if (ghost.mode !== 'eaten') {
-                        ghost.mode = 'frightened';
-                        ghost.speed = ghost.speed * 0.5;
-                        ghost.displayColor = ghost.scaredColor;
-                        
-                        // Inverser la direction
-                        ghost.direction = {
-                            x: -ghost.direction.x,
-                            y: -ghost.direction.y
-                        };
-                    }
-                }
-                
-                if (this.engine?.soundManager) {
-                    this.engine.soundManager.playCoin();
-                }
+            // Mettre à jour la position en tuiles
+            this.pacman.x += this.pacman.direction.x;
+            this.pacman.y += this.pacman.direction.y;
+            
+            // Tunnel (passer d'un côté à l'autre)
+            if (this.pacman.x < 0) {
+                this.pacman.x = this.map[0].length - 1;
+                this.pacman.pixelX = this.pacman.x * ts + ts / 2;
+            } else if (this.pacman.x >= this.map[0].length) {
+                this.pacman.x = 0;
+                this.pacman.pixelX = ts / 2;
+            }
+            
+            // Manger la pastille sur cette case
+            this.eatDot(this.pacman.x, this.pacman.y);
+            
+        } else if (dist > speed) {
+            // Se déplacer progressivement
+            this.pacman.pixelX += (dx / dist) * speed;
+            this.pacman.pixelY += (dy / dist) * speed;
+        }
+    }
+
+    /**
+     * Vérifier si on peut se déplacer vers une case
+     */
+    canMoveTo(tileX, tileY) {
+        // Hors limites (pour le tunnel)
+        if (tileX < 0 || tileX >= this.map[0].length) return true;
+        if (tileY < 0 || tileY >= this.map.length) return false;
+        
+        return this.map[tileY][tileX].type !== 'wall';
+    }
+
+    /**
+     * Manger une pastille
+     */
+    eatDot(x, y) {
+        if (x >= 0 && x < this.map[0].length && y >= 0 && y < this.map.length) {
+            const cell = this.map[y][x];
+            
+            if (cell.type === 'dot') {
+                cell.type = 'empty';
+                this.addScore(10);
+                this.dotsRemaining--;
+                Utils.audio.playClick();
+            } else if (cell.type === 'superDot') {
+                cell.type = 'empty';
+                this.addScore(50);
+                this.dotsRemaining--;
+                this.activatePowerMode();
+                Utils.audio.playSuccess();
             }
         }
     }
-    
-    updateGhost(ghost, dt) {
-        // Position sur la grille
-        const tileX = Math.floor(ghost.x + 0.5);
-        const tileY = Math.floor(ghost.y + 0.5);
-        const centerX = tileX + 0.5;
-        const centerY = tileY + 0.5;
+
+    /**
+     * Activer le mode power-up
+     */
+    activatePowerMode() {
+        this.powerMode = true;
+        this.powerTimer = this.config.powerUpDuration;
+        this.ghosts.forEach(g => g.mode = 'scared');
+    }
+
+    /**
+     * Mettre à jour les fantômes
+     */
+    updateGhosts(deltaTime) {
+        const ts = this.config.tileSize;
+        const speed = (this.powerMode ? this.config.ghostSpeed * 0.5 : this.config.ghostSpeed) * ts * deltaTime;
         
-        // Vérifier si on est au centre d'une case (pour changer de direction)
-        const atCenter = Math.abs(ghost.x - centerX) < 0.08 && Math.abs(ghost.y - centerY) < 0.08;
-        
-        if (atCenter) {
-            ghost.x = centerX;
-            ghost.y = centerY;
+        this.ghosts.forEach(ghost => {
+            // IA simple: se déplacer aléatoirement ou vers Pac-Man
+            const currentTileX = Math.round((ghost.pixelX - ts/2) / ts);
+            const currentTileY = Math.round((ghost.pixelY - ts/2) / ts);
             
-            // Déterminer la cible selon le mode et le type de fantôme
-            let targetX, targetY;
+            // Vérifier si on est au centre d'une case
+            const centerX = currentTileX * ts + ts / 2;
+            const centerY = currentTileY * ts + ts / 2;
+            const atCenter = Math.abs(ghost.pixelX - centerX) < speed && 
+                            Math.abs(ghost.pixelY - centerY) < speed;
             
-            switch (ghost.mode) {
-                case 'scatter':
-                    targetX = ghost.targetX + 0.5;
-                    targetY = ghost.targetY + 0.5;
-                    break;
-                    
-                case 'chase':
-                    switch (ghost.name) {
-                        case 'blinky':
-                            // Cible directe Pac-Man
-                            targetX = this.pacman.x;
-                            targetY = this.pacman.y;
-                            break;
-                            
-                        case 'pinky':
-                            // Cible 4 cases devant Pac-Man
-                            targetX = this.pacman.x + this.pacman.direction.x * 4;
-                            targetY = this.pacman.y + this.pacman.direction.y * 4;
-                            break;
-                            
-                        case 'inky':
-                            // Comportement complexe basé sur Blinky et Pac-Man
-                            const blinky = this.ghosts[0];
-                            const pacmanAhead = {
-                                x: this.pacman.x + this.pacman.direction.x * 2,
-                                y: this.pacman.y + this.pacman.direction.y * 2
-                            };
-                            targetX = pacmanAhead.x + (pacmanAhead.x - blinky.x);
-                            targetY = pacmanAhead.y + (pacmanAhead.y - blinky.y);
-                            break;
-                            
-                        case 'clyde':
-                            // Si loin, chase; si proche, scatter
-                            const distToPac = MathUtils.distance(
-                                ghost.x, ghost.y,
+            if (atCenter) {
+                ghost.x = currentTileX;
+                ghost.y = currentTileY;
+                
+                // Choisir une nouvelle direction
+                const possibleDirections = [
+                    { x: 0, y: -1 }, // Haut
+                    { x: 0, y: 1 },  // Bas
+                    { x: -1, y: 0 }, // Gauche
+                    { x: 1, y: 0 }   // Droite
+                ].filter(dir => 
+                    this.canMoveTo(currentTileX + dir.x, currentTileY + dir.y) &&
+                    !(dir.x === -ghost.direction.x && dir.y === -ghost.direction.y) // Pas demi-tour
+                );
+                
+                if (possibleDirections.length > 0) {
+                    if (ghost.mode === 'chase' && Math.random() > 0.3) {
+                        // Vers Pac-Man
+                        possibleDirections.sort((a, b) => {
+                            const distA = Utils.getDistance(
+                                currentTileX + a.x, currentTileY + a.y,
                                 this.pacman.x, this.pacman.y
                             );
-                            
-                            if (distToPac > 8) {
-                                targetX = this.pacman.x;
-                                targetY = this.pacman.y;
-                            } else {
-                                targetX = ghost.targetX + 0.5;
-                                targetY = ghost.targetY + 0.5;
-                            }
-                            break;
-                    }
-                    break;
-                    
-                case 'frightened':
-                    // Aléatoire
-                    targetX = MathUtils.random(0, this.mapWidth);
-                    targetY = MathUtils.random(0, this.mapHeight);
-                    break;
-                    
-                case 'eaten':
-                    // Retour à la maison
-                    targetX = ghost.homeX + 0.5;
-                    targetY = ghost.homeY + 0.5;
-                    
-                    // Vérifier si arrivé
-                    if (Math.abs(ghost.x - targetX) < 1 && Math.abs(ghost.y - targetY) < 1) {
-                        ghost.mode = this.isScatterPhase ? 'scatter' : 'chase';
-                        ghost.speed = ghost.baseSpeed || ghost.speed;
-                    }
-                    break;
-                    
-                default:
-                    targetX = ghost.homeX + 0.5;
-                    targetY = ghost.homeY + 0.5;
-            }
-            
-            // Trouver la meilleure direction
-            const directions = [
-                { x: 1, y: 0 },
-                { x: -1, y: 0 },
-                { x: 0, y: 1 },
-                { x: 0, y: -1 }
-            ];
-            
-            // Filtrer les directions valides (pas demi-tour)
-            const validDirs = directions.filter(d => {
-                // Pas de demi-tour
-                if (d.x === -ghost.direction.x && d.y === -ghost.direction.y) return false;
-                
-                const nextTileX = tileX + d.x;
-                const nextTileY = tileY + d.y;
-                
-                // Vérifier les limites et murs
-                if (nextTileX < 0 || nextTileX >= this.mapWidth) return true; // Tunnel
-                if (nextTileY < 0 || nextTileY >= this.mapHeight) return false;
-                return this.map[nextTileY][nextTileX] !== 1;
-            });
-            
-            if (validDirs.length > 0) {
-                // Choisir la direction qui rapproche le plus de la cible
-                let bestDir = validDirs[0];
-                let bestDist = Infinity;
-                
-                for (const dir of validDirs) {
-                    const nextX = ghost.x + dir.x;
-                    const nextY = ghost.y + dir.y;
-                    const dist = MathUtils.distance(nextX, nextY, targetX, targetY);
-                    
-                    if (ghost.mode === 'frightened') {
-                        // En mode effrayé, préférer s'éloigner
-                        if (dist > bestDist) {
-                            bestDist = dist;
-                            bestDir = dir;
-                        }
+                            const distB = Utils.getDistance(
+                                currentTileX + b.x, currentTileY + b.y,
+                                this.pacman.x, this.pacman.y
+                            );
+                            return distA - distB;
+                        });
+                        ghost.direction = possibleDirections[0];
+                    } else if (ghost.mode === 'scared' && Math.random() > 0.3) {
+                        // Fuir Pac-Man
+                        possibleDirections.sort((a, b) => {
+                            const distA = Utils.getDistance(
+                                currentTileX + a.x, currentTileY + a.y,
+                                this.pacman.x, this.pacman.y
+                            );
+                            const distB = Utils.getDistance(
+                                currentTileX + b.x, currentTileY + b.y,
+                                this.pacman.x, this.pacman.y
+                            );
+                            return distB - distA;
+                        });
+                        ghost.direction = possibleDirections[0];
                     } else {
-                        if (dist < bestDist) {
-                            bestDist = dist;
-                            bestDir = dir;
-                        }
+                        // Aléatoire
+                        ghost.direction = possibleDirections[Utils.randomInt(0, possibleDirections.length - 1)];
                     }
                 }
-                
-                // Ajouter un peu d'aléatoire pour ne pas être trop parfait
-                if (Math.random() < 0.15 && validDirs.length > 1) {
-                    bestDir = validDirs[MathUtils.randomInt(0, validDirs.length - 1)];
-                }
-                
-                ghost.direction = bestDir;
             }
-        }
-        
-        // Mouvement
-        const speed = ghost.mode === 'eaten' ? ghost.speed * 2 : ghost.speed;
-        ghost.x += ghost.direction.x * speed * dt;
-        ghost.y += ghost.direction.y * speed * dt;
-        
-        // Tunnel
-        if (ghost.x < -0.5) ghost.x = this.mapWidth - 0.5;
-        if (ghost.x > this.mapWidth - 0.5) ghost.x = -0.5;
-    }
-    
-    checkCollisions() {
-        for (let i = 0; i < this.ghosts.length; i++) {
-            const ghost = this.ghosts[i];
-            const dist = MathUtils.distance(
-                this.pacman.x, this.pacman.y,
-                ghost.x, ghost.y
-            );
             
-            if (dist < 0.75) {
-                if (ghost.mode === 'frightened') {
+            // Déplacer
+            const targetX = ghost.x * ts + ts / 2 + ghost.direction.x * ts;
+            const targetY = ghost.y * ts + ts / 2 + ghost.direction.y * ts;
+            const dx = targetX - ghost.pixelX;
+            const dy = targetY - ghost.pixelY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist > 0 && dist <= speed) {
+                ghost.pixelX = targetX;
+                ghost.pixelY = targetY;
+                ghost.x += ghost.direction.x;
+                ghost.y += ghost.direction.y;
+                
+                // Tunnel
+                if (ghost.x < 0) {
+                    ghost.x = this.map[0].length - 1;
+                    ghost.pixelX = ghost.x * ts + ts / 2;
+                } else if (ghost.x >= this.map[0].length) {
+                    ghost.x = 0;
+                    ghost.pixelX = ts / 2;
+                }
+            } else if (dist > speed) {
+                ghost.pixelX += (dx / dist) * speed;
+                ghost.pixelY += (dy / dist) * speed;
+            }
+        });
+    }
+
+    /**
+     * Vérifier les collisions avec les fantômes
+     */
+    checkCollisions() {
+        const pacRadius = this.config.tileSize / 2 - 2;
+        const ghostRadius = this.config.tileSize / 2 - 2;
+        
+        this.ghosts.forEach(ghost => {
+            if (Utils.checkCircleCollision(
+                { x: this.pacman.pixelX, y: this.pacman.pixelY, radius: pacRadius },
+                { x: ghost.pixelX, y: ghost.pixelY, radius: ghostRadius }
+            )) {
+                if (this.powerMode && ghost.mode === 'scared') {
                     // Manger le fantôme
-                    ghost.mode = 'eaten';
-                    this.ghostsEaten++;
-                    
-                    // Points croissants pour chaque fantôme mangé
-                    const points = [200, 400, 800, 1600];
-                    this.score += points[Math.min(this.ghostsEaten - 1, 3)];
-                    
-                    // Particules
-                    this.particles.emit(
-                        ghost.x * this.tileSize + this.tileSize / 2,
-                        ghost.y * this.tileSize + this.tileSize / 2,
-                        {
-                            count: 20,
-                            speed: 8,
-                            size: 6,
-                            colors: [ghost.color, '#ffffff', '#fbbf24'],
-                            life: 1,
-                            gravity: 100,
-                            spread: Math.PI * 2
-                        }
-                    );
-                    
-                    if (this.engine?.soundManager) {
-                        this.engine.soundManager.playCoin();
-                    }
-                } else if (ghost.mode !== 'eaten') {
-                    // Pac-Man meurt
-                    this.die();
-                    return;
+                    this.addScore(200);
+                    ghost.x = 7;
+                    ghost.y = 7;
+                    ghost.pixelX = 7 * this.config.tileSize + this.config.tileSize / 2;
+                    ghost.pixelY = 7 * this.config.tileSize + this.config.tileSize / 2;
+                    ghost.mode = 'chase';
+                    Utils.audio.playSuccess();
+                } else if (!this.powerMode) {
+                    // Game Over
+                    this.endGame();
+                }
+            }
+        });
+    }
+
+    /**
+     * Rendre le jeu
+     */
+    render(ctx) {
+        // Fond noir
+        ctx.fillStyle = this.colors.background;
+        ctx.fillRect(0, 0, this.width, this.height);
+        
+        // Calculer l'offset pour centrer
+        const ts = this.config.tileSize;
+        const mapWidth = this.mapTemplate[0].length * ts;
+        const mapHeight = this.mapTemplate.length * ts;
+        const offsetX = (this.width - mapWidth) / 2;
+        const offsetY = (this.height - mapHeight) / 2;
+        
+        // Dessiner le labyrinthe
+        this.drawMap(ctx, offsetX, offsetY);
+        
+        // Dessiner les fantômes
+        this.drawGhosts(ctx, offsetX, offsetY);
+        
+        // Dessiner Pac-Man
+        this.drawPacMan(ctx, offsetX, offsetY);
+        
+        // UI
+        this.drawUI(ctx);
+    }
+
+    /**
+     * Dessiner le labyrinthe
+     */
+    drawMap(ctx, offsetX, offsetY) {
+        const ts = this.config.tileSize;
+        
+        for (let r = 0; r < this.map.length; r++) {
+            for (let c = 0; c < this.map[r].length; c++) {
+                const x = offsetX + c * ts;
+                const y = offsetY + r * ts;
+                const cell = this.map[r][c];
+                
+                switch (cell.type) {
+                    case 'wall':
+                        ctx.fillStyle = this.colors.wall;
+                        ctx.fillRect(x, y, ts, ts);
+                        
+                        // Bordure arrondie pour l'esthétique
+                        ctx.strokeStyle = '#4444ff';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x + 1, y + 1, ts - 2, ts - 2);
+                        break;
+                        
+                    case 'dot':
+                        ctx.fillStyle = this.colors.dot;
+                        ctx.beginPath();
+                        ctx.arc(x + ts/2, y + ts/2, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'superDot':
+                        // Super pastille qui pulse
+                        const pulse = 1 + Math.sin(Date.now() / 200) * 0.3;
+                        ctx.fillStyle = this.colors.superDot;
+                        ctx.shadowColor = this.colors.superDot;
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath();
+                        ctx.arc(x + ts/2, y + ts/2, 6 * pulse, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                        break;
                 }
             }
         }
     }
-    
-    die() {
-        this.deathAnimation = true;
-        this.deathTimer = 1.5;
+
+    /**
+     * Dessiner Pac-Man
+     */
+    drawPacMan(ctx, offsetX, offsetY) {
+        const x = this.pacman.pixelX + offsetX;
+        const y = this.pacman.pixelY + offsetY;
+        const radius = this.config.tileSize / 2 - 2;
         
-        // Particules de mort
-        this.particles.emit(
-            this.pacman.x * this.tileSize + this.tileSize / 2,
-            this.pacman.y * this.tileSize + this.tileSize / 2,
-            {
-                count: 30,
-                speed: 7,
-                size: 5,
-                colors: ['#fbbf24', '#ffffff', '#f59e0b'],
-                life: 1,
-                gravity: 150,
-                spread: Math.PI * 2
-            }
-        );
-        
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playGameOver();
-        }
-    }
-    
-    resetPositions() {
-        this.pacman.x = 9.5;
-        this.pacman.y = 15;
-        this.pacman.direction = { x: 0, y: 0 };
-        this.pacman.nextDirection = { x: 0, y: 0 };
-        
-        // Reset ghosts
-        const startPositions = [
-            { x: 9, y: 9 },
-            { x: 8, y: 10 },
-            { x: 10, y: 10 },
-            { x: 9, y: 10 }
-        ];
-        
-        for (let i = 0; i < this.ghosts.length; i++) {
-            this.ghosts[i].x = startPositions[i].x;
-            this.ghosts[i].y = startPositions[i].y;
-            this.ghosts[i].mode = this.isScatterPhase ? 'scatter' : 'chase';
-        }
-    }
-    
-    render() {
-        const ctx = this.ctx;
-        const offsetX = (this.width - this.mapWidth * this.tileSize) / 2;
-        const offsetY = (this.height - this.mapHeight * this.tileSize) / 2;
+        // Calculer l'angle de rotation selon la direction
+        let rotation = 0;
+        if (this.pacman.direction.x === 1) rotation = 0;
+        else if (this.pacman.direction.x === -1) rotation = Math.PI;
+        else if (this.pacman.direction.y === 1) rotation = Math.PI / 2;
+        else if (this.pacman.direction.y === -1) rotation = -Math.PI / 2;
         
         ctx.save();
-        ctx.translate(offsetX, offsetY);
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
         
-        // Fond
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(-offsetX, -offsetY, this.width, this.height);
-        
-        // Map
-        this.renderMap(ctx);
-        
-        // Particules
-        this.particles.render(ctx);
-        
-        // Ghosts
-        for (const ghost of this.ghosts) {
-            this.renderGhost(ctx, ghost);
-        }
-        
-        // Pac-Man
-        if (!this.deathAnimation) {
-            this.renderPacMan(ctx);
-        } else {
-            this.renderDeathAnimation(ctx);
-        }
-        
-        // UI overlay
-        this.renderUI(ctx);
+        // Corps de Pac-Man
+        ctx.fillStyle = this.colors.pacman;
+        ctx.shadowColor = this.colors.pacman;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, this.mouthAngle, Math.PI * 2 - this.mouthAngle);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
         
         ctx.restore();
     }
-    
-    renderMap(ctx) {
-        for (let row = 0; row < this.mapHeight; row++) {
-            for (let col = 0; col < this.mapWidth; col++) {
-                const cell = this.map[row][col];
-                const x = col * this.tileSize;
-                const y = row * this.tileSize;
-                
-                if (cell === 1) {
-                    // Mur
-                    ctx.fillStyle = '#1e40af';
-                    RenderUtils.roundRect(ctx, x + 1, y + 1, this.tileSize - 2, this.tileSize - 2, 4);
-                    ctx.fill();
-                    
-                    // Bordure lumineuse
-                    ctx.strokeStyle = '#3b82f6';
-                    ctx.lineWidth = 2;
-                    RenderUtils.roundRect(ctx, x + 1, y + 1, this.tileSize - 2, this.tileSize - 2, 4);
-                    ctx.stroke();
-                    
-                } else if (cell === 2) {
-                    // Pac-gomme
-                    ctx.fillStyle = '#fcd34d';
-                    ctx.beginPath();
-                    ctx.arc(x + this.tileSize/2, y + this.tileSize/2, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                } else if (cell === 3) {
-                    // Super pac-gomme (clignotante)
-                    const alpha = 0.5 + Math.sin(Date.now() * 0.008) * 0.5;
-                    ctx.globalAlpha = alpha;
-                    ctx.fillStyle = '#fbbf24';
-                    ctx.beginPath();
-                    ctx.arc(x + this.tileSize/2, y + this.tileSize/2, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
+
+    /**
+     * Dessiner les fantômes
+     */
+    drawGhosts(ctx, offsetX, offsetY) {
+        const ts = this.config.tileSize;
+        const radius = ts / 2 - 2;
+        
+        this.ghosts.forEach(ghost => {
+            const x = ghost.pixelX + offsetX;
+            const y = ghost.pixelY + offsetY;
+            
+            // Couleur selon le mode
+            let color = ghost.color;
+            if (this.powerMode && ghost.mode === 'scared') {
+                // Clignotement quand le temps est presque écoulé
+                if (this.powerTimer < 2000 && Math.floor(Date.now() / 200) % 2 === 0) {
+                    color = '#ffffff';
+                } else {
+                    color = this.colors.ghostScared;
                 }
             }
-        }
-    }
-    
-    renderPacMan(ctx) {
-        const x = this.pacman.x * this.tileSize;
-        const y = this.pacman.y * this.tileSize;
-        const radius = this.tileSize / 2 - 2;
-        
-        // Corps
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        
-        let startAngle, endAngle;
-        const mouth = this.pacman.mouthOpen ? this.pacman.mouthAngle : 0.05;
-        
-        // Orienter selon la direction
-        if (this.pacman.direction.x === 1) {
-            startAngle = mouth * Math.PI;
-            endAngle = (2 - mouth) * Math.PI;
-        } else if (this.pacman.direction.x === -1) {
-            startAngle = (1 + mouth) * Math.PI;
-            endAngle = (1 - mouth) * Math.PI;
-        } else if (this.pacman.direction.y === -1) {
-            startAngle = (1.5 + mouth) * Math.PI;
-            endAngle = (1.5 - mouth) * Math.PI;
-        } else {
-            startAngle = (0.5 + mouth) * Math.PI;
-            endAngle = (0.5 - mouth) * Math.PI;
-        }
-        
-        ctx.arc(x, y, radius, startAngle, endAngle);
-        ctx.lineTo(x, y);
-        ctx.closePath();
-        ctx.fill();
-    }
-    
-    renderDeathAnimation(ctx) {
-        const x = this.pacman.x * this.tileSize;
-        const y = this.pacman.y * this.tileSize;
-        const radius = this.tileSize / 2 - 2;
-        
-        const progress = 1 - (this.deathTimer / 1.5); // 0 à 1
-        
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        
-        // S'efface progressivement
-        const startAngle = progress * Math.PI;
-        const endAngle = (2 - progress) * Math.PI;
-        
-        ctx.arc(x, y, radius, startAngle, endAngle);
-        ctx.lineTo(x, y);
-        ctx.closePath();
-        ctx.fill();
-    }
-    
-    renderGhost(ctx, ghost) {
-        const x = ghost.x * this.tileSize;
-        const y = ghost.y * this.tileSize;
-        const radius = this.tileSize / 2 - 2;
-        
-        // Couleur selon le mode
-        let color;
-        if (ghost.mode === 'eaten') {
-            // Juste les yeux visibles
-            color = null;
-        } else if (ghost.mode === 'frightened') {
-            color = ghost.displayColor || ghost.scaredColor;
-        } else {
-            color = ghost.color;
-        }
-        
-        // Corps
-        if (color) {
+            
             ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 10;
+            
+            // Forme du fantôme (demi-cercle + corps ondulé)
             ctx.beginPath();
-            ctx.arc(x, y - radius * 0.2, radius, Math.PI, 0); // Demi-cercle supérieur
+            ctx.arc(x, y - radius/3, radius, Math.PI, 0, false);
             
             // Bas ondulé
             const waveCount = 4;
             const waveWidth = (radius * 2) / waveCount;
-            const baseY = y + radius * 0.8;
-            
-            ctx.lineTo(x + radius, baseY);
-            
             for (let i = 0; i < waveCount; i++) {
-                const waveX = x + radius - (i + 0.5) * waveWidth;
-                const waveY = baseY + (i % 2 === 0 ? 5 : 0);
-                ctx.lineTo(waveX, waveY);
+                const wx = x - radius + i * waveWidth;
+                const wy = y + radius/3;
+                ctx.lineTo(wx + waveWidth/2, wy + (i % 2 === 0 ? 4 : 0));
+                ctx.lineTo(wx + waveWidth, wy);
             }
             
-            ctx.lineTo(x - radius, y - radius * 0.2);
             ctx.closePath();
             ctx.fill();
-        }
-        
-        // Yeux (toujours visibles sauf en mode eaten où juste les yeux)
-        const eyeOffsetX = radius * 0.35;
-        const eyeOffsetY = -radius * 0.2;
-        const eyeRadius = radius * 0.28;
-        const pupilRadius = eyeRadius * 0.5;
-        
-        // Blanc des yeux
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x - eyeOffsetX, y + eyeOffsetY, eyeRadius, 0, Math.PI * 2);
-        ctx.arc(x + eyeOffsetX, y + eyeOffsetY, eyeRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Pupilles (regardent vers Pac-Man ou dans une direction fixe si effrayé)
-        ctx.fillStyle = ghost.mode === 'frightened' ? '#ffffff' : '#1e293b';
-        
-        let lookX = 0, lookY = 0;
-        
-        if (ghost.mode !== 'frightened') {
-            const dx = this.pacman.x - ghost.x;
-            const dy = this.pacman.y - ghost.y;
-            const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-            lookX = (dx / dist) * pupilRadius * 0.5;
-            lookY = (dy / dist) * pupilRadius * 0.5;
-        }
-        
-        ctx.beginPath();
-        ctx.arc(x - eyeOffsetX + lookX, y + eyeOffsetY + lookY, pupilRadius, 0, Math.PI * 2);
-        ctx.arc(x + eyeOffsetX + lookX, y + eyeOffsetY + lookY, pupilRadius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    renderUI(ctx) {
-        // Score
-        ctx.font = 'bold 20px Orbitron';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'left';
-        ctx.fillText(`SCORE: ${this.score}`, 10, -15);
-        
-        // Lives
-        ctx.textAlign = 'right';
-        ctx.fillText('VIES:', this.mapWidth * this.tileSize - 80, -15);
-        
-        for (let i = 0; i < this.lives; i++) {
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath();
-            ctx.arc(this.mapWidth * this.tileSize - 60 + i * 25, -20, 10, 0.25 * Math.PI, 1.75 * Math.PI);
-            ctx.lineTo(this.mapWidth * this.tileSize - 60 + i * 25, -20);
-            ctx.fill();
-        }
-        
-        // Ready text
-        if (this.readyState) {
-            ctx.font = 'bold 28px Orbitron';
-            ctx.fillStyle = '#fbbf24';
-            ctx.textAlign = 'center';
-            ctx.fillText('PRÊT!', this.mapWidth * this.tileSize / 2, this.mapHeight * this.tileSize / 2);
-        }
-        
-        // Power mode indicator
-        if (this.powerMode) {
-            ctx.font = 'bold 16px Orbitron';
-            ctx.fillStyle = '#06b6d4';
-            ctx.textAlign = 'center';
-            ctx.fillText(`⚡ ${Math.ceil(this.powerTimer)}s`, this.mapWidth * this.tileSize / 2, 30);
-        }
-        
-        ctx.textAlign = 'left';
-    }
-    
-    handleKey(key, code) {
-        if (this.readyState || this.deathAnimation || this.gameOver) return;
-        
-        switch (code) {
-            case 'ArrowUp':
-            case 'KeyW':
-                this.pacman.nextDirection = { x: 0, y: -1 };
-                break;
-            case 'ArrowDown':
-            case 'KeyS':
-                this.pacman.nextDirection = { x: 0, y: 1 };
-                break;
-            case 'ArrowLeft':
-            case 'KeyA':
-                this.pacman.nextDirection = { x: -1, y: 0 };
-                break;
-            case 'ArrowRight':
-            case 'KeyD':
-                this.pacman.nextDirection = { x: 1, y: 0 };
-                break;
-        }
-    }
-    
-    handleMobileInput(direction, state) {
-        if (state === 'down' && !this.readyState && !this.deathAnimation) {
-            switch (direction) {
-                case 'up': this.pacman.nextDirection = { x: 0, y: -1 }; break;
-                case 'down': this.pacman.nextDirection = { x: 0, y: 1 }; break;
-                case 'left': this.pacman.nextDirection = { x: -1, y: 0 }; break;
-                case 'right': this.pacman.nextDirection = { x: 1, y: 0 }; break;
+            ctx.shadowBlur = 0;
+            
+            // Yeux
+            if (!this.powerMode || ghost.mode !== 'scared') {
+                // Yeux normaux
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.ellipse(x - radius/3, y - radius/3, radius/4, radius/3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(x + radius/3, y - radius/3, radius/4, radius/3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Pupilles (regardent Pac-Man)
+                const lookDir = {
+                    x: this.pacman.pixelX - ghost.pixelX,
+                    y: this.pacman.pixelY - ghost.pixelY
+                };
+                const lookDist = Math.sqrt(lookDir.x ** 2 + lookDir.y ** 2);
+                const pupilOffset = {
+                    x: lookDist > 0 ? (lookDir.x / lookDist) * 2 : 0,
+                    y: lookDist > 0 ? (lookDir.y / lookDist) * 2 : 0
+                };
+                
+                ctx.fillStyle = '#0000aa';
+                ctx.beginPath();
+                ctx.arc(x - radius/3 + pupilOffset.x, y - radius/3 + pupilOffset.y, radius/6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + radius/3 + pupilOffset.x, y - radius/3 + pupilOffset.y, radius/6, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Yeux effrayés
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x - radius/3, y - radius/3, radius/5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + radius/3, y - radius/3, radius/5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bouche en forme de vagues
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x - radius/2, y + radius/4);
+                for (let i = 0; i < 4; i++) {
+                    ctx.lineTo(x - radius/2 + (i+0.5) * radius/2, y + radius/4 + (i % 2 === 0 ? 3 : -3));
+                }
+                ctx.stroke();
             }
+        });
+    }
+
+    /**
+     * Dessiner l'interface utilisateur
+     */
+    drawUI(ctx) {
+        // Score
+        Utils.canvas.drawGlowText(ctx, `Score: ${Utils.formatScore(this.score)}`, 60, 25, {
+            font: 'bold 18px Orbitron',
+            color: this.colors.text,
+            glowColor: this.colors.primary,
+            glowSize: 10,
+            align: 'left'
+        });
+        
+        // Pastilles restantes
+        Utils.canvas.drawGlowText(ctx, `Pastilles: ${this.dotsRemaining}`, this.width - 60, 25, {
+            font: 'bold 16px Orbitron',
+            color: this.colors.dot,
+            glowColor: this.colors.dot,
+            glowSize: 8,
+            align: 'right'
+        });
+        
+        // Indicateur Power Mode
+        if (this.powerMode) {
+            const barWidth = 100;
+            const barHeight = 8;
+            const x = this.width / 2 - barWidth / 2;
+            const y = 15;
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(x, y, barWidth, barHeight);
+            
+            ctx.fillStyle = this.colors.superDot;
+            ctx.shadowColor = this.colors.superDot;
+            ctx.shadowBlur = 10;
+            ctx.fillRect(x, y, barWidth * (this.powerTimer / this.config.powerUpDuration), barHeight);
+            ctx.shadowBlur = 0;
         }
+    }
+
+    /**
+     * Gérer les touches pressées
+     */
+    handleKeyDown(e) {
+        switch (e.key.toLowerCase()) {
+            case 'arrowup':
+            case 'w':
+            case 'z':
+                this.nextDirection = { x: 0, y: -1 };
+                break;
+            case 'arrowdown':
+            case 's':
+                this.nextDirection = { x: 0, y: 1 };
+                break;
+            case 'arrowleft':
+            case 'a':
+            case 'q':
+                this.nextDirection = { x: -1, y: 0 };
+                break;
+            case 'arrowright':
+            case 'd':
+                this.nextDirection = { x: 1, y: 0 };
+                break;
+            case 'r':
+                if (this.gameOver) this.init();
+                break;
+        }
+    }
+
+    /**
+     * Obtenir les instructions
+     */
+    getInstructions() {
+        return `
+            <strong>🟡 Pac-Man</strong> - Mangez toutes les pastilles!<br>
+            <span style="color: var(--neon-blue)">⬆️⬇️⬅️➡️ Flèches</span> pour vous déplacer | 
+            Évitez les 👻 ou mangez-les avec les <span style="color: #ffb8ff">⭐ super pastilles!</span>
+        `;
     }
 }
+
+// Enregistrer le jeu
+window.Games.pacman = PacManGame;
