@@ -1,122 +1,115 @@
+// arcade-collection/js/games/blackjack.js
+
 /**
  * ============================================
- * ARCADE ULTIMATE - BLACKJACK GAME
- * 21 points contre le Croupier IA
+ * ARCADE COLLECTION - BLACKJACK (21)
+ * Classique jeu de cartes contre le croupier
+ * Contrôles: Clic souris pour les actions
  * ============================================
  */
 
 class BlackjackGame extends BaseGame {
-    constructor(canvas, ctx) {
-        super(canvas, ctx);
+    constructor(ctx, width, height) {
+        super(ctx, width, height);
         
-        // Configuration des cartes
-        this.suits = ['♠', '♥', '♦', '♣'];
-        this.suitColors = { '♠': '#1f2937', '♥': '#dc2626', '♦': '#dc2626', '♣': '#1f2937' };
-        this.values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-        
-        // Dimensions des cartes
-        this.cardWidth = 80;
-        this.cardHeight = 115;
-        
-        // Système d'effets
-        this.particles = new ParticleSystem(100);
-        this.dealAnimation = { active: false, timer: 0, phase: 0 };
-        
-        // Initialiser
-        this.init();
-    }
-    
-    init() {
-        // Deck
-        this.deck = [];
-        this.createDeck();
-        this.shuffleDeck();
-        
-        // Mains
-        this.playerHand = [];
-        this.dealerHand = [];
-        
-        // État du jeu
-        this.gamePhase = 'betting'; // betting, playing, dealerTurn, ended
-        this.message = 'Placez votre mise ou appuyez sur DEAL';
-        this.resultMessage = '';
-        
-        // Mise et score
-        this.bet = 100;
-        this.balance = 1000;
-        this.score = 0;
-        
-        // Stats
-        this.handsPlayed = 0;
-        this.wins = 0;
-        this.losses = 0;
-        this.pushes = 0;
-        this.blackjacks = 0;
-        
-        // Animation
-        this.cardAnimations = [];
-        this.showDealerHoleCard = false;
-        this.resultTimer = 0;
-        
-        // Boutons actifs
-        this.buttonsEnabled = {
-            deal: true,
-            hit: false,
-            stand: false,
-            double: false,
-            newGame: false
+        // Configuration
+        this.config = {
+            deckCount: 1,
+            blackjackPayout: 1.5,
+            dealerStandsOn: 17,
+            chipValue: 10,
+            startingChips: 1000
         };
         
-        // État
-        this.gameOver = false;
-        this.gameState = GAME_STATES.IDLE;
-    }
-    
-    createDeck() {
+        // Valeurs des cartes
+        this.cardValues = {
+            'A': 11, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
+            '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10, 'Q': 10, 'K': 10
+        };
+        
+        // Couleurs des symboles
+        this.suits = {
+            'hearts': { symbol: '♥', color: '#ef5350' },
+            'diamonds': { symbol: '♦', color: '#ef5350' },
+            'clubs': { symbol: '♣', color: '#ffffff' },
+            'spades': { symbol: '♠', color: '#ffffff' }
+        };
+        
+        // État du jeu (initialisé dans init())
         this.deck = [];
-        for (const suit of this.suits) {
-            for (const value of this.values) {
-                this.deck.push({ suit, value });
+        this.playerHand = [];
+        this.dealerHand = [];
+        this.playerChips = this.config.startingChips;
+        this.currentBet = 0;
+        this.gamePhase = 'betting'; // betting, playing, dealerTurn, result
+        this.resultMessage = '';
+        this.canHit = true;
+        this.canStand = true;
+        this.canDouble = true;
+        
+        // Animation
+        this.dealAnimationProgress = 0;
+        this.isDealing = false;
+        
+        // Boutons
+        this.buttons = [];
+        
+        // Couleurs
+        this.colors = {
+            ...this.colors,
+            background: '#0d4f2a',
+            tableFelt: '#1b5e20',
+            tableBorder: '#2e7d32',
+            cardWhite: '#fafafa',
+            cardBack: '#1565c0',
+            chipRed: '#d32f2f',
+            chipGold: '#ffa000',
+            textGold: '#ffd700'
+        };
+    }
+
+    /**
+     * Créer un nouveau deck mélangé
+     */
+    createDeck() {
+        const suits = Object.keys(this.suits);
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const deck = [];
+        
+        for (let d = 0; d < this.config.deckCount; d++) {
+            for (const suit of suits) {
+                for (const value of values) {
+                    deck.push({ suit, value });
+                }
             }
         }
-        // Utiliser plusieurs decks pour plus de réalisme (6 decks comme dans les casinos)
-        const tempDeck = [...this.deck];
-        for (let i = 0; i < 5; i++) {
-            this.deck.push(...tempDeck.map(c => ({...c})));
-        }
+        
+        return Utils.shuffle(deck);
     }
-    
-    shuffleDeck() {
-        for (let i = this.deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
-        }
-    }
-    
+
+    /**
+     * Tirer une carte du deck
+     */
     drawCard() {
         if (this.deck.length === 0) {
-            this.createDeck();
-            this.shuffleDeck();
+            this.deck = this.createDeck();
         }
         return this.deck.pop();
     }
-    
-    getHandValue(hand) {
+
+    /**
+     * Calculer la valeur d'une main
+     */
+    calculateHand(hand) {
         let value = 0;
         let aces = 0;
         
         for (const card of hand) {
-            if (card.value === 'A') {
-                aces++;
-                value += 11;
-            } else if (['K', 'Q', 'J'].includes(card.value)) {
-                value += 10;
-            } else {
-                value += parseInt(card.value);
-            }
+            value += this.cardValues[card.value];
+            if (card.value === 'A') aces++;
         }
         
-        // Ajuster la valeur des As
+        // Ajuster les As (11 ou 1)
         while (value > 21 && aces > 0) {
             value -= 10;
             aces--;
@@ -124,604 +117,599 @@ class BlackjackGame extends BaseGame {
         
         return value;
     }
-    
+
+    /**
+     * Vérifier si c'est un Blackjack
+     */
     isBlackjack(hand) {
-        return hand.length === 2 && this.getHandValue(hand) === 21;
+        return hand.length === 2 && this.calculateHand(hand) === 21;
     }
-    
-    startNewRound() {
-        if (this.balance < this.bet) {
-            this.bet = this.balance;
-        }
+
+    /**
+     * Initialiser le jeu
+     */
+    init() {
+        super.init();
         
-        // Vérifier si assez d'argent
-        if (this.balance <= 0) {
-            this.balance = 1000; // Reset
-            this.message = "💰 Nouveau solde accordé !";
-        }
+        // Créer un nouveau deck
+        this.deck = this.createDeck();
         
-        // Reset
+        // Réinitialiser les mains
         this.playerHand = [];
         this.dealerHand = [];
-        this.showDealerHoleCard = false;
-        this.gamePhase = 'playing';
+        
+        // Réinitialiser l'état
+        this.currentBet = 0;
+        this.gamePhase = 'betting';
         this.resultMessage = '';
+        this.canHit = true;
+        this.canStand = true;
+        this.canDouble = true;
+        this.isDealing = false;
+        this.dealAnimationProgress = 0;
         
-        // Distribuer les cartes initiales avec animation
-        this.dealInitialCards();
+        console.log('[Blackjack] Jeu initialisé');
     }
-    
-    dealInitialCards() {
-        // Distribution alternée (comme dans un vrai casino)
-        this.playerHand.push(this.drawCard());
-        this.dealerHand.push(this.drawCard());
-        this.playerHand.push(this.drawCard());
-        this.dealerHand.push(this.drawCard());
+
+    /**
+     * Placer une mise
+     * @param {number} amount - Montant de la mise
+     */
+    placeBet(amount) {
+        if (this.gamePhase !== 'betting') return;
+        if (this.playerChips < amount) return;
         
-        // Vérifier blackjacks
-        if (this.isBlackjack(this.playerHand)) {
-            if (this.isBlackjack(this.dealerHand)) {
-                // Double blackjack = push
-                setTimeout(() => this.endRound('push'), 500);
-            } else {
-                // Blackjack du joueur = 1.5x la mise
-                this.blackjacks++;
-                setTimeout(() => this.endRound('blackjack'), 500);
-            }
-        } else if (this.isBlackjack(this.dealerHand)) {
-            // Blackjack du croupier
-            setTimeout(() => this.endRound('dealerBlackjack'), 800);
-        } else {
-            // Jeu normal
-            this.updateButtons();
-            this.message = 'Votre tour - H: Hit | S: Stand | D: Double';
-        }
+        this.currentBet += amount;
+        this.playerChips -= amount;
         
-        this.handsPlayed++;
-    }
-    
-    hit() {
-        if (this.gamePhase !== 'playing') return;
-        
-        this.playerHand.push(this.drawCard());
-        
-        // Particules
-        this.particles.emit(this.width / 2, this.height / 2 + 50, {
-            count: 10,
-            speed: 4,
-            size: 4,
-            colors: ['#22c55e', '#ffffff'],
-            life: 0.4,
-            spread: Math.PI
-        });
-        
-        if (this.engine?.soundManager) {
-            this.engine.soundManager.playClick();
-        }
-        
-        const playerValue = this.getHandValue(this.playerHand);
-        
-        if (playerValue > 21) {
-            // Bust!
-            this.showDealerHoleCard = true;
-            setTimeout(() => this.endRound('bust'), 500);
-        } else if (playerValue === 21) {
-            // Stand automatique à 21
-            this.stand();
-        } else {
-            // Plus de double après hit
-            this.buttonsEnabled.double = false;
-            this.message = `Total: ${playerValue} - H: Hit | S: Stand`;
+        // Démarrer le jeu si mise minimale atteinte
+        if (this.currentBet >= this.config.chipValue) {
+            this.startRound();
         }
     }
-    
-    stand() {
-        if (this.gamePhase !== 'playing') return;
+
+    /**
+     * Démarrer un tour
+     */
+    startRound() {
+        this.gamePhase = 'playing';
+        this.isDealing = true;
+        this.dealAnimationProgress = 0;
         
-        this.gamePhase = 'dealerTurn';
-        this.showDealerHoleCard = true;
-        this.message = 'Tour du croupier...';
-        
-        // Le croupie joue automatiquement
-        this.dealerPlay();
-    }
-    
-    doubleDown() {
-        if (this.gamePhase !== 'playing' || this.playerHand.length !== 2) return;
-        if (this.balance < this.bet) {
-            this.message = "Pas assez pour doubler !";
-            return;
-        }
-        
-        this.bet *= 2;
-        this.hit(); // Une seule carte puis stand automatique
-        
-        if (!this.gameOver) {
-            setTimeout(() => this.stand(), 600);
-        }
-    }
-    
-    dealerPlay() {
-        const playInterval = setInterval(() => {
-            const dealerValue = this.getHandValue(this.dealerHand);
+        // Distribuer les cartes initiales
+        setTimeout(() => {
+            this.playerHand.push(this.drawCard());
+            this.dealerHand.push(this.drawCard());
             
-            // Règle du croupier: tire jusqu'à 17, reste sur soft 17 ou plus
-            if (dealerValue < 17) {
+            setTimeout(() => {
+                this.playerHand.push(this.drawCard());
                 this.dealerHand.push(this.drawCard());
                 
-                if (this.engine?.soundManager) {
-                    this.engine.soundManager.playClick();
-                }
-            } else {
-                clearInterval(playInterval);
+                this.isDealing = false;
                 
-                // Déterminer le résultat
-                setTimeout(() => {
-                    const playerValue = this.getHandValue(this.playerHand);
-                    const finalDealerValue = this.getHandValue(this.dealerHand);
-                    
-                    if (finalDealerValue > 21) {
-                        this.endRound('dealerBust');
-                    } else if (finalDealerValue > playerValue) {
-                        this.endRound('lose');
-                    } else if (playerValue > finalDealerValue) {
-                        this.endRound('win');
-                    } else {
+                // Vérifier les blackjacks immédiats
+                if (this.isBlackjack(this.playerHand)) {
+                    if (this.isBlackjack(this.dealerHand)) {
                         this.endRound('push');
+                    } else {
+                        this.endRound('blackjack');
                     }
-                }, 500);
-            }
-        }, 400);
+                } else if (this.isBlackjack(this.dealerHand)) {
+                    this.endRound('dealerBlackjack');
+                } else {
+                    // Le double n'est possible qu'avec exactement 2 cartes et assez de jetons
+                    this.canDouble = this.playerChips >= this.currentBet;
+                }
+                
+                Utils.audio.playClick();
+            }, 200);
+        }, 200);
     }
-    
-    endRound(result) {
-        this.gamePhase = 'ended';
-        this.gameOver = true;
+
+    /**
+     * Tirer une carte (Hit)
+     */
+    hit() {
+        if (!this.canHit || this.gamePhase !== 'playing') return;
         
-        const playerValue = this.getHandValue(this.playerHand);
-        const dealerValue = this.getHandValue(this.dealerHand);
+        this.playerHand.push(this.drawCard());
+        this.canDouble = false;
+        Utils.audio.playClick();
+        
+        const playerValue = this.calculateHand(this.playerHand);
+        
+        if (playerValue > 21) {
+            this.endRound('bust');
+        } else if (playerValue === 21) {
+            this.stand(); // Auto-stand à 21
+        }
+    }
+
+    /**
+     * Rester (Stand)
+     */
+    stand() {
+        if (!this.canStand || this.gamePhase !== 'playing') return;
+        
+        this.gamePhase = 'dealerTurn';
+        this.canHit = false;
+        this.canStand = false;
+        this.canDouble = false;
+        
+        // Tour du croupier
+        this.playDealerTurn();
+    }
+
+    /**
+     * Doubler la mise
+     */
+    doubleDown() {
+        if (!this.canDouble || this.gamePhase !== 'playing') return;
+        
+        this.playerChips -= this.currentBet;
+        this.currentBet *= 2;
+        
+        // Une seule carte puis stand automatique
+        this.playerHand.push(this.drawCard());
+        this.canDouble = false;
+        Utils.audio.playClick();
+        
+        if (this.calculateHand(this.playerHand) > 21) {
+            this.endRound('bust');
+        } else {
+            this.stand();
+        }
+    }
+
+    /**
+     * Tour du croupier
+     */
+    playDealerTurn() {
+        const drawNextCard = () => {
+            const dealerValue = this.calculateHand(this.dealerHand);
+            
+            if (dealerValue < this.config.dealerStandsOn) {
+                this.dealerHand.push(this.drawCard());
+                Utils.audio.playBounce();
+                setTimeout(drawNextCard, 600);
+            } else {
+                this.determineWinner();
+            }
+        };
+        
+        setTimeout(drawNextCard, 500);
+    }
+
+    /**
+     * Déterminer le gagnant
+     */
+    determineWinner() {
+        const playerValue = this.calculateHand(this.playerHand);
+        const dealerValue = this.calculateHand(this.dealerHand);
+        
+        if (dealerValue > 21) {
+            this.endRound('dealerBust');
+        } else if (playerValue > dealerValue) {
+            this.endRound('win');
+        } else if (dealerValue > playerValue) {
+            this.endRound('lose');
+        } else {
+            this.endRound('push');
+        }
+    }
+
+    /**
+     * Terminer le tour
+     */
+    endRound(result) {
+        this.gamePhase = 'result';
+        
+        let winnings = 0;
         
         switch (result) {
             case 'blackjack':
-                this.resultMessage = '🎉 BLACKJACK! 3:2!';
-                this.balance += Math.floor(this.bet * 2.5);
-                this.wins++;
-                this.score = this.bet * 15;
+                winnings = Math.floor(this.currentBet * (1 + this.config.blackjackPayout));
+                this.resultMessage = `🎉 BLACKJACK! +${winnings}`;
+                Utils.audio.playSuccess();
                 break;
                 
             case 'win':
-                this.resultMessage = `✨ Vous gagnez! (${playerValue} vs ${dealerValue})`;
-                this.balance += this.bet * 2;
-                this.wins++;
-                this.score = this.bet * 10;
+                winnings = this.currentBet * 2;
+                this.resultMessage = `✨ Vous gagnez! +${winnings}`;
+                Utils.audio.playSuccess();
                 break;
                 
             case 'dealerBust':
-                this.resultMessage = `🎉 Le croupier bust! Vous gagnez!`;
-                this.balance += this.bet * 2;
-                this.wins++;
-                this.score = this.bet * 10;
-                break;
-                
-            case 'lose':
-                this.resultMessage = `😢 Le croupier gagne (${playerValue} vs ${dealerValue})`;
-                this.losses++;
-                this.score = 0;
-                break;
-                
-            case 'bust':
-                this.resultMessage = `💥 Bust! ${playerValue} points`;
-                this.losses++;
-                this.score = 0;
+                winnings = this.currentBet * 2;
+                this.resultMessage = `🎊 Le croupier bust! +${winnings}`;
+                Utils.audio.playSuccess();
                 break;
                 
             case 'push':
-                this.resultMessage = `🤝 Égalité! (${playerValue} vs ${dealerValue})`;
-                this.balance += this.bet; // Retour de la mise
-                this.pushes++;
-                this.score = this.bet * 5;
+                winnings = this.currentBet;
+                this.resultMessage = `🤝 Push - Égalité`;
+                Utils.audio.playClick();
+                break;
+                
+            case 'lose':
+                winnings = 0;
+                this.resultMessage = `😔 Vous perdez -${this.currentBet}`;
+                Utils.audio.playError();
+                break;
+                
+            case 'bust':
+                winnings = 0;
+                this.resultMessage = `💥 Bust! -${this.currentBet}`;
+                Utils.audio.playError();
                 break;
                 
             case 'dealerBlackjack':
-                this.resultMessage = '😱 Blackjack du croupier!';
-                this.losses++;
-                this.score = 0;
+                winnings = 0;
+                this.resultMessage = `😱 Blackjack du croupier!`;
+                Utils.audio.playError();
                 break;
         }
         
-        this.updateButtons();
+        this.playerChips += winnings;
+        this.addScore(winnings);
         
-        // Effets visuels selon le résultat
-        if (['win', 'blackjack', 'dealerBust'].includes(result)) {
-            this.particles.emit(this.width / 2, this.height / 2, {
-                count: 40,
-                speed: 8,
-                size: 6,
-                colors: ['#22c55e', '#fbbf24', '#ffffff'],
-                life: 1.2,
-                gravity: 150,
-                spread: Math.PI * 2
-            });
-            
-            if (this.engine?.soundManager) {
-                this.engine.soundManager.playVictory();
-            }
-        } else if (['lose', 'bust', 'dealerBlackjack'].includes(result)) {
-            if (this.engine?.soundManager) {
-                this.engine.soundManager.playGameOver();
-            }
-        }
-        
-        // Mettre à jour le score affiché
-        if (this.engine) {
-            this.engine.score = this.score;
-            this.engine.updateScoreDisplay();
-        }
-        
-        // Afficher le modal après un délai
-        setTimeout(() => {
-            const icon = ['win', 'blackjack', 'dealerBust'].includes(result) ? '🏆' :
-                         result === 'push' ? '🤝' : '😢';
-            const title = ['win', 'blackjack', 'dealerBust'].includes(result) ? 'VICTOIRE!' :
-                          result === 'push' ? 'ÉGALITÉ' : 'DÉFAITE';
-            
-            const statsHtml = `
-                <span>🃏 Mains jouées: ${this.handsPlayed}</span>
-                <span>✅ Victoires: ${this.wins}</span>
-            `;
-            
-            this.engine?.showModal(icon, title, this.balance, statsHtml);
-        }, 1500);
-    }
-    
-    updateButtons() {
-        switch (this.gamePhase) {
-            case 'betting':
-                this.buttonsEnabled = { deal: true, hit: false, stand: false, double: false, newGame: false };
-                break;
-            case 'playing':
-                const canDouble = this.playerHand.length === 2 && this.balance >= this.bet;
-                this.buttonsEnabled = { deal: false, hit: true, stand: true, double: canDouble, newGame: false };
-                break;
-            case 'ended':
-                this.buttonsEnabled = { deal: false, hit: false, stand: false, double: false, newGame: true };
-                break;
-            default:
-                this.buttonsEnabled = { deal: false, hit: false, stand: false, double: false, newGame: false };
+        // Vérifier si le joueur est ruiné
+        if (this.playerChips <= 0) {
+            this.playerChips = this.config.startingChips;
+            this.resultMessage += ' | Jetons rechargeés!';
         }
     }
-    
+
+    /**
+     * Nouvelle partie
+     */
     newGame() {
-        this.startNewRound();
-        this.gameOver = false;
-        this.gameState = GAME_STATES.PLAYING;
+        this.init();
     }
-    
-    update(dt) {
-        super.update(dt);
-        this.particles.update(dt);
+
+    /**
+     * Mettre à jour le jeu
+     */
+    update(deltaTime) {
+        if (this.isDealing) {
+            this.dealAnimationProgress += deltaTime * 3;
+            if (this.dealAnimationProgress >= 1) {
+                this.dealAnimationProgress = 1;
+            }
+        }
     }
-    
-    render() {
-        const ctx = this.ctx;
-        
-        // Fond table de casino
-        this.renderTableBackground(ctx);
-        
-        // Zone du croupier
-        this.renderDealerArea(ctx);
-        
-        // Zone du joueur
-        this.renderPlayerArea(ctx);
-        
-        // Informations
-        this.renderInfoPanel(ctx);
-        
-        // Boutons
-        this.renderButtons(ctx);
-        
-        // Particules
-        this.particles.render(ctx);
-    }
-    
-    renderTableBackground(ctx) {
-        // Gradient radial vert casino
+
+    /**
+     * Rendre le jeu
+     */
+    render(ctx) {
+        // Fond (table de casino)
         const gradient = ctx.createRadialGradient(
             this.width / 2, this.height / 2, 0,
-            this.width / 2, this.height / 2, this.width * 0.7
+            this.width / 2, this.height / 2, this.width / 1.5
         );
-        gradient.addColorStop(0, '#166534');
-        gradient.addColorStop(0.7, '#14532d');
-        gradient.addColorStop(1, '#052e16');
-        
+        gradient.addColorStop(0, this.colors.tableFelt);
+        gradient.addColorStop(1, this.colors.background);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, this.width, this.height);
         
-        // Bordure dorée
-        ctx.strokeStyle = '#fbbf24';
-        ctx.lineWidth = 8;
-        RenderUtils.roundRect(ctx, 10, 10, this.width - 20, this.height - 20, 20);
-        ctx.stroke();
+        // Bordure de table
+        ctx.strokeStyle = this.colors.tableBorder;
+        ctx.lineWidth = 15;
+        Utils.canvas.roundRect(ctx, 20, 20, this.width - 40, this.height - 40, 30, null, this.colors.tableBorder);
         
-        // Motif subtil
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.05)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < this.width; i += 30) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0);
-            ctx.lineTo(i, this.height);
-            ctx.stroke();
+        // Titre
+        Utils.canvas.drawGlowText(ctx, 'BLACKJACK', this.width / 2, 50, {
+            font: 'bold 32px Orbitron',
+            color: this.colors.textGold,
+            glowColor: this.colors.textGold,
+            glowSize: 20
+        });
+        
+        // Zone du croupier
+        this.drawDealerArea(ctx);
+        
+        // Zone du joueur
+        this.drawPlayerArea(ctx);
+        
+        // Informations de mise et jetons
+        this.drawInfoPanel(ctx);
+        
+        // Boutons d'action
+        if (this.gamePhase === 'playing' || this.gamePhase === 'betting') {
+            this.drawActionButtons(ctx);
+        }
+        
+        // Message de résultat
+        if (this.gamePhase === 'result') {
+            this.drawResultMessage(ctx);
         }
     }
-    
-    renderDealerArea(ctx) {
-        const centerY = 130;
+
+    /**
+     * Dessiner la zone du croupier
+     */
+    drawDealerArea(ctx) {
+        const y = 120;
         
         // Label
-        ctx.font = 'bold 18px Orbitron';
-        ctx.fillStyle = '#fbbf24';
+        ctx.font = '16px Orbitron';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.textAlign = 'center';
-        ctx.fillText('CROUPIER', this.width / 2, 35);
+        ctx.fillText('CROUPIER', this.width / 2, y);
         
         // Cartes du croupier
-        const startX = this.width / 2 - (this.dealerHand.length * (this.cardWidth + 15)) / 2;
+        const startX = this.width / 2 - (this.dealerHand.length * 45) / 2;
         
-        for (let i = 0; i < this.dealerHand.length; i++) {
-            const x = startX + i * (this.cardWidth + 15);
-            const y = centerY - this.cardHeight / 2;
-            
-            if (i === 1 && !this.showDealerHoleCard) {
-                // Carte cachée (dos)
-                this.renderCardBack(ctx, x, y);
-            } else {
-                this.renderCard(ctx, x, y, this.dealerHand[i]);
-            }
+        this.dealerHand.forEach((card, i) => {
+            const x = startX + i * 50;
+            const hideCard = (i === 1 && this.gamePhase === 'playing');
+            this.drawCard(ctx, x, y + 20, card, hideCard);
+        });
+        
+        // Score du croupier (visible seulement après le tour du joueur)
+        if (this.gamePhase !== 'playing' && this.dealerHand.length > 0) {
+            const score = this.calculateHand(this.dealerHand);
+            Utils.canvas.drawGlowText(ctx, score.toString(), this.width / 2, y + 145, {
+                font: 'bold 24px Orbitron',
+                color: score > 21 ? '#ef5350' : this.colors.textGold,
+                glowColor: this.colors.textGold,
+                glowSize: 10
+            });
         }
-        
-        // Valeur du croupier (si révélée)
-        if (this.showDealerHoleCard || this.gamePhase === 'ended') {
-            const dealerValue = this.getHandValue(this.dealerHand);
-            ctx.font = 'bold 24px Orbitron';
-            ctx.fillStyle = dealerValue > 21 ? '#ef4444' : '#ffffff';
-            ctx.fillText(dealerValue.toString(), this.width / 2, centerY + this.cardHeight / 2 + 30);
-        }
-        
-        ctx.textAlign = 'left';
     }
-    
-    renderPlayerArea(ctx) {
-        const centerY = this.height - 180;
+
+    /**
+     * Dessiner la zone du joueur
+     */
+    drawPlayerArea(ctx) {
+        const y = this.height - 220;
         
         // Label
-        ctx.font = 'bold 18px Orbitron';
-        ctx.fillStyle = '#4ade80';
+        ctx.font = '16px Orbitron';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.textAlign = 'center';
-        ctx.fillText('VOS CARTES', this.width / 2, this.height - 280);
+        ctx.fillText('VOS CARTES', this.width / 2, y);
         
         // Cartes du joueur
-        const startX = this.width / 2 - (this.playerHand.length * (this.cardWidth + 15)) / 2;
+        const startX = this.width / 2 - (this.playerHand.length * 45) / 2;
         
-        for (let i = 0; i < this.playerHand.length; i++) {
-            const x = startX + i * (this.cardWidth + 15);
-            const y = centerY - this.cardHeight / 2;
-            this.renderCard(ctx, x, y, this.playerHand[i]);
+        this.playerHand.forEach((card, i) => {
+            const x = startX + i * 50;
+            this.drawCard(ctx, x, y + 20, card, false);
+        });
+        
+        // Score du joueur
+        if (this.playerHand.length > 0) {
+            const score = this.calculateHand(this.playerHand);
+            Utils.canvas.drawGlowText(ctx, score.toString(), this.width / 2, y + 145, {
+                font: 'bold 28px Orbitron',
+                color: score > 21 ? '#ef5350' : this.colors.textGold,
+                glowColor: this.colors.textGold,
+                glowSize: 12
+            });
         }
+    }
+
+    /**
+     * Dessiner une carte
+     */
+    drawCard(ctx, x, y, card, faceDown = false) {
+        const width = 70;
+        const height = 100;
+        const radius = 8;
         
-        // Valeur du joueur
-        const playerValue = this.getHandValue(this.playerHand);
-        ctx.font = 'bold 28px Orbitron';
-        ctx.fillStyle = playerValue > 21 ? '#ef4444' : 
-                             playerValue === 21 ? '#fbbf24' : '#4ade80';
-        ctx.fillText(playerValue.toString(), this.width / 2, centerY + this.cardHeight / 2 + 35);
-        
-        // Blackjack indicator
-        if (this.isBlackjack(this.playerHand)) {
-            ctx.font = 'bold 20px Orbitron';
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillText('⭐ BLACKJACK! ⭐', this.width / 2, centerY + this.cardHeight / 2 + 60);
+        if (faceDown) {
+            // Dos de la carte
+            ctx.fillStyle = this.colors.cardBack;
+            Utils.canvas.roundRect(ctx, x, y, width, height, radius, this.colors.cardBack);
+            
+            // Pattern sur le dos
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 7; j++) {
+                    ctx.strokeRect(x + 8 + i * 12, y + 8 + j * 13, 10, 11);
+                }
+            }
+        } else {
+            // Face de la carte
+            ctx.fillStyle = this.colors.cardWhite;
+            Utils.canvas.roundRect(ctx, x, y, width, height, radius, this.colors.cardWhite);
+            
+            // Symbole et valeur
+            const suit = this.suits[card.suit];
+            ctx.fillStyle = suit.color;
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(card.value, x + 6, y + 22);
+            ctx.fillText(suit.symbol, x + 6, y + 42);
+            
+            // Grand symbole au centre
+            ctx.font = '36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(suit.symbol, x + width / 2, y + height / 2 + 12);
+            
+            // Valeur en bas (inversée)
+            ctx.save();
+            ctx.translate(x + width - 6, y + height - 8);
+            ctx.rotate(Math.PI);
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(card.value, 0, 14);
+            ctx.fillText(suit.symbol, 0, 34);
+            ctx.restore();
         }
-        
-        ctx.textAlign = 'left';
     }
-    
-    renderCard(ctx, x, y, card) {
-        // Ombre
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        RenderUtils.roundRect(ctx, x + 4, y + 4, this.cardWidth, this.cardHeight, 8);
-        ctx.fill();
+
+    /**
+     * Dessiner le panneau d'informations
+     */
+    drawInfoPanel(ctx) {
+        const panelY = this.height - 80;
         
-        // Carte blanche
-        ctx.fillStyle = '#ffffff';
-        RenderUtils.roundRect(ctx, x, y, this.cardWidth, this.cardHeight, 8);
-        ctx.fill();
-        
-        // Couleur de la carte
-        const color = this.suitColors[card.suit];
-        
-        // Valeur en haut à gauche
-        ctx.fillStyle = color;
-        ctx.font = 'bold 20px Arial';
+        // Jetons
+        ctx.font = 'bold 18px Orbitron';
+        ctx.fillStyle = this.colors.textGold;
         ctx.textAlign = 'left';
-        ctx.fillText(card.value, x + 8, y + 25);
-        
-        // Symbole en haut à gauche
-        ctx.font = '18px Arial';
-        ctx.fillText(card.suit, x + 8, y + 45);
-        
-        // Grand symbole au centre
-        ctx.font = '36px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(card.suit, x + this.cardWidth / 2, y + this.cardHeight / 2 + 12);
-        
-        // Valeur en bas à droite (inversée)
-        ctx.save();
-        ctx.translate(x + this.cardWidth - 8, y + this.cardHeight - 8);
-        ctx.rotate(Math.PI);
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(card.value, 0, 0);
-        ctx.font = '18px Arial';
-        ctx.fillText(card.suit, 0, 20);
-        ctx.restore();
-        
-        // Bordure subtile
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.lineWidth = 1;
-        RenderUtils.roundRect(ctx, x, y, this.cardWidth, this.cardHeight, 8);
-        ctx.stroke();
-    }
-    
-    renderCardBack(ctx, x, y) {
-        // Ombre
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        RenderUtils.roundRect(ctx, x + 4, y + 4, this.cardWidth, this.cardHeight, 8);
-        ctx.fill();
-        
-        // Dos de carte
-        ctx.fillStyle = '#1e40af';
-        RenderUtils.roundRect(ctx, x, y, this.cardWidth, this.cardHeight, 8);
-        ctx.fill();
-        
-        // Pattern
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1;
-        
-        for (let i = 0; i < 10; i++) {
-            ctx.beginPath();
-            ctx.moveTo(x + 10, y + 12 + i * 11);
-            ctx.lineTo(x + this.cardWidth - 10, y + 12 + i * 11);
-            ctx.stroke();
-        }
-        
-        // Logo central
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.3)';
-        ctx.beginPath();
-        ctx.arc(x + this.cardWidth / 2, y + this.cardHeight / 2, 20, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.font = 'bold 16px Arial';
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.5)';
-        ctx.textAlign = 'center';
-        ctx.fillText('?', x + this.cardWidth / 2, y + this.cardHeight / 2 + 6);
-    }
-    
-    renderInfoPanel(ctx) {
-        // Solde
-        ctx.font = 'bold 20px Orbitron';
-        ctx.fillStyle = '#fbbf24';
-        ctx.textAlign = 'left';
-        ctx.fillText(`💰 ${this.balance}`, 25, 45);
+        ctx.fillText(`💰 ${Utils.formatScore(this.playerChips)}`, 40, panelY);
         
         // Mise actuelle
-        ctx.font = '16px Rajdhani';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Mise: ${this.bet}`, 25, 70);
-        
-        // Message
-        ctx.font = '18px Rajdhani';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = this.resultMessage ? 
-            (this.resultMessage.includes('gagne') || this.resultMessage.includes('Blackjack')) ? '#4ade80' :
-            this.resultMessage.includes('bust') || this.resultMessage.includes('perte') ? '#ef4444' : '#fbbf24'
-            : '#e2e8f0';
-        ctx.fillText(this.message || this.resultMessage, this.width / 2, this.height - 55);
-        
-        // Stats
-        ctx.font = '13px Rajdhani';
-        ctx.fillStyle = '#64748b';
         ctx.textAlign = 'right';
-        ctx.fillText(`V:${this.wins} D:${this.losses} N:${this.pushes} BJ:${this.blackjacks}`, this.width - 25, 45);
-        
-        ctx.textAlign = 'left';
+        ctx.fillText(`Mise: ${this.currentBet}`, this.width - 40, panelY);
     }
-    
-    renderButtons(ctx) {
-        const buttons = [
-            { id: 'deal', text: 'DEAL', key: 'D', enabled: this.buttonsEnabled.deal },
-            { id: 'hit', text: 'HIT', key: 'H', enabled: this.buttonsEnabled.hit },
-            { id: 'stand', text: 'STAND', key: 'S', enabled: this.buttonsEnabled.stand },
-            { id: 'double', text: 'DOUBLE', key: 'D (x2)', enabled: this.buttonsEnabled.double },
-            { id: 'newGame', text: 'NEW GAME', key: 'N', enabled: this.buttonsEnabled.newGame }
-        ];
+
+    /**
+     * Dessiner les boutons d'action
+     */
+    drawActionButtons(ctx) {
+        const buttonY = this.height - 55;
+        const buttons = [];
         
-        const buttonY = this.height - 42;
-        const buttonWidth = 95;
-        const buttonHeight = 34;
-        const startX = (this.width - (buttons.filter(b => b.enabled).length * (buttonWidth + 10))) / 2;
-        
-        let currentX = startX;
-        
-        for (const btn of buttons) {
-            if (!btn.enabled) continue;
-            
-            const isHovered = false; // Pourrait être implémenté
-            
-            ctx.save();
-            
-            // Fond bouton
-            if (btn.id === 'hit' || btn.id === 'newGame') {
-                ctx.fillStyle = isHovered ? '#22c55e' : '#16a34a';
-            } else if (btn.id === 'stand') {
-                ctx.fillStyle = isHovered ? '#ef4444' : '#dc2626';
-            } else {
-                ctx.fillStyle = isHovered ? '#6366f1' : '#4f46e5';
+        if (this.gamePhase === 'betting') {
+            buttons.push(
+                { label: `${this.config.chipValue}€`, action: () => this.placeBet(this.config.chipValue), x: this.width / 2 - 120 },
+                { label: `${this.config.chipValue * 5}€`, action: () => this.placeBet(this.config.chipValue * 5), x: this.width / 2 },
+                { label: `${this.config.chipValue * 25}€`, action: () => this.placeBet(this.config.chipValue * 25), x: this.width / 2 + 120 }
+            );
+        } else if (this.gamePhase === 'playing') {
+            if (this.canHit) {
+                buttons.push({ label: 'HIT', action: () => this.hit(), x: this.width / 2 - 100 });
             }
+            if (this.canStand) {
+                buttons.push({ label: 'STAND', action: () => this.stand(), x: this.width / 2 });
+            }
+            if (this.canDouble) {
+                buttons.push({ label: 'DOUBLE', action: () => this.doubleDown(), x: this.width / 2 + 110 });
+            }
+        }
+        
+        this.buttons = buttons;
+        
+        buttons.forEach(btn => {
+            const width = btn.label.length > 6 ? 90 : 75;
+            const height = 36;
+            const x = btn.x - width / 2;
+            const y = buttonY - height / 2;
             
-            RenderUtils.roundRect(ctx, currentX, buttonY, buttonWidth, buttonHeight, 8);
-            ctx.fill();
+            // Fond du bouton
+            const isActive = (
+                (btn.label === 'HIT' && this.canHit) ||
+                (btn.label === 'STAND' && this.canStand) ||
+                (btn.label === 'DOUBLE' && this.canDouble) ||
+                this.gamePhase === 'betting'
+            );
+            
+            ctx.fillStyle = isActive ? 'rgba(33, 150, 243, 0.9)' : 'rgba(100, 100, 100, 0.5)';
+            Utils.canvas.roundRect(ctx, x, y, width, height, 18, ctx.fillStyle);
             
             // Texte
-            ctx.font = 'bold 12px Orbitron';
-            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px Orbitron';
+            ctx.fillStyle = isActive ? '#fff' : 'rgba(255, 255, 255, 0.5)';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(btn.text, currentX + buttonWidth / 2, buttonY + buttonHeight / 2);
-            
-            // Raccourci clavier
-            ctx.font = '10px Rajdhani';
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.fillText(`[${btn.key}]`, currentX + buttonWidth / 2, buttonY + buttonHeight - 6);
-            
-            ctx.restore();
-            
-            currentX += buttonWidth + 10;
-        }
+            ctx.fillText(btn.label, btn.x, buttonY + 5);
+        });
     }
-    
-    handleKey(key, code) {
-        switch (code) {
-            case 'KeyH':
-            case 'KeyZ':
-                if (this.buttonsEnabled.hit) this.hit();
-                break;
-            case 'KeyS':
-            case 'KeyQ':
-                if (this.buttonsEnabled.stand) this.stand();
-                break;
-            case 'KeyD':
-                if (this.buttonsEnabled.double) this.doubleDown();
-                else if (this.buttonsEnabled.deal) this.startNewRound();
-                else if (this.buttonsEnabled.newGame) this.newGame();
-                break;
-            case 'Enter':
-            case 'Space':
-                if (this.buttonsEnabled.deal) this.startNewRound();
-                else if (this.buttonsEnabled.newGame) this.newGame();
-                break;
-        }
-    }
-    
-    handleClick(x, y) {
-        // Vérifier clics sur les boutons
-        const buttonY = this.height - 42;
-        const buttonHeight = 34;
+
+    /**
+     * Dessiner le message de résultat
+     */
+    drawResultMessage(ctx) {
+        // Fond semi-transparent
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        Utils.canvas.roundRect(ctx, this.width / 2 - 180, this.height / 2 - 50, 360, 100, 15, ctx.fillStyle);
         
-        if (y >= buttonY && y <= buttonY + buttonHeight) {
-            if (this.buttonsEnabled.deal) this.startNewRound();
-            else if (this.buttonsEnabled.hit) this.hit();
-            else if (this.buttonsEnabled.stand) this.stand();
-            else if (this.buttonsEnabled.double) this.doubleDown();
-            else if (this.buttonsEnabled.newGame) this.newGame();
+        // Message
+        ctx.font = 'bold 24px Orbitron';
+        ctx.textAlign = 'center';
+        
+        if (this.resultMessage.includes('+')) {
+            ctx.fillStyle = '#81c784';
+        } else if (this.resultMessage.includes('-')) {
+            ctx.fillStyle = '#ef5350';
+        } else {
+            ctx.fillStyle = this.colors.textGold;
         }
+        
+        ctx.fillText(this.resultMessage, this.width / 2, this.height / 2 + 8);
+        
+        // Bouton Nouvelle Partie
+        const btnX = this.width / 2 - 70;
+        const btnY = this.height / 2 + 60;
+        ctx.fillStyle = 'rgba(76, 175, 80, 0.9)';
+        Utils.canvas.roundRect(ctx, btnX, btnY, 140, 40, 20, ctx.fillStyle);
+        
+        ctx.font = 'bold 16px Orbitron';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('NOUVELLE PARTIE', this.width / 2, btnY + 26);
+    }
+
+    /**
+     * Gérer les clics souris
+     */
+    handleMouseDown(pos) {
+        // Vérifier les clics sur les boutons
+        for (const btn of this.buttons) {
+            const width = btn.label.length > 6 ? 90 : 75;
+            const height = 36;
+            const x = btn.x - width / 2;
+            const y = this.height - 55 - height / 2;
+            
+            if (pos.x >= x && pos.x <= x + width && pos.y >= y && pos.y <= y + height) {
+                btn.action();
+                Utils.audio.playClick();
+                return;
+            }
+        }
+        
+        // Bouton nouvelle partie
+        if (this.gamePhase === 'result') {
+            const btnX = this.width / 2 - 70;
+            const btnY = this.height / 2 + 60;
+            
+            if (pos.x >= btnX && pos.x <= btnX + 140 && pos.y >= btnY && pos.y <= btnY + 40) {
+                this.newGame();
+                Utils.audio.playClick();
+            }
+        }
+    }
+
+    /**
+     * Gérer les touches pressées
+     */
+    handleKeyDown(e) {
+        switch (e.key.toLowerCase()) {
+            case 'h':
+                this.hit();
+                break;
+            case 's':
+                this.stand();
+                break;
+            case 'd':
+                this.doubleDown();
+                break;
+            case 'r':
+            case 'enter':
+                if (this.gamePhase === 'result') {
+                    this.newGame();
+                }
+                break;
+        }
+    }
+
+    /**
+     * Obtenir les instructions
+     */
+    getInstructions() {
+        return `
+            <strong>🃏 Blackjack</strong> - Faites 21 ou approchez-vous-en!<br>
+            <span style="color: var(--neon-blue)">H</span> Hit | 
+            <span style="color: var(--neon-green)">S</span> Stand | 
+            <span style="color: var(--neon-pink)">D</span> Double | 
+            <span style="color: var(--neon-yellow)">🖱️ Cliquez</span> pour miser!
+        `;
     }
 }
+
+// Enregistrer le jeu
+window.Games.blackjack = BlackjackGame;
